@@ -1,0 +1,333 @@
+---
+source: tests/pulldown_cmark.rs
+expression: "Parser::new(&md).into_offset_iter().collect::<Vec<_>>()"
+
+---
+- - Start:
+      Heading: H1
+  - start: 0
+    end: 18
+- - Text: I/O event queue
+  - start: 2
+    end: 17
+- - End:
+      Heading: H1
+  - start: 0
+    end: 18
+- - Start: Paragraph
+  - start: 19
+    end: 221
+- - Text: "The I/O event queue is what handles most of our I/O tasks. Now we'll go through"
+  - start: 19
+    end: 98
+- - SoftBreak
+  - start: 98
+    end: 99
+- - Text: "how we register events to that queue later on, but once an event is ready we"
+  - start: 99
+    end: 175
+- - SoftBreak
+  - start: 175
+    end: 176
+- - Text: "it sends the "
+  - start: 176
+    end: 189
+- - Code: event_id
+  - start: 189
+    end: 199
+- - Text: " through our channel."
+  - start: 199
+    end: 220
+- - End: Paragraph
+  - start: 19
+    end: 221
+- - Start:
+      CodeBlock:
+        Fenced: "rust, ignored"
+  - start: 222
+    end: 393
+- - Text: "fn process_epoll_events(&mut self, event_id: usize) {\n    self.callbacks_to_run.push((event_id, Js::Undefined));\n    self.epoll_pending_events -= 1;\n}\n"
+  - start: 239
+    end: 390
+- - End:
+      CodeBlock:
+        Fenced: "rust, ignored"
+  - start: 222
+    end: 393
+- - Start: Paragraph
+  - start: 395
+    end: 601
+- - Text: "As we'll see later on, the way we designed this, we actually made our "
+  - start: 395
+    end: 465
+- - Code: event_id
+  - start: 465
+    end: 475
+- - SoftBreak
+  - start: 475
+    end: 476
+- - Text: "and "
+  - start: 476
+    end: 480
+- - Code: callback_id
+  - start: 480
+    end: 493
+- - Text: " the same value since both represents an unique value for this"
+  - start: 493
+    end: 555
+- - SoftBreak
+  - start: 555
+    end: 556
+- - Text: event. It simplifies things slightly for us.
+  - start: 556
+    end: 600
+- - End: Paragraph
+  - start: 395
+    end: 601
+- - Start: Paragraph
+  - start: 602
+    end: 945
+- - Text: "We add the "
+  - start: 602
+    end: 613
+- - Code: callback_id
+  - start: 613
+    end: 626
+- - Text: " to the collection of callbacks to run. We pass"
+  - start: 626
+    end: 673
+- - SoftBreak
+  - start: 673
+    end: 674
+- - Text: "in "
+  - start: 674
+    end: 677
+- - Code: "Js::Undefined"
+  - start: 677
+    end: 692
+- - Text: " since we'll not actually pass any data along here. You'll see"
+  - start: 692
+    end: 754
+- - SoftBreak
+  - start: 754
+    end: 755
+- - Text: "why when we reach the "
+  - start: 755
+    end: 777
+- - Code: "[Http module](./8_3_http_module.md) chapter, but the main "
+  - start: 777
+    end: 837
+- - Text: "point is that the I/O queue doesn't return any data itself, it just tells us that"
+  - start: 837
+    end: 918
+- - SoftBreak
+  - start: 918
+    end: 919
+- - Text: data is ready to be read.
+  - start: 919
+    end: 944
+- - End: Paragraph
+  - start: 602
+    end: 945
+- - Start: Paragraph
+  - start: 946
+    end: 1101
+- - Text: "Lastly it's only for our own bookkeeping we decrement the count of outstanding"
+  - start: 946
+    end: 1024
+- - SoftBreak
+  - start: 1024
+    end: 1025
+- - Code: epoll_pending_events
+  - start: 1025
+    end: 1047
+- - Text: " so we keep track of how many events we have pending."
+  - start: 1047
+    end: 1100
+- - End: Paragraph
+  - start: 946
+    end: 1101
+- - Start: BlockQuote
+  - start: 1102
+    end: 2461
+- - Start: Paragraph
+  - start: 1104
+    end: 1415
+- - Start: Strong
+  - start: 1104
+    end: 1167
+- - Text: "Why even keep track of how many "
+  - start: 1106
+    end: 1138
+- - Code: epoll_events
+  - start: 1138
+    end: 1152
+- - Text: " are pending?"
+  - start: 1152
+    end: 1165
+- - End: Strong
+  - start: 1104
+    end: 1167
+- - SoftBreak
+  - start: 1167
+    end: 1168
+- - Text: "We don't use this value here, but I added it to make it easier to create"
+  - start: 1170
+    end: 1242
+- - SoftBreak
+  - start: 1242
+    end: 1243
+- - Text: "some "
+  - start: 1245
+    end: 1250
+- - Code: print
+  - start: 1250
+    end: 1257
+- - Text: " statements showing the status of our runtime at different points."
+  - start: 1257
+    end: 1323
+- - SoftBreak
+  - start: 1323
+    end: 1324
+- - Text: "However, there are good reasons to keep track of these events even if we don't use them."
+  - start: 1326
+    end: 1414
+- - End: Paragraph
+  - start: 1104
+    end: 1415
+- - Start: Paragraph
+  - start: 1419
+    end: 1607
+- - Text: "One area we're taking shortcuts on all the way here is security. If someone were"
+  - start: 1419
+    end: 1499
+- - SoftBreak
+  - start: 1499
+    end: 1500
+- - Text: "to build a public facing server out of this, we need to account for slow networks"
+  - start: 1502
+    end: 1583
+- - SoftBreak
+  - start: 1583
+    end: 1584
+- - Text: and malicious users.
+  - start: 1586
+    end: 1606
+- - End: Paragraph
+  - start: 1419
+    end: 1607
+- - Start: Paragraph
+  - start: 1611
+    end: 2071
+- - Text: "Since we use "
+  - start: 1611
+    end: 1624
+- - Code: IOCP
+  - start: 1624
+    end: 1630
+- - Text: ", which is a completion based model, we allocate memory for"
+  - start: 1630
+    end: 1689
+- - SoftBreak
+  - start: 1689
+    end: 1690
+- - Text: "a buffer for each "
+  - start: 1692
+    end: 1710
+- - Code: Read
+  - start: 1710
+    end: 1716
+- - Text: " or "
+  - start: 1716
+    end: 1720
+- - Code: Write
+  - start: 1720
+    end: 1727
+- - Text: " event. When we lend this memory to the OS,"
+  - start: 1727
+    end: 1770
+- - SoftBreak
+  - start: 1770
+    end: 1771
+- - Text: "we're in a weird situation. We own it, but we can't touch it. There are several"
+  - start: 1773
+    end: 1852
+- - SoftBreak
+  - start: 1852
+    end: 1853
+- - Text: "ways in which we could register interest in more events than occur, and thereby"
+  - start: 1855
+    end: 1934
+- - SoftBreak
+  - start: 1934
+    end: 1935
+- - Text: allocating memory that is just held in the buffers. Now if someone wanted to crash
+  - start: 1937
+    end: 2019
+- - SoftBreak
+  - start: 2019
+    end: 2020
+- - Text: "our server, they could cause this intentionally."
+  - start: 2022
+    end: 2070
+- - End: Paragraph
+  - start: 1611
+    end: 2071
+- - Start: Paragraph
+  - start: 2075
+    end: 2278
+- - Text: "A good practice is therefore to create a \"high watermark\" by keeping track of"
+  - start: 2075
+    end: 2152
+- - SoftBreak
+  - start: 2152
+    end: 2153
+- - Text: "the number of pending events, and when we reach that watermark, we queue events"
+  - start: 2155
+    end: 2234
+- - SoftBreak
+  - start: 2234
+    end: 2235
+- - Text: instead of registering them with the OS.
+  - start: 2237
+    end: 2277
+- - End: Paragraph
+  - start: 2075
+    end: 2278
+- - Start: Paragraph
+  - start: 2282
+    end: 2461
+- - Text: "By extension, this is also why you should "
+  - start: 2282
+    end: 2324
+- - Start: Strong
+  - start: 2324
+    end: 2334
+- - Text: always
+  - start: 2326
+    end: 2332
+- - End: Strong
+  - start: 2324
+    end: 2334
+- - Text: " have a timeout on these events"
+  - start: 2334
+    end: 2365
+- - SoftBreak
+  - start: 2365
+    end: 2366
+- - Text: so that you at some point can reclaim the memory and return an timeout error if
+  - start: 2368
+    end: 2447
+- - SoftBreak
+  - start: 2447
+    end: 2448
+- - Text: necessary.
+  - start: 2450
+    end: 2460
+- - End: Paragraph
+  - start: 2282
+    end: 2461
+- - End: BlockQuote
+  - start: 1102
+    end: 2461
+

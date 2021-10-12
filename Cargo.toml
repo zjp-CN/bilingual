@@ -1,0 +1,33 @@
+[package]
+name = "bilingual"
+version = "0.1.0"
+edition = "2021"
+exclude = ["assets", "examples", "benches", "tests", "CHANGELOG.md"]
+
+[dependencies]
+markdown = {version="0.3", optional=true}
+
+[dependencies.pulldown-cmark]
+version  = "0.8"
+optional = true
+default-features = false
+git = "https://github.com/raphlinus/pulldown-cmark.git"
+
+[dev-dependencies]
+insta = "1.8"
+
+[profile.release]
+lto = true
+opt-level = 3
+
+# docs.rs-specific configuration
+[package.metadata.docs.rs]
+# document all features
+all-features = true
+# defines the configuration attribute `docsrs`
+rustdoc-args = ["--cfg", "docsrs"]
+
+[[test]]
+name = "pulldown_cmark"
+path = "tests/pulldown_cmark.rs"
+required-features = ["pulldown-cmark/serde"]
