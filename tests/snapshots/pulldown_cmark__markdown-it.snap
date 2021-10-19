@@ -1,0 +1,776 @@
+---
+source: tests/pulldown_cmark.rs
+expression: "Parser::new_ext(&md, opt).collect::<Vec<_>>()"
+
+---
+- Rule
+- Start: Paragraph
+- Start: Strong
+- Text: "Advertisement :)"
+- End: Strong
+- End: Paragraph
+- Start:
+    List: ~
+- Start: Item
+- Start: Strong
+- Start:
+    Link:
+      - Inline
+      - "https://nodeca.github.io/pica/demo/"
+      - ""
+- Text: pica
+- End:
+    Link:
+      - Inline
+      - "https://nodeca.github.io/pica/demo/"
+      - ""
+- End: Strong
+- Text: " - high quality and fast image"
+- SoftBreak
+- Text: resize in browser.
+- End: Item
+- Start: Item
+- Start: Strong
+- Start:
+    Link:
+      - Inline
+      - "https://github.com/nodeca/babelfish/"
+      - ""
+- Text: babelfish
+- End:
+    Link:
+      - Inline
+      - "https://github.com/nodeca/babelfish/"
+      - ""
+- End: Strong
+- Text: " - developer friendly"
+- SoftBreak
+- Text: i18n with plurals support and easy syntax.
+- End: Item
+- End:
+    List: ~
+- Start: Paragraph
+- Text: You will like those projects!
+- End: Paragraph
+- Rule
+- Start:
+    Heading: H1
+- Text: h1 Heading 8-)
+- End:
+    Heading: H1
+- Start:
+    Heading: H2
+- Text: h2 Heading
+- End:
+    Heading: H2
+- Start:
+    Heading: H3
+- Text: h3 Heading
+- End:
+    Heading: H3
+- Start:
+    Heading: H4
+- Text: h4 Heading
+- End:
+    Heading: H4
+- Start:
+    Heading: H5
+- Text: h5 Heading
+- End:
+    Heading: H5
+- Start:
+    Heading: H6
+- Text: h6 Heading
+- End:
+    Heading: H6
+- Start:
+    Heading: H2
+- Text: Horizontal Rules
+- End:
+    Heading: H2
+- Rule
+- Rule
+- Rule
+- Start:
+    Heading: H2
+- Text: quotation marks
+- End:
+    Heading: H2
+- Start: Paragraph
+- Text: "\"Smartypants, double quotes\" and 'single quotes'"
+- End: Paragraph
+- Start:
+    Heading: H2
+- Text: Emphasis
+- End:
+    Heading: H2
+- Start: Paragraph
+- Start: Strong
+- Text: This is bold text
+- End: Strong
+- End: Paragraph
+- Start: Paragraph
+- Start: Strong
+- Text: This is bold text
+- End: Strong
+- End: Paragraph
+- Start: Paragraph
+- Start: Emphasis
+- Text: This is italic text
+- End: Emphasis
+- End: Paragraph
+- Start: Paragraph
+- Start: Emphasis
+- Text: This is italic text
+- End: Emphasis
+- End: Paragraph
+- Start: Paragraph
+- Start: Strikethrough
+- Text: Strikethrough
+- End: Strikethrough
+- End: Paragraph
+- Start:
+    Heading: H2
+- Text: Blockquotes
+- End:
+    Heading: H2
+- Start: BlockQuote
+- Start: Paragraph
+- Text: Blockquotes can also be nested...
+- End: Paragraph
+- Start: BlockQuote
+- Start: Paragraph
+- Text: "...by using additional greater-than signs right next to each other..."
+- End: Paragraph
+- Start: BlockQuote
+- Start: Paragraph
+- Text: "...or with spaces between arrows."
+- End: Paragraph
+- End: BlockQuote
+- End: BlockQuote
+- End: BlockQuote
+- Start:
+    Heading: H2
+- Text: Lists
+- End:
+    Heading: H2
+- Start: Paragraph
+- Text: Unordered
+- End: Paragraph
+- Start:
+    List: ~
+- Start: Item
+- Text: "Create a list by starting a line with "
+- Code: +
+- Text: ", "
+- Code: "-"
+- Text: ", or "
+- Code: "*"
+- End: Item
+- Start: Item
+- Text: "Sub-lists are made by indenting 2 spaces:"
+- Start:
+    List: ~
+- Start: Item
+- Text: "Marker character change forces new list start:"
+- Start:
+    List: ~
+- Start: Item
+- Text: Ac tristique libero volutpat at
+- End: Item
+- End:
+    List: ~
+- Start:
+    List: ~
+- Start: Item
+- Text: Facilisis in pretium nisl aliquet
+- End: Item
+- End:
+    List: ~
+- Start:
+    List: ~
+- Start: Item
+- Text: Nulla volutpat aliquam velit
+- End: Item
+- End:
+    List: ~
+- End: Item
+- End:
+    List: ~
+- End: Item
+- Start: Item
+- Text: Very easy!
+- End: Item
+- End:
+    List: ~
+- Start: Paragraph
+- Text: Ordered
+- End: Paragraph
+- Start:
+    List: 1
+- Start: Item
+- Start: Paragraph
+- Text: Lorem ipsum dolor sit amet
+- End: Paragraph
+- End: Item
+- Start: Item
+- Start: Paragraph
+- Text: Consectetur adipiscing elit
+- End: Paragraph
+- End: Item
+- Start: Item
+- Start: Paragraph
+- Text: Integer molestie lorem at massa
+- End: Paragraph
+- End: Item
+- Start: Item
+- Start: Paragraph
+- Text: You can use sequential numbers...
+- End: Paragraph
+- End: Item
+- Start: Item
+- Start: Paragraph
+- Text: "...or keep all the numbers as "
+- Code: "1."
+- End: Paragraph
+- End: Item
+- End:
+    List: 1
+- Start: Paragraph
+- Text: "Start numbering with offset:"
+- End: Paragraph
+- Start:
+    List: 57
+- Start: Item
+- Text: foo
+- End: Item
+- Start: Item
+- Text: bar
+- End: Item
+- End:
+    List: 57
+- Start:
+    Heading: H2
+- Text: Code
+- End:
+    Heading: H2
+- Start: Paragraph
+- Text: "Inline "
+- Code: code
+- End: Paragraph
+- Start: Paragraph
+- Text: Indented code
+- End: Paragraph
+- Start:
+    CodeBlock: Indented
+- Text: "// Some comments\n"
+- Text: "line 1 of code\n"
+- Text: "line 2 of code\n"
+- Text: "line 3 of code\n"
+- End:
+    CodeBlock: Indented
+- Start: Paragraph
+- Text: "Block code \"fences\""
+- End: Paragraph
+- Start:
+    CodeBlock:
+      Fenced: ""
+- Text: "Sample text here...\n"
+- End:
+    CodeBlock:
+      Fenced: ""
+- Start: Paragraph
+- Text: Syntax highlighting
+- End: Paragraph
+- Start:
+    CodeBlock:
+      Fenced: js
+- Text: "var foo = function (bar) {\n  return bar++;\n};\n\nconsole.log(foo(5));\n"
+- End:
+    CodeBlock:
+      Fenced: js
+- Start:
+    Heading: H2
+- Text: Tables
+- End:
+    Heading: H2
+- Start:
+    Table:
+      - None
+      - None
+- Start: TableHead
+- Start: TableCell
+- Text: Option
+- End: TableCell
+- Start: TableCell
+- Text: Description
+- End: TableCell
+- End: TableHead
+- Start: TableRow
+- Start: TableCell
+- Text: data
+- End: TableCell
+- Start: TableCell
+- Text: path to data files to supply the data that will be passed into templates.
+- End: TableCell
+- End: TableRow
+- Start: TableRow
+- Start: TableCell
+- Text: engine
+- End: TableCell
+- Start: TableCell
+- Text: engine to be used for processing templates. Handlebars is the default.
+- End: TableCell
+- End: TableRow
+- Start: TableRow
+- Start: TableCell
+- Text: ext
+- End: TableCell
+- Start: TableCell
+- Text: extension to be used for dest files.
+- End: TableCell
+- End: TableRow
+- End:
+    Table:
+      - None
+      - None
+- Start: Paragraph
+- Text: Right aligned columns
+- End: Paragraph
+- Start:
+    Table:
+      - Right
+      - Right
+- Start: TableHead
+- Start: TableCell
+- Text: Option
+- End: TableCell
+- Start: TableCell
+- Text: Description
+- End: TableCell
+- End: TableHead
+- Start: TableRow
+- Start: TableCell
+- Text: data
+- End: TableCell
+- Start: TableCell
+- Text: path to data files to supply the data that will be passed into templates.
+- End: TableCell
+- End: TableRow
+- Start: TableRow
+- Start: TableCell
+- Text: engine
+- End: TableCell
+- Start: TableCell
+- Text: engine to be used for processing templates. Handlebars is the default.
+- End: TableCell
+- End: TableRow
+- Start: TableRow
+- Start: TableCell
+- Text: ext
+- End: TableCell
+- Start: TableCell
+- Text: extension to be used for dest files.
+- End: TableCell
+- End: TableRow
+- End:
+    Table:
+      - Right
+      - Right
+- Start:
+    Heading: H2
+- Text: Links
+- End:
+    Heading: H2
+- Start: Paragraph
+- Start:
+    Link:
+      - Inline
+      - "http://dev.nodeca.com"
+      - ""
+- Text: link text
+- End:
+    Link:
+      - Inline
+      - "http://dev.nodeca.com"
+      - ""
+- End: Paragraph
+- Start: Paragraph
+- Start:
+    Link:
+      - Inline
+      - "http://nodeca.github.io/pica/demo/"
+      - title text!
+- Text: link with title
+- End:
+    Link:
+      - Inline
+      - "http://nodeca.github.io/pica/demo/"
+      - title text!
+- End: Paragraph
+- Start: Paragraph
+- Start:
+    Link:
+      - Reference
+      - "http://dev.nodeca.com"
+      - ""
+- Text: ref link
+- End:
+    Link:
+      - Reference
+      - "http://dev.nodeca.com"
+      - ""
+- End: Paragraph
+- Start: Paragraph
+- Text: "Autoconverted link https://github.com/nodeca/pica (enable linkify to see)"
+- End: Paragraph
+- Start:
+    Heading: H2
+- Text: Images
+- End:
+    Heading: H2
+- Start: Paragraph
+- Start:
+    Image:
+      - Inline
+      - "https://octodex.github.com/images/minion.png"
+      - ""
+- Text: Minion
+- End:
+    Image:
+      - Inline
+      - "https://octodex.github.com/images/minion.png"
+      - ""
+- SoftBreak
+- Start:
+    Image:
+      - Inline
+      - "https://octodex.github.com/images/stormtroopocat.jpg"
+      - The Stormtroopocat
+- Text: Stormtroopocat
+- End:
+    Image:
+      - Inline
+      - "https://octodex.github.com/images/stormtroopocat.jpg"
+      - The Stormtroopocat
+- End: Paragraph
+- Start: Paragraph
+- Text: "Like links, Images also have a footnote style syntax"
+- End: Paragraph
+- Start: Paragraph
+- Start:
+    Image:
+      - Reference
+      - "https://octodex.github.com/images/dojocat.jpg"
+      - The Dojocat
+- Text: Alt text
+- End:
+    Image:
+      - Reference
+      - "https://octodex.github.com/images/dojocat.jpg"
+      - The Dojocat
+- End: Paragraph
+- Start: Paragraph
+- Text: "With a reference later in the document defining the URL location:"
+- End: Paragraph
+- Start:
+    Heading: H2
+- Text: Plugins
+- End:
+    Heading: H2
+- Start: Paragraph
+- Text: "The killer feature of "
+- Code: markdown-it
+- Text: " is very effective support of"
+- SoftBreak
+- Start:
+    Link:
+      - Inline
+      - "https://www.npmjs.org/browse/keyword/markdown-it-plugin"
+      - ""
+- Text: syntax plugins
+- End:
+    Link:
+      - Inline
+      - "https://www.npmjs.org/browse/keyword/markdown-it-plugin"
+      - ""
+- Text: "."
+- End: Paragraph
+- Start:
+    Heading: H3
+- Start:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-emoji"
+      - ""
+- Text: Emojies
+- End:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-emoji"
+      - ""
+- End:
+    Heading: H3
+- Start: BlockQuote
+- Start: Paragraph
+- Text: "Classic markup: :wink: :crush: :cry: :tear: :laughing: :yum:"
+- End: Paragraph
+- Start: Paragraph
+- Text: "Shortcuts (emoticons): :-) :-( 8-) ;)"
+- End: Paragraph
+- End: BlockQuote
+- Start: Paragraph
+- Text: "see "
+- Start:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-emoji#change-output"
+      - ""
+- Text: how to change output
+- End:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-emoji#change-output"
+      - ""
+- Text: " with twemoji."
+- End: Paragraph
+- Start:
+    Heading: H3
+- Start:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-sub"
+      - ""
+- Text: Subscript
+- End:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-sub"
+      - ""
+- Text: " / "
+- Start:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-sup"
+      - ""
+- Text: Superscript
+- End:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-sup"
+      - ""
+- End:
+    Heading: H3
+- Start:
+    List: ~
+- Start: Item
+- Text: 19^th^
+- End: Item
+- Start: Item
+- Text: H~2~O
+- End: Item
+- End:
+    List: ~
+- Start:
+    Heading: H3
+- Start:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-ins"
+      - ""
+- Text: "<ins>"
+- End:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-ins"
+      - ""
+- End:
+    Heading: H3
+- Start: Paragraph
+- Text: ++Inserted text++
+- End: Paragraph
+- Start:
+    Heading: H3
+- Start:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-mark"
+      - ""
+- Text: "<mark>"
+- End:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-mark"
+      - ""
+- End:
+    Heading: H3
+- Start: Paragraph
+- Text: "==Marked text=="
+- End: Paragraph
+- Start:
+    Heading: H3
+- Start:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-footnote"
+      - ""
+- Text: Footnotes
+- End:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-footnote"
+      - ""
+- End:
+    Heading: H3
+- Start: Paragraph
+- Text: Footnote 1 link
+- FootnoteReference: first
+- Text: "."
+- End: Paragraph
+- Start: Paragraph
+- Text: Footnote 2 link
+- FootnoteReference: second
+- Text: "."
+- End: Paragraph
+- Start: Paragraph
+- Text: Inline footnote^
+- Text: "["
+- Text: Text of inline footnote
+- Text: "]"
+- Text: " definition."
+- End: Paragraph
+- Start: Paragraph
+- Text: Duplicated footnote reference
+- FootnoteReference: second
+- Text: "."
+- End: Paragraph
+- Start:
+    FootnoteDefinition: first
+- Start: Paragraph
+- Text: "Footnote "
+- Start: Strong
+- Text: can have markup
+- End: Strong
+- End: Paragraph
+- End:
+    FootnoteDefinition: first
+- Start:
+    CodeBlock: Indented
+- Text: "and multiple paragraphs.\n"
+- End:
+    CodeBlock: Indented
+- Start:
+    FootnoteDefinition: second
+- Start: Paragraph
+- Text: Footnote text.
+- End: Paragraph
+- End:
+    FootnoteDefinition: second
+- Start:
+    Heading: H3
+- Start:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-deflist"
+      - ""
+- Text: Definition lists
+- End:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-deflist"
+      - ""
+- End:
+    Heading: H3
+- Start: Paragraph
+- Text: Term 1
+- End: Paragraph
+- Start: Paragraph
+- Text: ":   Definition 1"
+- SoftBreak
+- Text: with lazy continuation.
+- End: Paragraph
+- Start: Paragraph
+- Text: "Term 2 with "
+- Start: Emphasis
+- Text: inline markup
+- End: Emphasis
+- End: Paragraph
+- Start: Paragraph
+- Text: ":   Definition 2"
+- End: Paragraph
+- Start:
+    CodeBlock: Indented
+- Text: "    { some code, part of Definition 2 }\n\n"
+- Text: "Third paragraph of definition 2.\n"
+- End:
+    CodeBlock: Indented
+- Start: Paragraph
+- Start: Emphasis
+- Text: "Compact style:"
+- End: Emphasis
+- End: Paragraph
+- Start: Paragraph
+- Text: Term 1
+- SoftBreak
+- Text: ~ Definition 1
+- End: Paragraph
+- Start: Paragraph
+- Text: Term 2
+- SoftBreak
+- Text: ~ Definition 2a
+- SoftBreak
+- Text: ~ Definition 2b
+- End: Paragraph
+- Start:
+    Heading: H3
+- Start:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-abbr"
+      - ""
+- Text: Abbreviations
+- End:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-abbr"
+      - ""
+- End:
+    Heading: H3
+- Start: Paragraph
+- Text: This is HTML abbreviation example.
+- End: Paragraph
+- Start: Paragraph
+- Text: "It converts \"HTML\", but keep intact partial entries like \"xxxHTMLyyy\" and so on."
+- End: Paragraph
+- Start: Paragraph
+- Text: "*"
+- Text: "["
+- Text: HTML
+- Text: "]"
+- Text: ": Hyper Text Markup Language"
+- End: Paragraph
+- Start:
+    Heading: H3
+- Start:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-container"
+      - ""
+- Text: Custom containers
+- End:
+    Link:
+      - Inline
+      - "https://github.com/markdown-it/markdown-it-container"
+      - ""
+- End:
+    Heading: H3
+- Start: Paragraph
+- Text: "::: warning"
+- SoftBreak
+- Start: Emphasis
+- Text: here be dragons
+- End: Emphasis
+- SoftBreak
+- Text: ":::"
+- End: Paragraph
+

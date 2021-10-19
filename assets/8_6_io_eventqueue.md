@@ -17,8 +17,8 @@ event. It simplifies things slightly for us.
 
 We add the `callback_id` to the collection of callbacks to run. We pass
 in `Js::Undefined` since we'll not actually pass any data along here. You'll see
-why when we reach the `[Http module](./8_3_http_module.md) chapter, but the main
-`point is that the I/O queue doesn't return any data itself, it just tells us that
+why when we reach the [Http module](./8_3_http_module.md) chapter, but the main
+point is that the I/O queue doesn't return any data itself, it just tells us that
 data is ready to be read.
 
 Lastly it's only for our own bookkeeping we decrement the count of outstanding

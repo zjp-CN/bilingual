@@ -86,7 +86,7 @@ expression: "Parser::new(&md).into_offset_iter().collect::<Vec<_>>()"
     end: 601
 - - Start: Paragraph
   - start: 602
-    end: 945
+    end: 943
 - - Text: "We add the "
   - start: 602
     end: 613
@@ -114,220 +114,240 @@ expression: "Parser::new(&md).into_offset_iter().collect::<Vec<_>>()"
 - - Text: "why when we reach the "
   - start: 755
     end: 777
-- - Code: "[Http module](./8_3_http_module.md) chapter, but the main "
+- - Start:
+      Link:
+        - Inline
+        - "./8_3_http_module.md"
+        - ""
   - start: 777
-    end: 837
-- - Text: "point is that the I/O queue doesn't return any data itself, it just tells us that"
-  - start: 837
-    end: 918
+    end: 812
+- - Text: Http module
+  - start: 778
+    end: 789
+- - End:
+      Link:
+        - Inline
+        - "./8_3_http_module.md"
+        - ""
+  - start: 777
+    end: 812
+- - Text: " chapter, but the main"
+  - start: 812
+    end: 834
 - - SoftBreak
-  - start: 918
-    end: 919
+  - start: 834
+    end: 835
+- - Text: "point is that the I/O queue doesn't return any data itself, it just tells us that"
+  - start: 835
+    end: 916
+- - SoftBreak
+  - start: 916
+    end: 917
 - - Text: data is ready to be read.
-  - start: 919
-    end: 944
+  - start: 917
+    end: 942
 - - End: Paragraph
   - start: 602
-    end: 945
+    end: 943
 - - Start: Paragraph
-  - start: 946
-    end: 1101
+  - start: 944
+    end: 1099
 - - Text: "Lastly it's only for our own bookkeeping we decrement the count of outstanding"
-  - start: 946
-    end: 1024
+  - start: 944
+    end: 1022
 - - SoftBreak
-  - start: 1024
-    end: 1025
+  - start: 1022
+    end: 1023
 - - Code: epoll_pending_events
-  - start: 1025
-    end: 1047
+  - start: 1023
+    end: 1045
 - - Text: " so we keep track of how many events we have pending."
-  - start: 1047
-    end: 1100
+  - start: 1045
+    end: 1098
 - - End: Paragraph
-  - start: 946
-    end: 1101
+  - start: 944
+    end: 1099
 - - Start: BlockQuote
-  - start: 1102
-    end: 2461
+  - start: 1100
+    end: 2459
 - - Start: Paragraph
-  - start: 1104
-    end: 1415
+  - start: 1102
+    end: 1413
 - - Start: Strong
-  - start: 1104
-    end: 1167
-- - Text: "Why even keep track of how many "
-  - start: 1106
-    end: 1138
-- - Code: epoll_events
-  - start: 1138
-    end: 1152
-- - Text: " are pending?"
-  - start: 1152
+  - start: 1102
     end: 1165
-- - End: Strong
+- - Text: "Why even keep track of how many "
   - start: 1104
-    end: 1167
-- - SoftBreak
-  - start: 1167
-    end: 1168
-- - Text: "We don't use this value here, but I added it to make it easier to create"
-  - start: 1170
-    end: 1242
-- - SoftBreak
-  - start: 1242
-    end: 1243
-- - Text: "some "
-  - start: 1245
-    end: 1250
-- - Code: print
-  - start: 1250
-    end: 1257
-- - Text: " statements showing the status of our runtime at different points."
-  - start: 1257
-    end: 1323
-- - SoftBreak
-  - start: 1323
-    end: 1324
-- - Text: "However, there are good reasons to keep track of these events even if we don't use them."
-  - start: 1326
-    end: 1414
-- - End: Paragraph
-  - start: 1104
-    end: 1415
-- - Start: Paragraph
-  - start: 1419
-    end: 1607
-- - Text: "One area we're taking shortcuts on all the way here is security. If someone were"
-  - start: 1419
-    end: 1499
-- - SoftBreak
-  - start: 1499
-    end: 1500
-- - Text: "to build a public facing server out of this, we need to account for slow networks"
-  - start: 1502
-    end: 1583
-- - SoftBreak
-  - start: 1583
-    end: 1584
-- - Text: and malicious users.
-  - start: 1586
-    end: 1606
-- - End: Paragraph
-  - start: 1419
-    end: 1607
-- - Start: Paragraph
-  - start: 1611
-    end: 2071
-- - Text: "Since we use "
-  - start: 1611
-    end: 1624
-- - Code: IOCP
-  - start: 1624
-    end: 1630
-- - Text: ", which is a completion based model, we allocate memory for"
-  - start: 1630
-    end: 1689
-- - SoftBreak
-  - start: 1689
-    end: 1690
-- - Text: "a buffer for each "
-  - start: 1692
-    end: 1710
-- - Code: Read
-  - start: 1710
-    end: 1716
-- - Text: " or "
-  - start: 1716
-    end: 1720
-- - Code: Write
-  - start: 1720
-    end: 1727
-- - Text: " event. When we lend this memory to the OS,"
-  - start: 1727
-    end: 1770
-- - SoftBreak
-  - start: 1770
-    end: 1771
-- - Text: "we're in a weird situation. We own it, but we can't touch it. There are several"
-  - start: 1773
-    end: 1852
-- - SoftBreak
-  - start: 1852
-    end: 1853
-- - Text: "ways in which we could register interest in more events than occur, and thereby"
-  - start: 1855
-    end: 1934
-- - SoftBreak
-  - start: 1934
-    end: 1935
-- - Text: allocating memory that is just held in the buffers. Now if someone wanted to crash
-  - start: 1937
-    end: 2019
-- - SoftBreak
-  - start: 2019
-    end: 2020
-- - Text: "our server, they could cause this intentionally."
-  - start: 2022
-    end: 2070
-- - End: Paragraph
-  - start: 1611
-    end: 2071
-- - Start: Paragraph
-  - start: 2075
-    end: 2278
-- - Text: "A good practice is therefore to create a \"high watermark\" by keeping track of"
-  - start: 2075
-    end: 2152
-- - SoftBreak
-  - start: 2152
-    end: 2153
-- - Text: "the number of pending events, and when we reach that watermark, we queue events"
-  - start: 2155
-    end: 2234
-- - SoftBreak
-  - start: 2234
-    end: 2235
-- - Text: instead of registering them with the OS.
-  - start: 2237
-    end: 2277
-- - End: Paragraph
-  - start: 2075
-    end: 2278
-- - Start: Paragraph
-  - start: 2282
-    end: 2461
-- - Text: "By extension, this is also why you should "
-  - start: 2282
-    end: 2324
-- - Start: Strong
-  - start: 2324
-    end: 2334
-- - Text: always
-  - start: 2326
-    end: 2332
+    end: 1136
+- - Code: epoll_events
+  - start: 1136
+    end: 1150
+- - Text: " are pending?"
+  - start: 1150
+    end: 1163
 - - End: Strong
-  - start: 2324
-    end: 2334
-- - Text: " have a timeout on these events"
-  - start: 2334
-    end: 2365
-- - SoftBreak
-  - start: 2365
-    end: 2366
-- - Text: so that you at some point can reclaim the memory and return an timeout error if
-  - start: 2368
-    end: 2447
-- - SoftBreak
-  - start: 2447
-    end: 2448
-- - Text: necessary.
-  - start: 2450
-    end: 2460
-- - End: Paragraph
-  - start: 2282
-    end: 2461
-- - End: BlockQuote
   - start: 1102
-    end: 2461
+    end: 1165
+- - SoftBreak
+  - start: 1165
+    end: 1166
+- - Text: "We don't use this value here, but I added it to make it easier to create"
+  - start: 1168
+    end: 1240
+- - SoftBreak
+  - start: 1240
+    end: 1241
+- - Text: "some "
+  - start: 1243
+    end: 1248
+- - Code: print
+  - start: 1248
+    end: 1255
+- - Text: " statements showing the status of our runtime at different points."
+  - start: 1255
+    end: 1321
+- - SoftBreak
+  - start: 1321
+    end: 1322
+- - Text: "However, there are good reasons to keep track of these events even if we don't use them."
+  - start: 1324
+    end: 1412
+- - End: Paragraph
+  - start: 1102
+    end: 1413
+- - Start: Paragraph
+  - start: 1417
+    end: 1605
+- - Text: "One area we're taking shortcuts on all the way here is security. If someone were"
+  - start: 1417
+    end: 1497
+- - SoftBreak
+  - start: 1497
+    end: 1498
+- - Text: "to build a public facing server out of this, we need to account for slow networks"
+  - start: 1500
+    end: 1581
+- - SoftBreak
+  - start: 1581
+    end: 1582
+- - Text: and malicious users.
+  - start: 1584
+    end: 1604
+- - End: Paragraph
+  - start: 1417
+    end: 1605
+- - Start: Paragraph
+  - start: 1609
+    end: 2069
+- - Text: "Since we use "
+  - start: 1609
+    end: 1622
+- - Code: IOCP
+  - start: 1622
+    end: 1628
+- - Text: ", which is a completion based model, we allocate memory for"
+  - start: 1628
+    end: 1687
+- - SoftBreak
+  - start: 1687
+    end: 1688
+- - Text: "a buffer for each "
+  - start: 1690
+    end: 1708
+- - Code: Read
+  - start: 1708
+    end: 1714
+- - Text: " or "
+  - start: 1714
+    end: 1718
+- - Code: Write
+  - start: 1718
+    end: 1725
+- - Text: " event. When we lend this memory to the OS,"
+  - start: 1725
+    end: 1768
+- - SoftBreak
+  - start: 1768
+    end: 1769
+- - Text: "we're in a weird situation. We own it, but we can't touch it. There are several"
+  - start: 1771
+    end: 1850
+- - SoftBreak
+  - start: 1850
+    end: 1851
+- - Text: "ways in which we could register interest in more events than occur, and thereby"
+  - start: 1853
+    end: 1932
+- - SoftBreak
+  - start: 1932
+    end: 1933
+- - Text: allocating memory that is just held in the buffers. Now if someone wanted to crash
+  - start: 1935
+    end: 2017
+- - SoftBreak
+  - start: 2017
+    end: 2018
+- - Text: "our server, they could cause this intentionally."
+  - start: 2020
+    end: 2068
+- - End: Paragraph
+  - start: 1609
+    end: 2069
+- - Start: Paragraph
+  - start: 2073
+    end: 2276
+- - Text: "A good practice is therefore to create a \"high watermark\" by keeping track of"
+  - start: 2073
+    end: 2150
+- - SoftBreak
+  - start: 2150
+    end: 2151
+- - Text: "the number of pending events, and when we reach that watermark, we queue events"
+  - start: 2153
+    end: 2232
+- - SoftBreak
+  - start: 2232
+    end: 2233
+- - Text: instead of registering them with the OS.
+  - start: 2235
+    end: 2275
+- - End: Paragraph
+  - start: 2073
+    end: 2276
+- - Start: Paragraph
+  - start: 2280
+    end: 2459
+- - Text: "By extension, this is also why you should "
+  - start: 2280
+    end: 2322
+- - Start: Strong
+  - start: 2322
+    end: 2332
+- - Text: always
+  - start: 2324
+    end: 2330
+- - End: Strong
+  - start: 2322
+    end: 2332
+- - Text: " have a timeout on these events"
+  - start: 2332
+    end: 2363
+- - SoftBreak
+  - start: 2363
+    end: 2364
+- - Text: so that you at some point can reclaim the memory and return an timeout error if
+  - start: 2366
+    end: 2445
+- - SoftBreak
+  - start: 2445
+    end: 2446
+- - Text: necessary.
+  - start: 2448
+    end: 2458
+- - End: Paragraph
+  - start: 2280
+    end: 2459
+- - End: BlockQuote
+  - start: 1100
+    end: 2459
 

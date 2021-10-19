@@ -1,6 +1,6 @@
 ---
 source: tests/pulldown_cmark.rs
-expression: "Parser::new(&std::fs::read_to_string(\"assets/8_6_io_eventqueue.md\")?).collect::<Vec<_>>()"
+expression: "Parser::new(&md).collect::<Vec<_>>()"
 
 ---
 - Start:
@@ -44,7 +44,19 @@ expression: "Parser::new(&std::fs::read_to_string(\"assets/8_6_io_eventqueue.md\
 - Text: " since we'll not actually pass any data along here. You'll see"
 - SoftBreak
 - Text: "why when we reach the "
-- Code: "[Http module](./8_3_http_module.md) chapter, but the main "
+- Start:
+    Link:
+      - Inline
+      - "./8_3_http_module.md"
+      - ""
+- Text: Http module
+- End:
+    Link:
+      - Inline
+      - "./8_3_http_module.md"
+      - ""
+- Text: " chapter, but the main"
+- SoftBreak
 - Text: "point is that the I/O queue doesn't return any data itself, it just tells us that"
 - SoftBreak
 - Text: data is ready to be read.

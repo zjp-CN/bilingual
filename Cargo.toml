@@ -31,3 +31,6 @@ rustdoc-args = ["--cfg", "docsrs"]
 name = "pulldown_cmark"
 path = "tests/pulldown_cmark.rs"
 required-features = ["pulldown-cmark/serde"]
+
+[workspace]
+members = ["translation-api-cn"]
