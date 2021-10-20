@@ -1,5 +1,6 @@
 // use nanorand::{Rng, WyRand};
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
 /// 翻译前的必要信息
 #[derive(Debug)]
@@ -33,35 +34,6 @@ pub struct User {
 }
 
 impl<'q> Query<'q> {
-    // pub fn en_zh(q: &'q str) -> Self {
-    //     Self { q,
-    //            from: "en",
-    //            to: "zh",
-    //            sign: "".into() }
-    // }
-    //
-    // pub fn zh_en(q: &'q str) -> Self {
-    //     Self { q,
-    //            from: "zh",
-    //            to: "en",
-    //            sign: "".into() }
-    // }
-    //
-    // pub fn q(mut self, q: &'q str) -> Self {
-    //     self.q = q;
-    //     self
-    // }
-    //
-    // pub fn from(mut self, from: &'q str) -> Self {
-    //     self.from = from;
-    //     self
-    // }
-    //
-    // pub fn to(mut self, to: &'q str) -> Self {
-    //     self.to = to;
-    //     self
-    // }
-
     /// 实例化
     pub fn new(q: &'q str, from: &'q str, to: &'q str) -> Self {
         Self { q,
@@ -72,16 +44,17 @@ impl<'q> Query<'q> {
 
     /// 计算 MD5 值，返回以表单方式提交的数据，用于身份验证/登录。
     /// 当以下内容至少一项发生变动时，必须调用此方法：
-    /// - User：appid、salt、key
-    /// - Query：q
+    /// - User: [appid]、[salt]、[key]
+    /// - Query: [q][`Query::q`]
+    ///
+    /// [appid]: `User::appid`
+    /// [salt]: `User::salt`
+    /// [key]: `User::key`
     pub fn sign<'f>(&'f mut self, user: &'f User) -> Form<'f> {
         let data = format!("{}{}{}{}", &user.appid, self.q, &user.salt, &user.key);
         self.sign = format!("{:x}", md5::compute(data));
         Form::from_user_query(user, self)
     }
-
-    // /// 未计算 MD5 值，返回以表单方式提交的数据。
-    // pub fn form<'f>(&'f self, user: &'f User) -> Form<'f> { Form::from_user_query(user, self) }
 }
 
 /// 以表单方式提交的数据
@@ -109,50 +82,83 @@ impl<'f> Form<'f> {
 /// 响应的信息。要么返回翻译结果，要么返回错误信息。
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
-pub enum Response {
-    Ok(Success),
+pub enum Response<'r> {
+    #[serde(borrow)]
+    Ok(Success<'r>),
     Err(BaiduError),
 }
 
-impl Response {
-    /// 合并翻译内容
-    /// TODO: 测试 slice::join 和 iter::fold 在拼接 str 上的速度
-    pub fn result(self) -> Result<Vec<String>, BaiduError> {
+impl<'r> Response<'r> {
+    /// 提取翻译内容。无翻译内容时，返回错误。
+    ///
+    /// TODO: [`BaiduError`] 会经过两次内存分配，这种设计的原因是
+    ///       `anyhow` crate 要求错误的类型必须是 `'static`。
+    ///       [`BaiduError`] 一次分配的例子见 `tests/baidu.rs`。
+    pub fn dst(&self) -> Result<Vec<&str>, BaiduError> {
         match self {
-            Response::Ok(res) => Ok(res.dst()),
+            Response::Ok(s) => Ok(s.res.iter().map(|x| x.dst.as_ref()).collect()),
+            Response::Err(e) => Err(e.clone()),
+        }
+    }
+
+    /// 提取翻译内容。无翻译内容时，返回错误。
+    pub fn dst_owned(self) -> Result<Vec<String>, BaiduError> {
+        match self {
+            Response::Ok(s) => Ok(s.res.into_iter().map(|x| x.dst.into()).collect()),
             Response::Err(e) => Err(e),
+        }
+    }
+
+    /// 翻译内容（即 [`SrcDst`] 的 `dst`字段）是否为 `Cow::Borrowed` 类型。
+    /// 比如英译中时，中文为代码点：
+    /// ```text
+    /// {
+    ///   "from": "en",
+    ///   "to":   "zh",
+    ///   "trans_result":[
+    ///     {"src": "hello", "dst": "\u4f60\u597d"},
+    ///     {"src": "world", "dst": "\u4e16\u754c"}
+    ///   ]
+    /// }
+    /// ```
+    /// 必须使用 `String` 或者 `Cow::Owned` 类型。
+    ///
+    /// 而 dst 为英文时，使用 `&str` 或者 `Cow::Borrowed` 类型可以减少分配。
+    pub fn is_borrowed(&self) -> Option<bool> {
+        match self {
+            Response::Ok(Success { res, .. }) => {
+                if res.len() != 0 {
+                    Some(matches!(res[0].dst, Cow::Borrowed(_)))
+                } else {
+                    None
+                }
+            }
+            Response::Err(_) => None,
         }
     }
 }
 
 /// 返回的数据
 #[derive(Debug, Clone, Deserialize)]
-pub struct Success {
-    pub from: String,
-    pub to:   String,
+pub struct Success<'r> {
+    pub from: &'r str,
+    pub to:   &'r str,
     /// 原文中被 `\n` 分隔的多条翻译文本。
     #[serde(rename = "trans_result")]
-    pub res:  Vec<SrcDst>,
+    #[serde(borrow)]
+    pub res:  Vec<SrcDst<'r>>,
 }
 
 /// 单条翻译文本
 #[derive(Debug, Clone, Deserialize)]
-pub struct SrcDst {
-    // src: String,
-    pub dst: String,
-}
-
-impl Success {
-    /// 取出翻译内容
-    /// TODO: 测试 slice::join 和 iter::fold 在拼接 str 上的速度
-    pub fn dst(self) -> Vec<String> {
-        self.res.into_iter().map(|x| x.dst).collect()
-        // self.res.join("\n").to_string() // error: Vec<T> join => T
-    }
+pub struct SrcDst<'r> {
+    // pub src: &'r str,
+    #[serde(borrow)]
+    pub dst: Cow<'r, str>,
 }
 
 /// 错误处理 / 错误码
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct BaiduError {
     pub error_code: String,
     pub error_msg:  String,

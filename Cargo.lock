@@ -981,6 +981,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "argh",
+ "insta",
  "md5",
  "reqwest",
  "serde",

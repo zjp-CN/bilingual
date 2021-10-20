@@ -52,9 +52,24 @@
 //!     以上内容由百度翻译 API 返回
 //! ```
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use reqwest::blocking;
 use translation_api_cn::baidu::{Form, Query, Response, User};
+
+macro_rules! log {
+    (display: $v:expr) => {
+        log!("{}", $v)
+    };
+    ($v:expr) => {
+        log!("{:#?}", $v)
+    };
+    ($fmt:expr, $($arg:tt)*)=>{
+        match std::env::var("DEBUG") {
+            Ok(x) if x == "true" || x == "1" => println!($fmt, $($arg)*),
+            _ => (),
+        }
+    }
+}
 
 fn main() -> Result<()> {
     let mut cmd: Cmd = argh::from_env();
@@ -62,10 +77,21 @@ fn main() -> Result<()> {
     let mut query = cmd.to_query();
 
     let form = query.sign(&user);
-    let res = translate(&form)?;
+    let text = translate(&form)?;
 
-    log(&query);
-    println!("翻译结果：{:#?}", res);
+    log!("query: {:#?}", query);
+    log!("text: {}", text);
+
+    let response: Response =
+        serde_json::from_str(&text).with_context(|| format!("JSON 格式化失败：{}", text))?;
+    let dst = response.dst().with_context(|| "解析返回数据时失败")?;
+
+    log!("dst is borrowed: {:?}", response.is_borrowed());
+
+    // 从响应数据取翻译结果（3 种方式）：
+    println!("翻译结果：{:#?}", dst);
+    log!("翻译结果(the same)：{:#?}", response.dst_owned()?);
+    log!("翻译结果(the same)：{:#?}", serde_json::from_str::<Response>(&text)?.dst_owned()?);
 
     Ok(())
 }
@@ -80,17 +106,10 @@ fn send<T: serde::Serialize + ?Sized>(form: &T) -> Result<blocking::Response> {
     Ok(response)
 }
 
-fn translate<'a>(form: &'a Form<'a>) -> Result<Vec<String>> {
-    if let Ok(res) = send(form) {
-        if let Ok(v) = res.json::<Response>() {
-            v.result().with_context(|| "解析返回数据时失败")
-        } else {
-            bail!("JSON 格式化失败");
-        }
-    } else {
-        println!("Failed: {:?}", form.q);
-        bail!("接收数据失败");
-    }
+fn translate<'a>(form: &'a Form<'a>) -> Result<String> {
+    send(form).with_context(|| "接收数据失败")?
+              .text()
+              .with_context(|| "解析文本数据失败")
 }
 
 use argh::FromArgs;
@@ -125,7 +144,7 @@ struct Cmd {
 
 impl Cmd {
     fn to_query(&mut self) -> Query {
-        log(self);
+        log!("Cmd: {:#?}", self);
         let mut query = self.multiquery.join("\n");
         if self.query.len() != 0 {
             if query.len() != 0 {
@@ -144,13 +163,5 @@ impl Cmd {
                key:   self.key.clone(),
                qps:   Some(1),
                salt:  "0".into(), }
-    }
-}
-
-/// simple logging
-fn log(s: &impl std::fmt::Debug) {
-    match std::env::var("DEBUG") {
-        Ok(x) if x == "true" || x == "1" => println!("{:#?}", s),
-        _ => (),
     }
 }
