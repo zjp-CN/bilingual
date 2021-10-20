@@ -79,14 +79,11 @@ fn main() -> Result<()> {
     let form = query.sign(&user);
     let text = translate(&form)?;
 
-    log!("query: {:#?}", query);
-    log!("text: {}", text);
-
     let response: Response =
         serde_json::from_str(&text).with_context(|| format!("JSON 格式化失败：{}", text))?;
     let dst = response.dst().with_context(|| "解析返回数据时失败")?;
 
-    log!("dst is borrowed: {:?}", response.is_borrowed());
+    log!("{:#?}\ntext: {}\ndst is borrowed: {:?}", query, text, response.is_borrowed());
 
     // 从响应数据取翻译结果（3 种方式）：
     println!("翻译结果：{:#?}", dst);
@@ -144,7 +141,7 @@ struct Cmd {
 
 impl Cmd {
     fn to_query(&mut self) -> Query {
-        log!("Cmd: {:#?}", self);
+        log!(self);
         let mut query = self.multiquery.join("\n");
         if self.query.len() != 0 {
             if query.len() != 0 {
