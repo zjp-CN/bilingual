@@ -64,7 +64,8 @@ version = "0.1.0"
 dependencies = [
  "insta",
  "markdown",
- "pulldown-cmark",
+ "pulldown-cmark 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pulldown-cmark-to-cmark",
 ]
 
 [[package]]
@@ -96,6 +97,14 @@ name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+
+[[package]]
+name = "cmark-test"
+version = "0.1.0"
+dependencies = [
+ "insta",
+ "pulldown-cmark 0.8.0 (git+https://github.com/raphlinus/pulldown-cmark.git)",
+]
 
 [[package]]
 name = "console"
@@ -617,11 +626,32 @@ dependencies = [
 [[package]]
 name = "pulldown-cmark"
 version = "0.8.0"
-source = "git+https://github.com/raphlinus/pulldown-cmark.git#5088b21d09ef94b424c4d852db7648c9c94fb630"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ffade02495f22453cd593159ea2f59827aae7f53fa8323f756799b670881dcf8"
 dependencies = [
  "bitflags",
  "memchr",
  "unicase",
+]
+
+[[package]]
+name = "pulldown-cmark"
+version = "0.8.0"
+source = "git+https://github.com/raphlinus/pulldown-cmark.git#5088b21d09ef94b424c4d852db7648c9c94fb630"
+dependencies = [
+ "bitflags",
+ "memchr",
+ "serde",
+ "unicase",
+]
+
+[[package]]
+name = "pulldown-cmark-to-cmark"
+version = "6.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f5925e2c68fb0c3c189cd0f6bbcf1e16402a070d4fcaf7600e239e8302dd0e8"
+dependencies = [
+ "pulldown-cmark 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

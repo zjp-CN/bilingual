@@ -1,5 +1,5 @@
 ---
-source: tests/pulldown_cmark.rs
+source: tests/pulldown-cmark/lib.rs
 expression: "Parser::new_ext(&md, opt).collect::<Vec<_>>()"
 
 ---

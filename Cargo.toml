@@ -6,12 +6,13 @@ exclude = ["assets", "examples", "benches", "tests", "CHANGELOG.md"]
 
 [dependencies]
 markdown = {version="0.3", optional=true}
+pulldown-cmark-to-cmark = {version="6", optional=true}
 
 [dependencies.pulldown-cmark]
 version  = "0.8"
 optional = true
 default-features = false
-git = "https://github.com/raphlinus/pulldown-cmark.git"
+# git = "https://github.com/raphlinus/pulldown-cmark.git"
 
 [dev-dependencies]
 insta = "1.8"
@@ -27,10 +28,15 @@ all-features = true
 # defines the configuration attribute `docsrs`
 rustdoc-args = ["--cfg", "docsrs"]
 
-[[test]]
-name = "pulldown_cmark"
-path = "tests/pulldown_cmark.rs"
-required-features = ["pulldown-cmark/serde"]
+# [[test]]
+# name = "pulldown_cmark"
+# path = "tests/pulldown_cmark.rs"
+# required-features = ["pulldown-cmark/serde"]
+ 
+[[example]]
+name = "pulldown-cmark-to-cmark"
+path = "examples/pulldown-cmark-to-cmark.rs"
+required-features = ["pulldown-cmark-to-cmark", "pulldown-cmark"]
 
 [workspace]
-members = ["translation-api-cn"]
+members = ["translation-api-cn", "tests/pulldown-cmark"]
