@@ -87,10 +87,18 @@ fn main() -> Result<()> {
     log!("{:#?}\ntext: {}\ndst is borrowed: {:?}\nresponse: {:#?}",
          query, text, response.is_borrowed(), response);
 
-    // 从响应数据取翻译结果（3 种方式）：
-    println!("翻译结果：{:#?}", dst);
-    log!("翻译结果(the same)：{:#?}", response.dst_owned()?);
+    // 从响应数据取翻译结果（多种等价写法）：
+    println!("翻译结果：{:#?}", dst); // dst 是借用的
+    log!("翻译结果(the same)：{:#?}", response.dst_owned()?); // dst 是有所有权的
+
+    // dst 是有所有权的：链式写法
     log!("翻译结果(the same)：{:#?}", serde_json::from_str::<Response>(&text)?.dst_owned()?);
+
+    // 无需转化成 String
+    log!("dst (deserialized from bytes) is borrowed: {:?}",
+         serde_json::from_slice::<Response>(&send(&query.sign(&user))?.bytes()?)?.is_borrowed());
+    log!("翻译结果(the same)：{:#?}",
+         serde_json::from_slice::<Response>(&send(&query.sign(&user))?.bytes()?)?.dst_owned()?);
 
     Ok(())
 }
@@ -101,10 +109,12 @@ fn send<T: serde::Serialize + ?Sized>(form: &T) -> Result<blocking::Response> {
                                .form(form)
                                .send()
                                .with_context(|| "发送数据失败")?;
-    assert!(response.error_for_status_ref().is_ok());
+    debug_assert!(response.error_for_status_ref().is_ok());
     Ok(response)
 }
 
+/// 返回的文本（未反序列化）。注意 `baidu::Response` 不具有 `DeserializeOwned` trait，
+/// 所以无法直接调用 `reqwest::Response::json` 方法。
 fn translate<'a>(form: &'a Form<'a>) -> Result<String> {
     send(form).with_context(|| "接收数据失败")?
               .text()
