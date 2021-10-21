@@ -83,7 +83,9 @@ fn main() -> Result<()> {
         serde_json::from_str(&text).with_context(|| format!("JSON 格式化失败：{}", text))?;
     let dst = response.dst().with_context(|| "解析返回数据时失败")?;
 
-    log!("{:#?}\ntext: {}\ndst is borrowed: {:?}", query, text, response.is_borrowed());
+    #[rustfmt::skip]
+    log!("{:#?}\ntext: {}\ndst is borrowed: {:?}\nresponse: {:#?}",
+         query, text, response.is_borrowed(), response);
 
     // 从响应数据取翻译结果（3 种方式）：
     println!("翻译结果：{:#?}", dst);

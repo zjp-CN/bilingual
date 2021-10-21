@@ -5,13 +5,17 @@ use std::borrow::Cow;
 /// 翻译前的必要信息
 #[derive(Debug)]
 pub struct Query<'q> {
-    /// 请求翻译 query , UTF-8 编码
-    /// TODO: 在传入之前应该把文字控制在 6000 字节以内（汉字约为 2000 个字符），然后分段请求
+    /// 请求翻译 query，必须为 UTF-8 编码。
+    ///
+    /// TODO: 在传入之前应该把文字控制在 6000 字节以内（汉字约为 2000 个字符），
+    ///       超过 6000 字节要分段请求。
     pub q:    &'q str,
     /// 翻译源语言，可设置为 auto
+    ///
     /// TODO：变成 Option + enum 类型，None 表示 auto
     pub from: &'q str,
     /// 翻译目标语言，不可设置为 auto
+    ///
     /// TODO：和 `from` 共用 enum 类型，但无需是 Option 类型
     pub to:   &'q str,
     /// appid+q+salt+密钥的 MD5 值，q 是待查询的原文字符串
@@ -124,6 +128,9 @@ impl<'r> Response<'r> {
     /// 必须使用 `String` 或者 `Cow::Owned` 类型。
     ///
     /// 而 dst 为英文时，使用 `&str` 或者 `Cow::Borrowed` 类型可以减少分配。
+    ///
+    /// ## 注意
+    /// 无翻译内容时，返回 `None`。
     pub fn is_borrowed(&self) -> Option<bool> {
         match self {
             Response::Ok(Success { res, .. }) => {
@@ -150,9 +157,15 @@ pub struct Success<'r> {
 }
 
 /// 单条翻译文本
+///
+/// 当包含非 ascii 字符时，为 `Cow::Owned` 类型；
+/// 当全部为 ascii 字符时，为 `Cow::Borrowed` 类型。
+/// 例子见 [`Response::is_borrowed`]。
+///
+/// TODO: `src` 字段暂不考虑序列化，因为这个从原数据 [`Query::q`] 按照 `\n` 字符切分出来即可。
 #[derive(Debug, Deserialize)]
 pub struct SrcDst<'r> {
-    // pub src: &'r str,
+    // pub src: Cow<'r, str>,
     #[serde(borrow)]
     pub dst: Cow<'r, str>,
 }
