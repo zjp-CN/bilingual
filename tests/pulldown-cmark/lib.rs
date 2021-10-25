@@ -55,28 +55,19 @@ mod tests {
         Ok(())
     }
 
-    fn full_options() -> Options {
-        let mut options = Options::empty();
-        options.insert(Options::ENABLE_STRIKETHROUGH);
-        options.insert(Options::ENABLE_FOOTNOTES);
-        options.insert(Options::ENABLE_TASKLISTS);
-        // options.insert(Options::ENABLE_SMART_PUNCTUATION);
-        options.insert(Options::ENABLE_TABLES);
-        options
-    }
+    const OPT: Options = Options::all();
 
     #[test]
     fn full_config() -> std::io::Result<()> {
         let file = "markdown-it";
         let md = std::fs::read_to_string(format!("../../assets/{}.md", file))?;
-        let opt = full_options();
-        assert_yaml_snapshot!(file, Parser::new_ext(&md, opt).collect::<Vec<_>>());
+        assert_yaml_snapshot!(file, Parser::new_ext(&md, OPT).collect::<Vec<_>>());
         assert_yaml_snapshot!(format!("{}_offset", file),
-                              Parser::new_ext(&md, opt).into_offset_iter().collect::<Vec<_>>());
+                              Parser::new_ext(&md, OPT).into_offset_iter().collect::<Vec<_>>());
 
         let parsed = {
             let mut include = true;
-            Parser::new_ext(&md, opt).filter(|event| filter(event, &mut include))
+            Parser::new_ext(&md, OPT).filter(|event| filter(event, &mut include))
                                      .map(extract)
                                      .collect::<Vec<_>>()
         };

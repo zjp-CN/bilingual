@@ -5,14 +5,11 @@ edition = "2021"
 exclude = ["assets", "examples", "benches", "tests", "CHANGELOG.md"]
 
 [dependencies]
-markdown = {version="0.3", optional=true}
-pulldown-cmark-to-cmark = {version="6", optional=true}
+pulldown-cmark-to-cmark = "6"
 
 [dependencies.pulldown-cmark]
 version  = "0.8"
-optional = true
 default-features = false
-# git = "https://github.com/raphlinus/pulldown-cmark.git"
 
 [dev-dependencies]
 insta = "1.8"
@@ -20,23 +17,6 @@ insta = "1.8"
 [profile.release]
 lto = true
 opt-level = 3
-
-# docs.rs-specific configuration
-[package.metadata.docs.rs]
-# document all features
-all-features = true
-# defines the configuration attribute `docsrs`
-rustdoc-args = ["--cfg", "docsrs"]
-
-# [[test]]
-# name = "pulldown_cmark"
-# path = "tests/pulldown_cmark.rs"
-# required-features = ["pulldown-cmark/serde"]
- 
-[[example]]
-name = "pulldown-cmark-to-cmark"
-path = "examples/pulldown-cmark-to-cmark.rs"
-required-features = ["pulldown-cmark-to-cmark", "pulldown-cmark"]
 
 [workspace]
 members = ["translation-api-cn", "tests/pulldown-cmark"]
