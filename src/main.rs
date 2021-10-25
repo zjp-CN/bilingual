@@ -1,62 +1,9 @@
 mod md;
-use md::*;
 
-use pulldown_cmark::{Event, Parser};
-use pulldown_cmark_to_cmark::cmark;
-use std::io::{stdout, Write};
-
-fn main() {
-    // let file = std::env::args().skip(1).next().unwrap();
-    // let md = std::fs::read_to_string(file).unwrap();
-    let md = MD;
-    let parser: Vec<_> = Parser::new_ext(&md, cmark_opt()).collect();
-    dbg!(parser.len());
-
-    let mut include = true;
-    let mut content = {
-        parser.clone()
-              .into_iter()
-              .filter(|event| filter(event, &mut include))
-              .enumerate()
-              .map(extract)
-    };
-    let capacity = md.len();
-    let mut buf = String::with_capacity(capacity * 2);
-
-    // cmark(parser.into_iter(), &mut buf, None).unwrap();
-
-    // let mut include2 = true;
-    // println!("{}", content.join(""));
-    // let mut text = content.into_iter().enumerate();
-    // let mut para = paragraphs.iter();
-
-    cmark(parser.into_iter()
-                .map(move |event| {
-                    if filter2(&event) {
-                        let mut text = String::with_capacity(capacity);
-                        while let Some((pos, s, para)) = content.next() {
-                            text += s.as_ref();
-                            if para.map(|p| pos == p).unwrap_or(false) {
-                                break;
-                            }
-                        }
-                        text += "=============\n\n";
-                        dbg!(&text);
-                        append(event, text.into())
-                    } else {
-                        [dbg!(event), Event::Text(String::new().into())]
-                    }
-                })
-                .flatten(),
-          &mut buf,
-          None).unwrap();
-    stdout().write_all(buf.as_bytes()).unwrap();
-
-    // dbg!(paragraphs);
-}
+fn main() {}
 
 #[rustfmt::skip]
-static MD: &str = "
+pub static MD: &str = "
 # I/O event queue
 
 We add the `callback_id` to the collection of callbacks to run. We pass

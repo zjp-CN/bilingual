@@ -1,8 +1,9 @@
 use insta::{assert_debug_snapshot, assert_display_snapshot};
 use pulldown_cmark::{
+    CowStr,
     Event::{self, *},
     Options, Parser,
-    Tag::*,
+    Tag::{self, *},
 };
 use pulldown_cmark_to_cmark::cmark;
 
@@ -143,17 +144,11 @@ one paragraph `Inline code`
     A
     "###);
 
-    let mut split = buf.split('\n');
-    let output =
-        events.into_iter()
-              .map(|event| match event {
-                  End(Paragraph | Heading(_)) => [Some(Text('\n'.into())),
-                                                  Some(Text(split.next().unwrap().into())),
-                                                  Some(event)],
-                  _ => [Some(event), None, None],
-              })
-              .flatten()
-              .flatten();
+    let mut paragraphs = buf.split('\n');
+    let output = events.into_iter()
+                       .map(|event| append(event, &mut paragraphs))
+                       .flatten()
+                       .flatten();
     let mut output_md = String::with_capacity(capacity * 2);
     cmark(output, &mut output_md, None).unwrap();
     assert_display_snapshot!(output_md, @r###"
@@ -171,6 +166,20 @@ one paragraph `Inline code`
     <a>A</a>
     A
     "###);
+
+    assert_debug_snapshot!(std::mem::size_of::<Option<Event>>(), @"64");
+    assert_debug_snapshot!(std::mem::size_of::<Option<CowStr>>(), @"24");
+    assert_debug_snapshot!(std::mem::size_of::<Option<Tag>>(), @"56");
+}
+
+pub fn append<'a, 'b: 'a>(event: Event<'a>, paragraph: &'a mut impl Iterator<Item = &'b str>)
+                          -> [Option<Event<'a>>; 3] {
+    match event {
+        End(Paragraph | Heading(_)) => {
+            [Some(SoftBreak), Some(Text(paragraph.next().unwrap().into())), Some(event)]
+        }
+        _ => [Some(event), None, None],
+    }
 }
 
 /// 初步排除不需要的 Event
