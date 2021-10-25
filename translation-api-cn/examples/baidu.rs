@@ -64,8 +64,8 @@ macro_rules! log {
         log!("{:#?}", $v)
     };
     ($fmt:expr, $($arg:tt)*)=>{
-        match std::env::var("DEBUG") {
-            Ok(x) if x == "true" || x == "1" => println!($fmt, $($arg)*),
+        match std::env::var("DEBUG").as_deref() {
+            Ok("true" | "1") => println!($fmt, $($arg)*),
             _ => (),
         }
     }
