@@ -1,6 +1,16 @@
+use anyhow::Result;
 use bilingual::md;
 
-fn main() { md::process(MD); }
+mod config;
+
+fn main() -> Result<()> {
+    let user = config::Config::init()?;
+    dbg!(&user);
+    // md::process(MD);
+    let output = config::baidu_en_zh(MD, user.baidu())?;
+    println!("{}", output);
+    Ok(())
+}
 
 #[rustfmt::skip]
 pub static MD: &str = "

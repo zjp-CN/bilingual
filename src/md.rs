@@ -38,14 +38,6 @@ impl<'e> Md<'e> {
     }
 }
 
-pub fn process(raw: &str) -> String {
-    let mut md = Md::new(&raw);
-    let buf = md.extract();
-    let output = md.done(buf.split('\n'));
-    println!("{}", output);
-    output
-}
-
 pub fn cmark_opt() -> Options {
     let mut options = Options::all();
     options.remove(Options::ENABLE_SMART_PUNCTUATION);

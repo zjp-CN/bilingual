@@ -8,9 +8,25 @@ exclude = ["assets", "examples", "benches", "tests", "CHANGELOG.md"]
 pulldown-cmark-to-cmark = "6"
 arrayvec = "0.7"
 
+reqwest = {version = "0.11", features = ["json", "blocking"], optional=true}
+serde_json = {version = "1", optional = true}
+anyhow = {version = "1", optional = true}
+argh = {version = "0.1", optional = true}
+translation-api-cn = {path="./translation-api-cn", optional = true}
+
+serde = {version = "1", features = ["derive"], optional = true}
+toml = {version = "0.5", optional = true}
+
 [dependencies.pulldown-cmark]
 version  = "0.8"
 default-features = false
+
+[features]
+bin = ["argh", "reqwest", "serde_json", "anyhow", "translation-api-cn", "serde", "toml"]
+
+[[bin]]
+name = "bilingual"
+required-features = ["bin"]
 
 [dev-dependencies]
 insta = "1.8"
