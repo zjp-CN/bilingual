@@ -22,23 +22,17 @@ impl Config {
 }
 
 pub fn send<T: serde::Serialize + ?Sized>(form: &T) -> Result<blocking::Response> {
-    let response = blocking::Client::new().post(BAIDU_API)
-                                          .form(form)
-                                          .send()
-                                          .with_context(|| "发送数据失败")?;
+    let response = blocking::Client::new().post(BAIDU_API).form(form).send()?;
     debug_assert!(response.error_for_status_ref().is_ok());
     Ok(response)
 }
 
 pub fn baidu_en_zh(md: &str, user: &Baidu) -> Result<String> {
     use translation_api_cn::baidu::{Query, Response};
-    let mut md = crate::md::Md::new(md);
+    let md = crate::md::Md::new(md);
     let buf = md.extract();
     let mut query = Query::new(buf.trim(), "en", "zh");
-    let output =
-        md.done(
-            serde_json::from_slice::<Response>(&send(&dbg!(query.sign(user)))?
-                .bytes()?)?.dst()?.into_iter()
-            );
+    let output = md.done(serde_json::from_slice::<Response>(&send(&dbg!(query.sign(user)))?
+                            .bytes()?)?.dst()?.into_iter());
     Ok(output)
 }

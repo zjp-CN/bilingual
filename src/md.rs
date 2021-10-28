@@ -1,3 +1,4 @@
+use arrayvec::ArrayVec;
 use pulldown_cmark::{
     Event::{self, *},
     Options,
@@ -7,12 +8,10 @@ use pulldown_cmark::{
 pub struct Md<'e> {
     /// 解析 md 文件的事件
     events:  Vec<Event<'e>>,
+    /// md 原文的长度
     raw_len: usize,
-    // /// 提取的、待翻译的段落
-    // extract: String,
-    // /// 已翻译的段落
-    // translation: Vec<String>,
     /// 填充翻译内容之后的 md 文件的内容
+    /// TODO: 比较是否超出 output's capacity
     output:  String,
 }
 
@@ -24,10 +23,10 @@ impl<'e> Md<'e> {
                output:  String::with_capacity(capacity * 2), }
     }
 
-    pub fn extract(&mut self) -> String {
+    pub fn extract(&self) -> String {
         let mut select = true;
         let mut buf = String::with_capacity(self.raw_len);
-        self.events.iter().map(|event| extract(event, &mut select, &mut buf)).last();
+        self.events.iter().for_each(|event| extract(event, &mut select, &mut buf));
         buf
     }
 
@@ -44,15 +43,13 @@ pub fn cmark_opt() -> Options {
     options
 }
 
-const MAXIMUM: usize = 4;
-use arrayvec::ArrayVec;
+const MAXIMUM: usize = 3;
 
 pub fn prepend<'e>(event: Event<'e>, paragraph: &mut impl Iterator<Item = &'e str>)
                    -> ArrayVec<Event<'e>, MAXIMUM> {
     let mut arr = ArrayVec::<_, MAXIMUM>::new();
     match event {
         End(Paragraph | Heading(_)) => {
-            arr.push(SoftBreak); // TODO: 控制换行行数，1 或 2 行（默认 2 行）
             arr.extend([SoftBreak, Text(paragraph.next().unwrap().into()), event]);
         }
         _ => arr.extend([event]),
