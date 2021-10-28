@@ -2,6 +2,8 @@
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
+pub const API: &str = "https://fanyi-api.baidu.com/api/trans/vip/translate";
+
 /// 翻译前的必要信息
 #[derive(Debug)]
 pub struct Query<'q> {
@@ -32,10 +34,15 @@ pub struct User {
     /// 用户申请得到的密钥，这个字段用于生成 MD5 ，不用于直接构造请求内容
     pub key:   String,
     /// TODO: QPS：这涉及并发请求，允许不填，默认为 1
-    pub qps:   Option<u8>,
+    #[serde(default = "default_qps")]
+    pub qps:   u8,
     /// 随机的字母或数字的字符串
+    #[serde(default = "default_salt")]
     pub salt:  String,
 }
+
+fn default_qps() -> u8 { 1 }
+fn default_salt() -> String { String::from("0") }
 
 impl<'q> Query<'q> {
     /// 实例化
@@ -56,7 +63,7 @@ impl<'q> Query<'q> {
     /// [key]: `User::key`
     pub fn sign<'f>(&'f mut self, user: &'f User) -> Form<'f> {
         let data = format!("{}{}{}{}", &user.appid, self.q, &user.salt, &user.key);
-        self.sign = format!("{:x}", md5::compute(data));
+        self.sign = format!("{:x}", md5::compute(dbg!(data)));
         Form::from_user_query(user, self)
     }
 }
