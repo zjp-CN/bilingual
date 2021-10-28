@@ -1,23 +1,24 @@
+use bilingual::md::*;
 use insta::{assert_debug_snapshot, assert_display_snapshot};
-use pulldown_cmark::{
-    CowStr,
-    Event::{self, *},
-    Options, Parser,
-    Tag::{self, *},
-};
+use pulldown_cmark::{CowStr, Event, Parser, Tag};
 use pulldown_cmark_to_cmark::cmark;
 
-pub fn cmark_opt() -> Options {
-    let mut options = Options::all();
-    options.remove(Options::ENABLE_SMART_PUNCTUATION);
-    options
+/// 初步排除不需要的 Event；可能废弃
+pub fn filter_text(event: &Event) -> bool {
+    match event {
+        Event::Text(_) => true,
+        // 排除行间代码
+        _ => false,
+    }
 }
 
 #[test]
-fn title() {
+fn base() {
     let md = "# level one
 one paragraph `Inline code`
-        Indented code block
+```RUST
+code block
+```
 
 > quote block
 
@@ -54,14 +55,31 @@ one paragraph `Inline code`
                 "Inline code",
             ),
         ),
-        SoftBreak,
+        End(
+            Paragraph,
+        ),
+        Start(
+            CodeBlock(
+                Fenced(
+                    Borrowed(
+                        "RUST",
+                    ),
+                ),
+            ),
+        ),
         Text(
             Borrowed(
-                "Indented code block",
+                "code block\n",
             ),
         ),
         End(
-            Paragraph,
+            CodeBlock(
+                Fenced(
+                    Borrowed(
+                        "RUST",
+                    ),
+                ),
+            ),
         ),
         Start(
             BlockQuote,
@@ -119,7 +137,7 @@ one paragraph `Inline code`
         ),
         Text(
             Borrowed(
-                "Indented code block",
+                "code block\n",
             ),
         ),
         Text(
@@ -136,19 +154,17 @@ one paragraph `Inline code`
     "###);
 
     let mut buf = String::with_capacity(capacity);
-    events.iter().map(|event| extract(event, &mut buf)).last();
+    let mut select = true;
+    events.iter().map(|event| extract(event, &mut &mut select, &mut buf)).last();
     assert_display_snapshot!(buf, @r###"
     level one
-    one paragraph `Inline code` Indented code block
+    one paragraph `Inline code`
     quote block
     A
     "###);
 
     let mut paragraphs = buf.split('\n');
-    let output = events.into_iter()
-                       .map(|event| append(event, &mut paragraphs))
-                       .flatten()
-                       .flatten();
+    let output = events.into_iter().map(|event| prepend(event, &mut paragraphs)).flatten();
     let mut output_md = String::with_capacity(capacity * 2);
     cmark(output, &mut output_md, None).unwrap();
     assert_display_snapshot!(output_md, @r###"
@@ -156,8 +172,11 @@ one paragraph `Inline code`
     level one
 
     one paragraph `Inline code`
-    Indented code block
-    one paragraph `Inline code` Indented code block
+    one paragraph `Inline code`
+
+    ````RUST
+    code block
+    ````
 
      > 
      > quote block
@@ -166,42 +185,12 @@ one paragraph `Inline code`
     <a>A</a>
     A
     "###);
-
-    assert_debug_snapshot!(std::mem::size_of::<Option<Event>>(), @"64");
-    assert_debug_snapshot!(std::mem::size_of::<Option<CowStr>>(), @"24");
-    assert_debug_snapshot!(std::mem::size_of::<Option<Tag>>(), @"56");
 }
 
-pub fn append<'a, 'b: 'a>(event: Event<'a>, paragraph: &'a mut impl Iterator<Item = &'b str>)
-                          -> [Option<Event<'a>>; 3] {
-    match event {
-        End(Paragraph | Heading(_)) => {
-            [Some(SoftBreak), Some(Text(paragraph.next().unwrap().into())), Some(event)]
-        }
-        _ => [Some(event), None, None],
-    }
-}
-
-/// 初步排除不需要的 Event
-pub fn filter_text(event: &Event) -> bool {
-    match event {
-        Text(_) => true,
-        // 排除行间代码
-        _ => false,
-    }
-}
-
-/// 取出需要被翻译的内容：按照段落或标题
-pub fn extract(event: &Event, buf: &mut String) {
-    match event {
-        End(Paragraph | Heading(_)) => buf.push('\n'),
-        Text(x) => buf.push_str(x.as_ref()),
-        SoftBreak | HardBreak => buf.push(' '),
-        Code(x) => {
-            buf.push('`');
-            buf.push_str(x.as_ref());
-            buf.push('`');
-        }
-        _ => (),
-    }
+#[test]
+fn size() {
+    use std::mem::size_of;
+    assert_debug_snapshot!(size_of::<Option<Event>>(), @"64");
+    assert_debug_snapshot!(size_of::<Option<CowStr>>(), @"24");
+    assert_debug_snapshot!(size_of::<Option<Tag>>(), @"56");
 }

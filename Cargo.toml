@@ -6,6 +6,7 @@ exclude = ["assets", "examples", "benches", "tests", "CHANGELOG.md"]
 
 [dependencies]
 pulldown-cmark-to-cmark = "6"
+arrayvec = "0.7"
 
 [dependencies.pulldown-cmark]
 version  = "0.8"

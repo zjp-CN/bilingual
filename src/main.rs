@@ -1,6 +1,6 @@
-mod md;
+use bilingual::md;
 
-fn main() {}
+fn main() { md::process(MD); }
 
 #[rustfmt::skip]
 pub static MD: &str = "
