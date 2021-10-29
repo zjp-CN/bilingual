@@ -1,5 +1,4 @@
-use crate::config::Config;
-use crate::config::API;
+use crate::config::{Config, API};
 use anyhow::Result;
 use argh::FromArgs;
 use std::path::PathBuf;
@@ -95,8 +94,6 @@ impl Baidu {
         if self.singlequery.len() != 0 {
             self.multiquery.push(self.singlequery);
         }
-        // 逆序。当使用 pop 时，就是输入的顺序。
-        self.multiquery.reverse();
-        cf.multiquery = self.multiquery;
+        cf.src.query = self.multiquery.join("\n\n");
     }
 }

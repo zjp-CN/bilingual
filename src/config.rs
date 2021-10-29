@@ -1,16 +1,15 @@
 use anyhow::{Context, Result};
 use reqwest::blocking;
+use std::path::PathBuf;
 use translation_api_cn::baidu::{User as Baidu, API as BAIDU_API};
 
 #[derive(Debug, serde::Deserialize)]
 pub struct Config {
     #[serde(skip_deserializing)]
-    pub multiquery: Vec<String>,
+    pub src:   Src,
     #[serde(skip_deserializing)]
-    pub src:        Src,
-    #[serde(skip_deserializing)]
-    pub api:        API,
-    pub baidu:      Baidu,
+    pub api:   API,
+    pub baidu: Baidu,
 }
 
 #[derive(Debug)]
@@ -23,12 +22,11 @@ impl Default for API {
     fn default() -> Self { Self::All }
 }
 
-use std::path::PathBuf;
-
 #[derive(Debug, Default)]
 pub struct Src {
     pub from:  String,
     pub to:    String,
+    pub query: String,
     pub files: Vec<PathBuf>,
     pub dirs:  Vec<PathBuf>,
 }
@@ -50,15 +48,14 @@ impl Config {
         }
     }
 
-    pub fn single_file(&mut self) -> Option<String> {
+    pub fn do_single_file(&mut self) -> Option<String> {
         let file = self.src.files.pop()?;
         let md = std::fs::read_to_string(file).ok()?;
         translate(&md, &self.src.from, &self.src.to, &self.user()).ok()
     }
 
-    pub fn single_query(&mut self) -> Option<String> {
-        let query = self.multiquery.pop()?;
-        translate(&query, &self.src.from, &self.src.to, &self.user()).ok()
+    pub fn do_query(&mut self) -> Option<String> {
+        translate(&self.src.query, &self.src.from, &self.src.to, &self.user()).ok()
     }
 }
 
