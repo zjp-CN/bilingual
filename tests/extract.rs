@@ -236,10 +236,10 @@ Hi!
 #[test]
 fn md_split_append() {
     fn split(raw: &str) -> String {
-        let mut md = Md::new(&raw);
+        let md = Md::new(&raw);
         let buf = md.extract();
         let output = md.done(buf.split('\n'));
-        println!("{}", output);
+        // println!("{}", output);
         output
     }
 

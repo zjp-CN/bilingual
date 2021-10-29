@@ -11,9 +11,8 @@ impl Config {
     #[rustfmt::skip]
     pub fn init() -> Result<Self> {
         Ok(
-            toml::from_slice(
-                    &std::fs::read("bilingual.toml").with_context(
-                        || "未找到 `bilingual.toml` 配置文件")?)
+            toml::from_slice(&std::fs::read("bilingual.toml")
+                             .with_context(|| "未找到 `bilingual.toml` 配置文件")?)
                  .with_context(|| "请检查`bilingual.toml` 配置文件的内容")?
           )
     }
@@ -27,7 +26,7 @@ pub fn send<T: serde::Serialize + ?Sized>(form: &T) -> Result<blocking::Response
     Ok(response)
 }
 
-pub fn baidu_en_zh(md: &str, user: &Baidu) -> Result<String> {
+pub fn en_zh(md: &str, user: &Baidu) -> Result<String> {
     use translation_api_cn::baidu::{Query, Response};
     let md = crate::md::Md::new(md);
     let buf = md.extract();

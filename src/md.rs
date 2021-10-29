@@ -32,24 +32,34 @@ impl<'e> Md<'e> {
 
     pub fn done(mut self, mut paragraph: impl Iterator<Item = &'e str>) -> String {
         let output = self.events.into_iter().map(|event| prepend(event, &mut paragraph)).flatten();
-        pulldown_cmark_to_cmark::cmark(output, &mut self.output, None).unwrap();
+        let opt = cmark_to_cmark_opt();
+        pulldown_cmark_to_cmark::cmark_with_options(output, &mut self.output, None, opt).unwrap();
         self.output
     }
 }
 
+/// 开启 `pulldown_cmark::Options` 除 `SMART_PUNCTUATION` 之外的所有功能
 pub fn cmark_opt() -> Options {
     let mut options = Options::all();
     options.remove(Options::ENABLE_SMART_PUNCTUATION);
     options
 }
 
-const MAXIMUM: usize = 3;
+/// 把 `pulldown_cmark_to_cmark::Options` 的 `code_block_backticks` 设置为 3
+pub fn cmark_to_cmark_opt() -> pulldown_cmark_to_cmark::Options {
+    let mut opt = pulldown_cmark_to_cmark::Options::default();
+    opt.code_block_backticks = 3;
+    opt
+}
+
+const MAXIMUM: usize = 4;
 
 pub fn prepend<'e>(event: Event<'e>, paragraph: &mut impl Iterator<Item = &'e str>)
                    -> ArrayVec<Event<'e>, MAXIMUM> {
     let mut arr = ArrayVec::<_, MAXIMUM>::new();
     match event {
         End(Paragraph | Heading(_)) => {
+            arr.push(SoftBreak); // TODO: 是否空行
             arr.extend([SoftBreak, Text(paragraph.next().unwrap().into()), event]);
         }
         _ => arr.extend([event]),

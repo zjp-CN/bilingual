@@ -7,7 +7,7 @@ fn main() -> Result<()> {
     let user = config::Config::init()?;
     dbg!(&user);
     // md::process(MD);
-    let output = config::baidu_en_zh(MD, user.baidu())?;
+    let output = config::en_zh(MD, user.baidu())?;
     println!("{}", output);
     Ok(())
 }
