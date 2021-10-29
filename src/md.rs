@@ -34,6 +34,10 @@ impl<'e> Md<'e> {
         let output = self.events.into_iter().map(|event| prepend(event, &mut paragraph)).flatten();
         let opt = cmark_to_cmark_opt();
         pulldown_cmark_to_cmark::cmark_with_options(output, &mut self.output, None, opt).unwrap();
+        dbg!(self.output.len(),
+             self.output.capacity(),
+             self.raw_len * 2,
+             self.output.len() <= self.raw_len * 2);
         self.output
     }
 }

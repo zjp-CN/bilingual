@@ -4,20 +4,62 @@ use translation_api_cn::baidu::{User as Baidu, API as BAIDU_API};
 
 #[derive(Debug, serde::Deserialize)]
 pub struct Config {
-    baidu: Baidu,
+    #[serde(skip_deserializing)]
+    pub multiquery: Vec<String>,
+    #[serde(skip_deserializing)]
+    pub src:        Src,
+    #[serde(skip_deserializing)]
+    pub api:        API,
+    pub baidu:      Baidu,
+}
+
+#[derive(Debug)]
+pub enum API {
+    All,
+    Baidu,
+}
+
+impl Default for API {
+    fn default() -> Self { Self::All }
+}
+
+use std::path::PathBuf;
+
+#[derive(Debug, Default)]
+pub struct Src {
+    pub from:  String,
+    pub to:    String,
+    pub files: Vec<PathBuf>,
+    pub dirs:  Vec<PathBuf>,
 }
 
 impl Config {
     #[rustfmt::skip]
-    pub fn init() -> Result<Self> {
+    pub fn init(path: impl AsRef<std::path::Path>) -> Result<Self> {
         Ok(
-            toml::from_slice(&std::fs::read("bilingual.toml")
+            toml::from_slice(&std::fs::read(path)
                              .with_context(|| "未找到 `bilingual.toml` 配置文件")?)
                  .with_context(|| "请检查`bilingual.toml` 配置文件的内容")?
           )
     }
 
-    pub fn baidu(&self) -> &Baidu { &self.baidu }
+    pub fn user(&self) -> &Baidu {
+        match self.api {
+            API::Baidu => &self.baidu,
+            _ => &self.baidu,
+        }
+    }
+
+    pub fn single_file(&mut self) -> Option<String> {
+        let file = self.src.files.pop()?;
+        let md = std::fs::read_to_string(file).ok()?;
+        translate(&md, &self.src.from, &self.src.to, &self.user()).ok()
+    }
+
+    pub fn single_query(&mut self) -> Option<String> {
+        let query = self.multiquery.pop()?;
+        translate(&query, &self.src.from, &self.src.to, &self.user()).ok()
+    }
 }
 
 pub fn send<T: serde::Serialize + ?Sized>(form: &T) -> Result<blocking::Response> {
@@ -26,11 +68,11 @@ pub fn send<T: serde::Serialize + ?Sized>(form: &T) -> Result<blocking::Response
     Ok(response)
 }
 
-pub fn en_zh(md: &str, user: &Baidu) -> Result<String> {
+pub fn translate(md: &str, from: &str, to: &str, user: &Baidu) -> Result<String> {
     use translation_api_cn::baidu::{Query, Response};
     let md = crate::md::Md::new(md);
     let buf = md.extract();
-    let mut query = Query::new(buf.trim(), "en", "zh");
+    let mut query = Query::new(buf.trim(), from, to);
     let output = md.done(serde_json::from_slice::<Response>(&send(&dbg!(query.sign(user)))?
                             .bytes()?)?.dst()?.into_iter());
     Ok(output)
