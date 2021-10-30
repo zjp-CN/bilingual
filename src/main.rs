@@ -4,6 +4,9 @@ use bilingual::md;
 mod cmd;
 mod config;
 
+#[cfg(test)]
+mod tests;
+
 fn main() -> Result<()> {
     let mut config = argh::from_env::<cmd::Bilingual>().run()?;
     dbg!(&config);
