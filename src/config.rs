@@ -39,7 +39,7 @@ pub struct Src {
 #[rustfmt::skip]
 fn filter_md_files(d: impl AsRef<Path>) -> Option<impl Iterator<Item = PathBuf>> {
     Some(std::fs::read_dir(d).ok()?
-            .filter_map(|e| e.ok()).map(|d| d.path())
+            .filter_map(|e| e.ok()).map(|f| f.path())
             .filter(|p| p.extension().map(|f| f == "md").unwrap_or(false)))
 }
 
@@ -71,7 +71,7 @@ impl Config {
         Ok(
             toml::from_slice(&std::fs::read(path)
                              .with_context(|| "未找到 `bilingual.toml` 配置文件")?)
-                 .with_context(|| "请检查`bilingual.toml` 配置文件的内容")?
+                 .with_context(|| "请检查 `bilingual.toml` 配置文件的内容")?
           )
     }
 
@@ -82,7 +82,8 @@ impl Config {
         }
     }
 
-    /// 按照 [`files`][`Src::file`] / [dirs][`Src::dirs`] / [query][`Src::query`] 顺序查询。
+    /// 按照 [`files`][`Src::file`] / [`dirs`][`Src::dirs`] / [`query`][`Src::query`]
+    /// 顺序查询。
     pub fn do_single_query(&mut self) -> Option<String> {
         let md = self.src.next()?;
         translate(&md, &self.src.from, &self.src.to, &self.user()).ok()
