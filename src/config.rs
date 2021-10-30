@@ -84,13 +84,10 @@ impl Config {
         }
     }
 
-    pub fn do_single_file(&mut self) -> Option<String> {
+    /// 按照 [`files`][`Src::file`] / [dirs][`Src::dirs`] / [query][`Src::query`] 顺序查询。
+    pub fn do_single_query(&mut self) -> Option<String> {
         let md = self.src.next()?;
         translate(&md, &self.src.from, &self.src.to, &self.user()).ok()
-    }
-
-    pub fn do_query(&mut self) -> Option<String> {
-        translate(&self.src.query, &self.src.from, &self.src.to, &self.user()).ok()
     }
 }
 
