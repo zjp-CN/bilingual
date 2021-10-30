@@ -10,8 +10,9 @@ pub struct Md<'e> {
     events:  Vec<Event<'e>>,
     /// md 原文的长度
     raw_len: usize,
-    /// 填充翻译内容之后的 md 文件的内容
-    /// TODO: 比较是否超出 output's capacity
+    /// 填充翻译内容之后的 md 文件的内容。
+    /// 为了减少分配，小于 1024B 的文本以 1024B 字节长度初始化；
+    /// 大于 1024B 的文本以原文 2 倍字节长度初始化。
     output:  String,
 }
 
@@ -29,6 +30,9 @@ impl<'e> Md<'e> {
                }, }
     }
 
+    /// 提取文本
+    ///
+    /// TODO: 尽可能保存原样式/结构
     pub fn extract(&self) -> String {
         let mut select = true;
         let mut buf = String::with_capacity(self.raw_len);
@@ -36,6 +40,7 @@ impl<'e> Md<'e> {
         buf
     }
 
+    /// 完成并返回写入翻译内容。参数 `paragraph` 为按段落翻译的译文。
     pub fn done(mut self, mut paragraph: impl Iterator<Item = &'e str>) -> String {
         let output = self.events.into_iter().map(|event| prepend(event, &mut paragraph)).flatten();
         let opt = cmark_to_cmark_opt();
