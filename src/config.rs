@@ -60,10 +60,8 @@ impl Iterator for Src {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        (if self.query.is_empty() { 0 } else { 1 }
-         + self.files.len()
-         + self.dirs.iter().map(filter_md_files).count(),
-         None)
+        let n = if self.query.is_empty() { 0 } else { 1 };
+        (n, Some(n + self.files.len() + self.dirs.iter().map(filter_md_files).count()))
     }
 }
 
