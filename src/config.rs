@@ -74,3 +74,16 @@ pub fn translate(md: &str, from: &str, to: &str, user: &Baidu) -> Result<String>
                             .bytes()?)?.dst()?.into_iter());
     Ok(output)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use insta::assert_debug_snapshot;
+
+    #[test]
+    fn size() {
+        use std::mem::size_of;
+        assert_debug_snapshot!(size_of::<Config>(), @"208");
+        assert_debug_snapshot!(size_of::<Src>(), @"120");
+    }
+}
