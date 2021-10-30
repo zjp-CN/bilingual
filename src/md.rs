@@ -15,12 +15,18 @@ pub struct Md<'e> {
     output:  String,
 }
 
+const MINIMUM_CAPACITY: usize = 1 << 10;
+
 impl<'e> Md<'e> {
     pub fn new(md: &'e str) -> Self {
         let capacity = md.len();
         Self { events:  pulldown_cmark::Parser::new_ext(md, cmark_opt()).collect(),
                raw_len: capacity,
-               output:  String::with_capacity(capacity * 2), }
+               output:  {
+                   let capacity =
+                       if capacity < MINIMUM_CAPACITY { MINIMUM_CAPACITY } else { capacity * 2 };
+                   String::with_capacity(capacity)
+               }, }
     }
 
     pub fn extract(&self) -> String {
@@ -37,7 +43,9 @@ impl<'e> Md<'e> {
         dbg!(self.output.len(),
              self.output.capacity(),
              self.raw_len * 2,
-             self.output.len() <= self.raw_len * 2);
+             self.output.len() <= self.raw_len * 2,
+             self.output.len() <= MINIMUM_CAPACITY,
+             self.output.len() <= self.raw_len * 2 || self.output.len() <= MINIMUM_CAPACITY);
         self.output
     }
 }
@@ -56,11 +64,11 @@ pub fn cmark_to_cmark_opt() -> pulldown_cmark_to_cmark::Options {
     opt
 }
 
-const MAXIMUM: usize = 4;
+const MAXIMUM_EVENTS: usize = 4;
 
 pub fn prepend<'e>(event: Event<'e>, paragraph: &mut impl Iterator<Item = &'e str>)
-                   -> ArrayVec<Event<'e>, MAXIMUM> {
-    let mut arr = ArrayVec::<_, MAXIMUM>::new();
+                   -> ArrayVec<Event<'e>, MAXIMUM_EVENTS> {
+    let mut arr = ArrayVec::<_, MAXIMUM_EVENTS>::new();
     match event {
         End(Paragraph | Heading(_)) => {
             arr.push(SoftBreak); // TODO: 是否空行
