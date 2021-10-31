@@ -1,4 +1,3 @@
-// use nanorand::{Rng, WyRand};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
@@ -27,7 +26,6 @@ pub struct Query<'q> {
 /// 账户信息
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename = "baidu")] // for config or cmd
-#[allow(dead_code)]
 pub struct User {
     /// 用户申请得到的 APP ID
     pub appid: String,
@@ -96,7 +94,7 @@ impl<'f> Form<'f> {
 pub enum Response<'r> {
     #[serde(borrow)]
     Ok(Success<'r>),
-    Err(BaiduError),
+    Err(Error),
 }
 
 impl<'r> Response<'r> {
@@ -105,7 +103,7 @@ impl<'r> Response<'r> {
     /// TODO: [`BaiduError`] 会经过两次内存分配，这种设计的原因是
     ///       `anyhow` crate 要求错误的类型必须是 `'static`。
     ///       [`BaiduError`] 一次分配的例子见 `tests/baidu.rs`。
-    pub fn dst(&self) -> Result<Vec<&str>, BaiduError> {
+    pub fn dst(&self) -> Result<Vec<&str>, Error> {
         match self {
             Response::Ok(s) => Ok(s.res.iter().map(|x| x.dst.as_ref()).collect()),
             Response::Err(e) => Err(e.clone()),
@@ -113,7 +111,7 @@ impl<'r> Response<'r> {
     }
 
     /// 提取翻译内容。无翻译内容时，返回错误。
-    pub fn dst_owned(self) -> Result<Vec<String>, BaiduError> {
+    pub fn dst_owned(self) -> Result<Vec<String>, Error> {
         match self {
             Response::Ok(s) => Ok(s.res.into_iter().map(|x| x.dst.into()).collect()),
             Response::Err(e) => Err(e),
@@ -179,27 +177,29 @@ pub struct SrcDst<'r> {
 
 /// 错误处理 / 错误码
 #[derive(Debug, Clone, Deserialize)]
-pub struct BaiduError {
-    pub error_code: String,
-    pub error_msg:  String,
+pub struct Error {
+    #[serde(rename = "error_code")]
+    pub code: String,
+    #[serde(rename = "error_msg")]
+    pub msg:  String,
 }
 
-impl std::fmt::Display for BaiduError {
+impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f,
                "错误码：`{}`\n错误信息：`{}`\n错误含义：{}\n以上内容由百度翻译 API 返回",
-               self.error_code,
-               self.error_msg,
+               self.code,
+               self.msg,
                self.solution())
     }
 }
 
-impl std::error::Error for BaiduError {}
+impl std::error::Error for Error {}
 
-impl BaiduError {
+impl Error {
     /// 参考：[错误码列表](https://fanyi-api.baidu.com/doc/21)
     pub fn solution(&self) -> &str {
-        match self.error_code.as_bytes() {
+        match self.code.as_bytes() {
             b"52000" => "成功。",
             b"52001" => "请求超时。\n解决方法：请重试。",
             b"52002" => "系统错误。\n解决方法：请重试。",
