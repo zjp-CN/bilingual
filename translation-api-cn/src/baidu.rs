@@ -24,7 +24,7 @@ pub struct Query<'q> {
 }
 
 /// 账户信息
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename = "baidu")] // for config or cmd
 pub struct User {
     /// 用户申请得到的 APP ID

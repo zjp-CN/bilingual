@@ -28,13 +28,16 @@ pub struct Query<'q> {
 }
 
 /// 账户信息以及一些不变的信息
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename = "baidu")] // for config or cmd
 pub struct User {
     /// SecretId
     pub id:        String,
     /// SecretKey
     pub key:       String,
+    /// 地域列表，默认为上海。
+    #[serde(default)]
+    pub region:    Region,
     /// 项目ID，可以根据控制台-账号中心-项目管理中的配置填写，如无配置请填写默认项目ID:0
     #[serde(default)]
     pub projectid: u8,
@@ -45,19 +48,25 @@ pub struct User {
     #[serde(default = "default_action")]
     #[serde(skip_deserializing)]
     pub action:    String,
+    #[serde(default = "default_service")]
+    #[serde(skip_deserializing)]
+    pub service:   String,
     #[serde(default = "default_version")]
     #[serde(skip_deserializing)]
     pub version:   String,
 }
 
 fn default_qps() -> u8 { 5 }
-fn default_action() -> String { "TextTranslate".into() }
+fn default_action() -> String { "TextTranslateBatch".into() }
+fn default_service() -> String { "tmt".into() }
 fn default_version() -> String { "2018-03-21".into() }
 
-pub struct PublicArgs<'u> {
+/// 生成请求结构
+pub struct HeaderJson<'u, 'q> {
     pub timestamp:     i64,
     pub authorization: String,
     pub user:          &'u User,
+    pub query:         &'q Query<'q>,
 }
 
 /// | 地域 | 取值 |
@@ -116,6 +125,10 @@ pub enum Region {
     Siliconvalley,
     #[serde(rename = "ap-toronto")]
     Toronto,
+}
+
+impl Default for Region {
+    fn default() -> Self { Self::Shanghai }
 }
 
 /// 错误处理 / 错误码
