@@ -3,7 +3,7 @@ use hmac::{
     Hmac, Mac, NewMac,
 };
 use serde::{Deserialize, Serialize};
-use sha2::Sha256;
+use sha2::{Digest, Sha256};
 use time::OffsetDateTime;
 
 // Create alias for HMAC-SHA256
@@ -12,6 +12,11 @@ pub type Output = MacOutput<HmacSha256>;
 pub type HashResult<T> = Result<T, InvalidKeyLength>;
 pub type MultiErrResult<T> = Result<T, Box<dyn std::error::Error>>;
 
+pub fn hash256(data: &[u8]) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    format!("{:x}", hasher.finalize())
+}
 pub fn hash_u8_to_string(v: &[u8]) -> HashResult<String> {
     Ok(format!("{:x}", HmacSha256::new_from_slice(v)?.finalize().into_bytes()))
 }
@@ -96,8 +101,8 @@ pub struct Query<'q> {
 }
 
 impl<'q> Query<'q> {
-    pub fn to_hashed(&self) -> MultiErrResult<String> {
-        hash_u8_to_string(&serde_json::to_vec(self)?).map_err(InvalidKeyLength::into)
+    pub fn to_hashed(&self) -> serde_json::Result<String> {
+        Ok(hash256(&serde_json::to_vec(self)?))
     }
 
     pub fn to_json(&self) -> serde_json::Result<String> { serde_json::to_string(self) }
@@ -147,29 +152,36 @@ impl Default for User {
 
 /// 生成请求结构
 pub struct HeaderJson<'u, 'q> {
-    pub datetime:      OffsetDateTime,
-    pub authorization: String,
-    pub user:          &'u User,
-    pub query:         Query<'q>,
+    pub datetime:         OffsetDateTime,
+    pub timestamp:        String,
+    pub credential_scope: String,
+    pub authorization:    String,
+    pub user:             &'u User,
+    pub query:            &'q Query<'q>,
 }
 
 impl<'u, 'q> HeaderJson<'u, 'q> {
     const ALGORITHM: &'static str = "TC3-HMAC-SHA256";
-    const CANONICALHEADERS: &'static str = "content-type:application/json; charset=utf-8\nhost:";
+    const CANONICALHEADERS: &'static str =
+        "content-type:application/json; charset=utf-8\nhost:cvm.tencentcloudapi.com\n";
     const CANONICALQUERYSTRING: &'static str = "";
     const CANONICALURI: &'static str = "POST";
+    const CONTENTTYPE: &'static str = "application/json; charset=utf-8";
     const CREDENTIALSCOPE: &'static str = "tc3_request";
+    const HOST: &'static str = "tmt.tencentcloudapi.com";
     const HTTPREQUESTMETHOD: &'static str = "/";
-    const SIGNEDHEADERS: &'static str = "content-type:application/json; charset=utf-8\nhost:";
+    const SIGNEDHEADERS: &'static str = "content-type;host";
+    pub const URL: &'static str = "https://tmt.tencentcloudapi.com";
 
     #[rustfmt::skip]
-    pub fn new(user: &'u User, query: Query<'q>) -> Self {
-        // let now = time::OffsetDateTime::now_utc();
-        // let timestamp = now.unix_timestamp();
-        Self { datetime: OffsetDateTime::now_utc(), authorization: String::new(), user, query }
+    pub fn new(user: &'u User, query: &'q Query) -> Self {
+        let datetime = time::OffsetDateTime::now_utc();
+        let timestamp = datetime.unix_timestamp().to_string();
+        Self { datetime, timestamp, credential_scope: String::new(),
+               authorization: String::new(), user, query }
     }
 
-    pub fn signature(&self) -> MultiErrResult<String> {
+    pub fn signature(&mut self) -> MultiErrResult<String> {
         let canonical_request = format!("{}\n{}\n{}\n{}\n{}\n{}",
                                         Self::HTTPREQUESTMETHOD,
                                         Self::CANONICALURI,
@@ -179,13 +191,12 @@ impl<'u, 'q> HeaderJson<'u, 'q> {
                                         self.query.to_hashed()?);
 
         let date = self.datetime.date();
-        let stringtosign = format!("{}\n{}\n{}/{}/{}\n{}",
+        self.credential_scope = format!("{}/{}/{}", date, self.user.service, Self::CREDENTIALSCOPE);
+        let stringtosign = format!("{}\n{}\n{}\n{}",
                                    Self::ALGORITHM,
-                                   self.datetime.unix_timestamp(),
-                                   self.user.service,
-                                   date,
-                                   Self::CREDENTIALSCOPE,
-                                   hash_u8_to_string(canonical_request.as_bytes())?);
+                                   self.timestamp,
+                                   self.credential_scope,
+                                   hash256(canonical_request.as_bytes()));
         let secret_date =
             hash_2u8(format!("TC3{}", self.user.key).as_bytes(), format!("{}", date).as_bytes())?;
         let secret_service = hash_hash_u8(secret_date, self.user.service.as_bytes())?;
@@ -193,15 +204,30 @@ impl<'u, 'q> HeaderJson<'u, 'q> {
         hash_hash_to_string(hash_hash_u8(secret_signing, stringtosign.as_bytes())?).map_err(InvalidKeyLength::into)
     }
 
-    pub fn authorization(&mut self) -> MultiErrResult<()> {
-        let _signature = self.signature()?;
-        let _credential_scope =
-            format!("{}/{}/{}", self.datetime.date(), self.user.service, Self::CREDENTIALSCOPE);
-        Ok(())
+    pub fn authorization(&mut self) -> MultiErrResult<&str> {
+        let signature = self.signature()?;
+        self.authorization = format!("{} Credential={}/{},SignedHeaders={},Signature={}",
+                                     Self::ALGORITHM,
+                                     self.user.id,
+                                     self.credential_scope,
+                                     Self::SIGNEDHEADERS,
+                                     signature);
+        Ok(&self.authorization)
     }
-    // RequestPayload
-    // pub fn json(&self) { serde_json::to_string(self) }
+
+    pub fn header(&self) -> Option<HashMap<&str, &str>> {
+        let mut map = HashMap::new();
+        map.insert("authorization", self.authorization.as_str())?;
+        map.insert("content-type", Self::CONTENTTYPE)?;
+        map.insert("host", Self::HOST)?;
+        map.insert("x-tc-action", &self.user.action)?;
+        map.insert("x-tc-version", &self.user.version)?;
+        map.insert("x-tc-region", &self.user.region.as_str())?;
+        map.insert("x-tc-timestamp", &self.timestamp)?;
+        Some(map)
+    }
 }
+use std::collections::HashMap;
 
 /// | 地域 | 取值 |
 /// | --- | --- |
@@ -262,7 +288,32 @@ pub enum Region {
 }
 
 impl Default for Region {
-    fn default() -> Self { Self::Shanghai }
+    fn default() -> Self { Self::Beijing }
+}
+
+impl Region {
+    #[rustfmt::skip]
+    pub fn as_str(&self) -> &str {
+        use Region::*;
+        match self {
+            Beijing       => "ap-beijing",
+            Shanghai      => "ap-shanghai",
+            ShanghaiFsi   => "ap-shanghai-fsi",
+            Guangzhou     => "ap-guangzhou",
+            ShenzhenFsi   => "ap-shenzhen-fsi",
+            Chengdu       => "ap-chengdu",
+            Chongqing     => "ap-chongqing",
+            Hongkong      => "ap-hongkong",
+            Bangkok       => "ap-bangkok",
+            Mumbai        => "ap-mumbai",
+            Seoul         => "ap-seoul",
+            Singapore     => "ap-singapore",
+            Frankfurt     => "ap-frankfurt",
+            Ashburn       => "ap-ashburn",
+            Siliconvalley => "ap-siliconvalley",
+            Toronto       => "ap-toronto",
+        }
+    }
 }
 
 /// 错误处理 / 错误码
