@@ -110,13 +110,13 @@ impl<'q> Query<'q> {
 
 /// 账户信息以及一些不变的信息
 #[derive(Debug, Deserialize)]
-#[serde(rename = "baidu")] // for config or cmd
+#[serde(rename = "tencent")] // for config or cmd
 pub struct User {
     /// SecretId
     pub id:        String,
     /// SecretKey
     pub key:       String,
-    /// 地域列表，默认为上海。
+    /// 地域列表，默认为北京。
     #[serde(default)]
     pub region:    Region,
     /// 项目ID，可以根据控制台-账号中心-项目管理中的配置填写，如无配置请填写默认项目ID:0
@@ -141,7 +141,7 @@ impl Default for User {
     fn default() -> Self {
         Self { id:        String::new(),
                key:       String::new(),
-               region:    Region::Beijing,
+               region:    Region::default(),
                projectid: 0,
                qps:       5,
                action:    "TextTranslateBatch".into(),
@@ -222,7 +222,7 @@ impl<'u, 'q> HeaderJson<'u, 'q> {
         map.insert("host", Self::HOST)?;
         map.insert("x-tc-action", &self.user.action)?;
         map.insert("x-tc-version", &self.user.version)?;
-        map.insert("x-tc-region", &self.user.region.as_str())?;
+        map.insert("x-tc-region", self.user.region.as_str())?;
         map.insert("x-tc-timestamp", &self.timestamp)?;
         Some(map)
     }
