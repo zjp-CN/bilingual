@@ -1,5 +1,5 @@
 use hmac::{
-    crypto_mac::{InvalidKeyLength, Output as MacOutput},
+    crypto_mac::{InvalidKeyLength, Output as HmacOutput},
     Hmac, Mac, NewMac,
 };
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,7 @@ use time::OffsetDateTime;
 
 // Create alias for HMAC-SHA256
 pub type HmacSha256 = Hmac<Sha256>;
-pub type Output = MacOutput<HmacSha256>;
+pub type Output = HmacOutput<HmacSha256>;
 pub type HashResult<T> = Result<T, InvalidKeyLength>;
 pub type MultiErrResult<T> = Result<T, Box<dyn std::error::Error>>;
 
@@ -17,10 +17,10 @@ pub fn hash256(data: &[u8]) -> String {
     hasher.update(data);
     format!("{:x}", hasher.finalize())
 }
-pub fn hash_u8_to_string(v: &[u8]) -> HashResult<String> {
+pub fn hash_string_from_u8(v: &[u8]) -> HashResult<String> {
     Ok(format!("{:x}", HmacSha256::new_from_slice(v)?.finalize().into_bytes()))
 }
-pub fn hash_hash_to_string(v: Output) -> HashResult<String> {
+pub fn hash_string_from_hash(v: Output) -> HashResult<String> {
     Ok(format!("{:x}",
                HmacSha256::new_from_slice(v.into_bytes().as_slice())?.finalize().into_bytes()))
 }
@@ -201,7 +201,7 @@ impl<'u, 'q> HeaderJson<'u, 'q> {
             hash_2u8(format!("TC3{}", self.user.key).as_bytes(), format!("{}", date).as_bytes())?;
         let secret_service = hash_hash_u8(secret_date, self.user.service.as_bytes())?;
         let secret_signing = hash_hash_u8(secret_service, Self::CREDENTIALSCOPE.as_bytes())?;
-        hash_hash_to_string(hash_hash_u8(secret_signing, stringtosign.as_bytes())?).map_err(InvalidKeyLength::into)
+        hash_string_from_hash(hash_hash_u8(secret_signing, stringtosign.as_bytes())?).map_err(InvalidKeyLength::into)
     }
 
     pub fn authorization(&mut self) -> MultiErrResult<&str> {

@@ -63,17 +63,17 @@ fn tencent_test() {
 #[test]
 fn compare_test() {
     use hmac::{Mac, NewMac};
-    use translation_api_cn::tencent::{hash_u8_to_string, HmacSha256};
+    use translation_api_cn::tencent::{hash_string_from_u8, HmacSha256};
     let test = r#"{"Limit": 1, "Filters": [{"Name": "instance-name", "Values": ["\u{672a}\u{547d}\u{540d}"]}]}"#;
     assert_display_snapshot!(test, @r###"{"Limit": 1, "Filters": [{"Name": "instance-name", "Values": ["\u{672a}\u{547d}\u{540d}"]}]}"###);
-    assert_display_snapshot!(hash_u8_to_string(test.as_bytes()).unwrap(),
+    assert_display_snapshot!(hash_string_from_u8(test.as_bytes()).unwrap(),
         @"f1de55c15235a9d71fcc6859825b76202b6c9018df3f9c6f3d3ba2eca2e6d1b9");
 
     let test = r#"a"#;
     assert_display_snapshot!(test, @"a");
-    assert_display_snapshot!(hash_u8_to_string(test.as_bytes()).unwrap(),
+    assert_display_snapshot!(hash_string_from_u8(test.as_bytes()).unwrap(),
         @"3acdaa86b3d73e8d18b7019d3f520000531a23db3b6dda7a94ad28db61a9008c");
-    assert_display_snapshot!(hash_u8_to_string(b"a").unwrap(),
+    assert_display_snapshot!(hash_string_from_u8(b"a").unwrap(),
         @"3acdaa86b3d73e8d18b7019d3f520000531a23db3b6dda7a94ad28db61a9008c");
     let mac = HmacSha256::new_from_slice(b"a").unwrap();
     let x = format!("{:x}", mac.finalize().into_bytes());
@@ -83,7 +83,7 @@ fn compare_test() {
 
 #[test]
 fn sha256_test() {
-    use translation_api_cn::tencent::{hash256, hash_u8_to_string};
+    use translation_api_cn::tencent::{hash256, hash_string_from_u8};
 
     let data = b"Nobody inspects the spammish repetition";
 
@@ -91,13 +91,13 @@ fn sha256_test() {
     // 031edd7d41651593c5fe5c006fa5752b37fddff7bc4e843aa6af0c950f4b9406
     assert_display_snapshot!(hash256(data),
         @"031edd7d41651593c5fe5c006fa5752b37fddff7bc4e843aa6af0c950f4b9406"); // √
-    assert_display_snapshot!(hash_u8_to_string(data).unwrap(),
+    assert_display_snapshot!(hash_string_from_u8(data).unwrap(),
         @"f5d6645a2c7bc9a9f1ffffe0931ae24c4dd37904cdab576bc4147ef1b0441a9f");
 
     let data =
         r#"{"Source": "en", "Target": "zh", "ProjectId": 0, "SourceTextList": ["hi", "there"]}"#;
     assert_display_snapshot!(hash256(data.as_bytes()), 
         @"132203170c4d03f4b351cacc51a7ceeed78ca571be42688945f74bb0796bb739"); // √
-    assert_display_snapshot!(hash_u8_to_string(data.as_bytes()).unwrap(),
+    assert_display_snapshot!(hash_string_from_u8(data.as_bytes()).unwrap(),
         @"3436b7117ac9800bd6c9f8e2834c58ede79dfc7b9dd9064e5b98929af6dd30df");
 }
