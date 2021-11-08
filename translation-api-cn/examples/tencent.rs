@@ -13,13 +13,13 @@ fn main() -> AnyResult<()> {
                         projectid: 0,
                         q:         &["hi", "there"], };
     let mut header = Header::new(&user, &query);
-    header.authorization()?;
-    println!("{}", send(&header)?);
+    println!("{}", send(&mut header)?);
     Ok(())
 }
 
-pub fn send(header: &Header) -> AnyResult<String> {
+pub fn send(header: &mut Header) -> AnyResult<String> {
     use reqwest::blocking::Client;
+    header.authorization()?; // 更改 query 或者 user 时必须重新生成验证信息
     let map = {
         use reqwest::header::{HeaderName, HeaderValue};
         use std::str::FromStr;
