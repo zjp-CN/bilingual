@@ -25,8 +25,13 @@ pub fn send(header: &HeaderJson, query: &Query) -> AnyResult<String> {
         use std::str::FromStr;
         header.header()
               .into_iter()
-              .map(|(k, v)| (HeaderName::from_str(k).unwrap(), HeaderValue::from_str(v).unwrap()))
+              .map(|(k, v)| match (HeaderName::from_str(k), HeaderValue::from_str(v)) {
+                  (Ok(key), Ok(value)) => Some((key, value)),
+                  _ => None,
+              })
+              .flatten() // 遇到 Err 时，把 Ok 的部分 collect
               .collect()
     };
-    Ok(Client::new().post(HeaderJson::URL).headers(map).json(&query).send()?.text()?)
+    dbg!(&map);
+    Ok(Client::new().post(HeaderJson::URL).headers(map).json(query).send()?.text()?)
 }
