@@ -5,7 +5,7 @@ static PAYLOAD: &str =
     r#"{"Source": "en", "Target": "zh", "ProjectId": 0, "SourceTextList": ["hi", "there"]}"#;
 
 #[test]
-fn usage_test() -> MultiErrResult<()> {
+fn usage_test() -> Result<()> {
     // sample starts
     use time::OffsetDateTime;
     let datetime = OffsetDateTime::from_unix_timestamp(1636111645)?;
@@ -39,7 +39,7 @@ fn usage_test() -> MultiErrResult<()> {
 
 /// 基于 1636111645 timestamp（2021-11-05）的例子，已完全对照腾讯云 SDK_PYTHON_3.0.519
 #[test]
-fn detaild_hexhash_in_signature_and_authorization() -> MultiErrResult<()> {
+fn detaild_hexhash_in_signature_and_authorization() -> Result<()> {
     assert_eq!(hash256(PAYLOAD.as_bytes()),
                "132203170c4d03f4b351cacc51a7ceeed78ca571be42688945f74bb0796bb739");
 

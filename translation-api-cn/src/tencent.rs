@@ -5,39 +5,49 @@ use hmac::{
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use thiserror::Error;
 use time::OffsetDateTime;
 
-// Create alias for HMAC-SHA256
+// HMAC-SHA256 算法
 pub type HmacSha256 = Hmac<Sha256>;
 pub type Output = HmacOutput<HmacSha256>;
-pub type HashResult<T> = Result<T, InvalidKeyLength>;
-pub type MultiErrResult<T> = Result<T, Box<dyn std::error::Error>>;
+pub type Result<T> = std::result::Result<T, Error>;
+
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("序列化时出错")]
+    Ser(#[from] serde_json::Error),
+    #[error("计算 HMAC-SHA256 时出错")]
+    Hash(#[from] InvalidKeyLength),
+    #[error("计算 unix timestamp 时出错")]
+    UnixTimeStamp(#[from] time::error::ComponentRange),
+}
 
 pub fn hash256(data: &[u8]) -> String {
     let mut hasher = Sha256::new();
     hasher.update(data);
     format!("{:x}", hasher.finalize())
 }
-pub fn hash256_string(v: &[u8]) -> HashResult<String> {
+pub fn hash256_string(v: &[u8]) -> Result<String> {
     Ok(format!("{:x}", HmacSha256::new_from_slice(v)?.finalize().into_bytes()))
 }
 pub fn hmac_sha256_string(v: Output) -> String { format!("{:x}", v.into_bytes()) }
-pub fn hash_u8_hash(key: &[u8], msg: Output) -> HashResult<Output> {
+pub fn hash_u8_hash(key: &[u8], msg: Output) -> Result<Output> {
     let mut mac = HmacSha256::new_from_slice(key)?;
     mac.update(msg.into_bytes().as_slice());
     Ok(mac.finalize())
 }
-pub fn hash_hash_u8(key: Output, msg: &[u8]) -> HashResult<Output> {
+pub fn hash_hash_u8(key: Output, msg: &[u8]) -> Result<Output> {
     let mut mac = HmacSha256::new_from_slice(key.into_bytes().as_slice())?;
     mac.update(msg);
     Ok(mac.finalize())
 }
-pub fn hash_2u8(key: &[u8], msg: &[u8]) -> HashResult<Output> {
+pub fn hash_2u8(key: &[u8], msg: &[u8]) -> Result<Output> {
     let mut mac = HmacSha256::new_from_slice(key)?;
     mac.update(msg);
     Ok(mac.finalize())
 }
-pub fn hash_2hash(key: Output, msg: Output) -> HashResult<Output> {
+pub fn hash_2hash(key: Output, msg: Output) -> Result<Output> {
     let mut mac = HmacSha256::new_from_slice(key.into_bytes().as_slice())?;
     mac.update(msg.into_bytes().as_slice());
     Ok(mac.finalize())
@@ -100,9 +110,20 @@ pub struct Query<'q> {
 }
 
 impl<'q> Query<'q> {
-    pub fn to_hashed(&self) -> serde_json::Result<String> { Ok(hash256(&ser_json::to_vec(self)?)) }
+    pub fn to_hashed(&self) -> serde_json::Result<String> {
+        Ok(hash256(&serde_json::to_vec(self)?))
+    }
 
-    pub fn to_json_string(&self) -> serde_json::Result<String> { ser_json::to_string(self) }
+    pub fn to_json_string(&self) -> serde_json::Result<String> { serde_json::to_string(self) }
+
+    // 由于 [`reqwest::RequestBuilder::json`] 调用了 [`serde_json::to_vec`]，
+    // 直接调用 [`reqwest::RequestBuilder::json`] 会触发
+    // `{"Error":{"Code":"AuthFailure.SignatureFailure","Message":"The provided credentials
+    // could not be validated. Please check your signature is correct."}"}}`
+    // 。
+    pub fn to_hashed2(&self) -> serde_json::Result<String> { Ok(hash256(&ser_json::to_vec(self)?)) }
+
+    pub fn to_json_string2(&self) -> serde_json::Result<String> { ser_json::to_string(self) }
 }
 
 /// 账户信息以及一些不变的信息
@@ -182,7 +203,7 @@ impl<'u, 'q> HeaderJson<'u, 'q> {
                authorization: String::new(), user, query }
     }
 
-    pub fn signature(&mut self) -> MultiErrResult<String> {
+    pub fn signature(&mut self) -> Result<String> {
         let canonical_request = format!("{}\n{}\n{}\n{}\n{}\n{}",
                                         Self::HTTPREQUESTMETHOD,
                                         Self::CANONICALURI,
@@ -205,7 +226,7 @@ impl<'u, 'q> HeaderJson<'u, 'q> {
         Ok(hmac_sha256_string(hash_hash_u8(secret_signing, stringtosign.as_bytes())?))
     }
 
-    pub fn authorization(&mut self) -> MultiErrResult<&str> {
+    pub fn authorization(&mut self) -> Result<&str> {
         let signature = self.signature()?;
         self.authorization = format!("{} Credential={}/{}, SignedHeaders={}, Signature={}",
                                      Self::ALGORITHM,
@@ -216,16 +237,16 @@ impl<'u, 'q> HeaderJson<'u, 'q> {
         Ok(&self.authorization)
     }
 
-    pub fn header(&self) -> Option<HashMap<&str, &str>> {
+    pub fn header(&self) -> HashMap<&str, &str> {
         let mut map = HashMap::new();
-        map.insert("authorization", self.authorization.as_str())?;
-        map.insert("content-type", Self::CONTENTTYPE)?;
-        map.insert("host", Self::HOST)?;
-        map.insert("x-tc-action", &self.user.action)?;
-        map.insert("x-tc-version", &self.user.version)?;
-        map.insert("x-tc-region", self.user.region.as_str())?;
-        map.insert("x-tc-timestamp", &self.timestamp)?;
-        Some(map)
+        map.insert("authorization", self.authorization.as_str()).unwrap_or_default();
+        map.insert("content-type", Self::CONTENTTYPE).unwrap_or_default();
+        map.insert("host", Self::HOST).unwrap_or_default();
+        map.insert("x-tc-action", &self.user.action).unwrap_or_default();
+        map.insert("x-tc-version", &self.user.version).unwrap_or_default();
+        map.insert("x-tc-region", self.user.region.as_str()).unwrap_or_default();
+        map.insert("x-tc-timestamp", &self.timestamp).unwrap_or_default();
+        map
     }
 }
 
@@ -323,7 +344,7 @@ impl Region {
 /// - https://cloud.tencent.com/api/error-center?group=PLATFORM&page=1
 /// - https://cloud.tencent.com/document/product/551/40566
 #[derive(Debug, Clone, Deserialize)]
-pub struct Error {
+pub struct ResponseError {
     #[serde(rename = "error_code")]
     pub code: String,
     #[serde(rename = "error_msg")]
@@ -420,7 +441,7 @@ pub mod ser_json {
 }
 
 #[test]
-fn signature_to_string_test() -> MultiErrResult<()> {
+fn signature_to_string_test() -> Result<()> {
     // sample starts
     let datetime = OffsetDateTime::from_unix_timestamp(1636111645)?;
     let timestamp = datetime.unix_timestamp().to_string();
