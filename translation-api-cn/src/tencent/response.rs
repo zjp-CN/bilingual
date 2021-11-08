@@ -8,15 +8,15 @@ pub struct Response<'r> {
 }
 
 impl<'r> Response<'r> {
-    /// 提取翻译内容。无翻译内容时，返回错误。
-    pub fn dst(&self) -> Result<&Vec<&str>, ResponseError> {
+    /// 提取翻译内容。
+    pub fn dst(&self) -> Result<&[&str], ResponseError> {
         match &self.res {
             ResponseInner::Ok { res, .. } => Ok(res),
             ResponseInner::Err { error, .. } => Err(error.clone()),
         }
     }
 
-    /// 提取翻译内容。无翻译内容时，返回错误。
+    /// 提取翻译内容。
     pub fn dst_owned(self) -> Result<Vec<String>, ResponseError> {
         match self.res {
             ResponseInner::Ok { res, .. } => Ok(res.into_iter().map(|x| x.into()).collect()),
@@ -24,7 +24,7 @@ impl<'r> Response<'r> {
         }
     }
 
-    /// 翻译内容是否为 `str` 类型。无翻译内容时，返回 `None`。
+    /// 翻译内容是否为 `str` 类型。无翻译内容或出错时，返回 `None`。
     pub fn is_borrowed(&self) -> Option<bool> {
         match &self.res {
             ResponseInner::Ok { res, .. } if res.len() != 0 => Some(true),
