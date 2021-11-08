@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result as AnyResult};
-use translation_api_cn::tencent::{HeaderJson, Query, User};
+use translation_api_cn::tencent::{Header, Query, User};
 
 fn main() -> AnyResult<()> {
     let mut user = User::default();
@@ -12,13 +12,13 @@ fn main() -> AnyResult<()> {
                         to:        "zh",
                         projectid: 0,
                         q:         &["hi", "there"], };
-    let mut header = HeaderJson::new(&user, &query);
+    let mut header = Header::new(&user, &query);
     header.authorization()?;
-    println!("{}", send(&header, &query)?);
+    println!("{}", send(&header)?);
     Ok(())
 }
 
-pub fn send(header: &HeaderJson, query: &Query) -> AnyResult<String> {
+pub fn send(header: &Header) -> AnyResult<String> {
     use reqwest::blocking::Client;
     let map = {
         use reqwest::header::{HeaderName, HeaderValue};
@@ -33,5 +33,5 @@ pub fn send(header: &HeaderJson, query: &Query) -> AnyResult<String> {
               .collect()
     };
     dbg!(&map);
-    Ok(Client::new().post(HeaderJson::URL).headers(map).json(query).send()?.text()?)
+    Ok(Client::new().post(Header::URL).headers(map).json(header.query).send()?.text()?)
 }

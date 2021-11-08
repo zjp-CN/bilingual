@@ -170,7 +170,7 @@ impl Default for User {
 }
 
 /// 生成请求结构
-pub struct HeaderJson<'u, 'q> {
+pub struct Header<'u, 'q> {
     pub datetime:         OffsetDateTime,
     pub timestamp:        String,
     pub credential_scope: String,
@@ -179,7 +179,7 @@ pub struct HeaderJson<'u, 'q> {
     pub query:            &'q Query<'q>,
 }
 
-impl<'u, 'q> HeaderJson<'u, 'q> {
+impl<'u, 'q> Header<'u, 'q> {
     const ALGORITHM: &'static str = "TC3-HMAC-SHA256";
     const CANONICALHEADERS: &'static str =
         "content-type:application/json\nhost:tmt.tencentcloudapi.com\n";
@@ -454,29 +454,29 @@ fn signature_to_string_test() -> Result<()> {
                         q:         &["hi", "there"], };
     // sample ends
     let canonical_request = format!("{}\n{}\n{}\n{}\n{}\n{}",
-                                    HeaderJson::HTTPREQUESTMETHOD,
-                                    HeaderJson::CANONICALURI,
-                                    HeaderJson::CANONICALQUERYSTRING,
-                                    HeaderJson::CANONICALHEADERS,
-                                    HeaderJson::SIGNEDHEADERS,
+                                    Header::HTTPREQUESTMETHOD,
+                                    Header::CANONICALURI,
+                                    Header::CANONICALQUERYSTRING,
+                                    Header::CANONICALHEADERS,
+                                    Header::SIGNEDHEADERS,
                                     query.to_hashed()?);
     #[rustfmt::skip]
     assert_eq!(canonical_request,
                "POST\n/\n\ncontent-type:application/json\n\
                 host:tmt.tencentcloudapi.com\n\ncontent-type;host\n\
                 132203170c4d03f4b351cacc51a7ceeed78ca571be42688945f74bb0796bb739");
-    let mut header = HeaderJson { datetime,
-                                  timestamp,
-                                  credential_scope: "".into(),
-                                  authorization: "".into(),
-                                  user: &user,
-                                  query: &query };
+    let mut header = Header { datetime,
+                              timestamp,
+                              credential_scope: "".into(),
+                              authorization: "".into(),
+                              user: &user,
+                              query: &query };
     let date = datetime.date();
     header.credential_scope =
-        format!("{}/{}/{}", date, header.user.service, HeaderJson::CREDENTIALSCOPE);
+        format!("{}/{}/{}", date, header.user.service, Header::CREDENTIALSCOPE);
     assert_eq!(header.credential_scope, "2021-11-05/tmt/tc3_request");
     let stringtosign = format!("{}\n{}\n{}\n{}",
-                               HeaderJson::ALGORITHM,
+                               Header::ALGORITHM,
                                header.timestamp,
                                header.credential_scope,
                                hash256(canonical_request.as_bytes()));
@@ -486,7 +486,7 @@ fn signature_to_string_test() -> Result<()> {
     let secret_date =
         hash_2u8(format!("TC3{}", header.user.key).as_bytes(), format!("{}", date).as_bytes())?;
     let secret_service = hash_hash_u8(secret_date, header.user.service.as_bytes())?;
-    let secret_signing = hash_hash_u8(secret_service, HeaderJson::CREDENTIALSCOPE.as_bytes())?;
+    let secret_signing = hash_hash_u8(secret_service, Header::CREDENTIALSCOPE.as_bytes())?;
     let hex = hmac_sha256_string(hash_hash_u8(secret_signing, stringtosign.as_bytes())?);
     assert_eq!(hex, "5a4474831e97a0b0e37730abf8de690234fb750be49bf5033469f2b626752eb5");
     Ok(())

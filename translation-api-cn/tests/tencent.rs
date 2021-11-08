@@ -22,12 +22,12 @@ fn usage_test() -> Result<()> {
 
     assert_eq!(query.to_hashed()?,
                "132203170c4d03f4b351cacc51a7ceeed78ca571be42688945f74bb0796bb739");
-    let mut header = HeaderJson { datetime,
-                                  timestamp,
-                                  credential_scope: "".into(),
-                                  authorization: "".into(),
-                                  user: &user,
-                                  query: &query };
+    let mut header = Header { datetime,
+                              timestamp,
+                              credential_scope: "".into(),
+                              authorization: "".into(),
+                              user: &user,
+                              query: &query };
     assert_eq!(header.signature()?,
                "5a4474831e97a0b0e37730abf8de690234fb750be49bf5033469f2b626752eb5");
     assert_eq!(header.authorization()?,
