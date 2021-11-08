@@ -1,5 +1,5 @@
-use anyhow::{anyhow, Result as AnyResult};
-use translation_api_cn::tencent::{Header, Query, User};
+use anyhow::{anyhow, Context, Result as AnyResult};
+use translation_api_cn::tencent::{Header, Query, Response, User};
 
 fn main() -> AnyResult<()> {
     let mut user = User::default();
@@ -32,6 +32,13 @@ pub fn send(header: &mut Header) -> AnyResult<String> {
               .flatten() // 遇到 Err 时，把 Ok 的部分 collect
               .collect()
     };
-    dbg!(&map);
-    Ok(Client::new().post(Header::URL).headers(map).json(header.query).send()?.text()?)
+    // dbg!(&map);
+    // Ok(Client::new().post(Header::URL).headers(map).json(header.query).send()?.text()?)
+    let bytes = Client::new().post(Header::URL)
+                             .headers(map)
+                             .json(header.query)
+                             .send()?
+                             .bytes()?;
+    let json: Response = serde_json::from_slice(&bytes).with_context(|| "解析 Json 失败")?;
+    Ok(format!("{:?}", json))
 }

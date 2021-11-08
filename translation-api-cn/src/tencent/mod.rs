@@ -199,6 +199,45 @@ impl<'u, 'q> Header<'u, 'q> {
     }
 }
 
+#[derive(Debug, Deserialize)]
+pub struct Response<'r> {
+    #[serde(borrow)]
+    #[serde(rename = "Response")]
+    pub res: ResponseInner<'r>,
+}
+
+/// 响应的信息。要么返回翻译结果，要么返回错误信息。
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum ResponseInner<'r> {
+    #[serde(borrow)]
+    Ok(Success<'r>),
+    #[serde(borrow)]
+    Err(ResponseErr<'r>),
+}
+
+/// 返回的数据
+#[derive(Debug, Deserialize)]
+pub struct Success<'r> {
+    #[serde(rename = "RequestId")]
+    pub id:   &'r str,
+    #[serde(rename = "Source")]
+    pub from: &'r str,
+    #[serde(rename = "Target")]
+    pub to:   &'r str,
+    #[serde(borrow)]
+    #[serde(rename = "TargetTextList")]
+    pub res:  Vec<std::borrow::Cow<'r, str>>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ResponseErr<'r> {
+    #[serde(rename = "RequestId")]
+    pub id:    &'r str,
+    #[serde(rename = "Error")]
+    pub error: ResponseError,
+}
+
 /// 错误处理 / 错误码
 ///
 /// see:
@@ -207,8 +246,25 @@ impl<'u, 'q> Header<'u, 'q> {
 /// - https://cloud.tencent.com/document/product/551/40566
 #[derive(Debug, Clone, Deserialize)]
 pub struct ResponseError {
-    #[serde(rename = "error_code")]
+    #[serde(rename = "Code")]
     pub code: String,
-    #[serde(rename = "error_msg")]
+    #[serde(rename = "Message")]
     pub msg:  String,
+}
+
+#[test]
+fn response_test() {
+    let success = r#"{"Response":{"RequestId":"7895050c-b0bd-45f2-ba88-c95c509020f2","Source":"en","Target":"zh","TargetTextList":["嗨","那里"]}}"#;
+    assert_eq!(format!("{:?}", serde_json::from_str::<Response>(success).unwrap()),
+               "Response { res: Ok(Success { id: \"7895050c-b0bd-45f2-ba88-c95c509020f2\", from: \
+                \"en\", to: \"zh\", res: [\"嗨\", \"那里\"] }) }");
+    let error = r#"{"Response":{"Error":{"Code":"AuthFailure.SignatureFailure","Message":"The provided credentials could not be validated. Please check your signature is correct."},"RequestId":"47546ee3-767c-4671-8f90-2c02c7484a42"}}"#;
+    #[rustfmt::skip]
+    assert_eq!(
+               format!("{:?}", serde_json::from_str::<Response>(error).unwrap()),
+               "Response { res: Err(ResponseErr { id: \"47546ee3-767c-4671-8f90-2c02c7484a42\", \
+                error: ResponseError { code: \"AuthFailure.SignatureFailure\", \
+                msg: \"The provided credentials could not be validated. \
+                Please check your signature is correct.\" } }) }"
+    );
 }
