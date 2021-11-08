@@ -9,9 +9,9 @@ pub struct Response<'r> {
 
 impl<'r> Response<'r> {
     /// 提取翻译内容。无翻译内容时，返回错误。
-    pub fn dst(&self) -> Result<Vec<&str>, ResponseError> {
+    pub fn dst(&self) -> Result<&Vec<&str>, ResponseError> {
         match &self.res {
-            ResponseInner::Ok { res, .. } => Ok(res.iter().map(|x| x.as_ref()).collect()),
+            ResponseInner::Ok { res, .. } => Ok(res),
             ResponseInner::Err { error, .. } => Err(error.clone()),
         }
     }
@@ -27,14 +27,8 @@ impl<'r> Response<'r> {
     /// 翻译内容是否为 `str` 类型。无翻译内容时，返回 `None`。
     pub fn is_borrowed(&self) -> Option<bool> {
         match &self.res {
-            ResponseInner::Ok { res, .. } => {
-                if res.len() != 0 {
-                    Some(true)
-                } else {
-                    None
-                }
-            }
-            ResponseInner::Err { .. } => None,
+            ResponseInner::Ok { res, .. } if res.len() != 0 => Some(true),
+            _ => None,
         }
     }
 }
