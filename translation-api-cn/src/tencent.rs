@@ -93,21 +93,16 @@ pub struct Query<'q> {
     /// 超过 2000 字节要分段请求。
     #[serde(rename = "Target")]
     pub to:        &'q str,
+    #[serde(rename = "ProjectId")]
     pub projectid: u8,
     #[serde(rename = "SourceTextList")]
     pub q:         &'q [&'q str],
 }
 
 impl<'q> Query<'q> {
-    pub fn to_hashed(&self) -> serde_json::Result<String> {
-        Ok(hash256(&serde_json::to_vec(self)?))
-    }
+    pub fn to_hashed(&self) -> serde_json::Result<String> { Ok(hash256(&ser_json::to_vec(self)?)) }
 
-    pub fn to_json(&self) -> serde_json::Result<String> { serde_json::to_string(self) }
-
-    pub fn to_json_pretty(&self) -> serde_json::Result<String> {
-        serde_json::to_string_pretty(self)
-    }
+    pub fn to_json_string(&self) -> serde_json::Result<String> { ser_json::to_string(self) }
 }
 
 /// 账户信息以及一些不变的信息
@@ -330,4 +325,77 @@ pub struct Error {
     pub code: String,
     #[serde(rename = "error_msg")]
     pub msg:  String,
+}
+
+/// 自定义序列化 json Formatter
+///
+/// [`serde_json`] 主要有两种 [`Formatter`][`serde_json::ser::Formatter`]：
+/// - [`CompactFormatter`][`serde_json::ser::CompactFormatter`]，不含空格或换行的格式：
+///   `{"Source":"en","Target":"zh","ProjectId":0,"SourceTextList":["hi","there"]}`
+/// - [`PrettyFormatter`][`serde_json::ser::PrettyFormatter`]，美观的空格+换行的格式：
+///
+///   ```JSON
+///   { "Source": "en", "Target": "zh", "ProjectId": 0, "SourceTextList": [ "hi", "there" ] }
+///   ```
+///
+/// 而腾讯云需要的 json 格式不属于上面两种（参考 python `json.dumps` 的样式）。
+/// 因此需要实现新的样式：
+/// `{"Source": "en", "Target": "zh", "ProjectId": 0, "SourceTextList": ["hi", "there"]}`。
+pub mod ser_json {
+    use serde::Serialize;
+    use serde_json::ser::{Formatter, Serializer};
+    use std::io;
+    pub struct SimpleFormatter;
+    #[inline]
+    fn format_begin<W: ?Sized + io::Write>(writer: &mut W, first: bool) -> io::Result<()> {
+        if first {
+            Ok(())
+        } else {
+            writer.write_all(b", ")
+        }
+    }
+
+    impl Formatter for SimpleFormatter {
+        #[inline]
+        fn begin_array_value<W>(&mut self, writer: &mut W, first: bool) -> io::Result<()>
+            where W: ?Sized + io::Write {
+            format_begin(writer, first)
+        }
+
+        #[inline]
+        fn begin_object_key<W>(&mut self, writer: &mut W, first: bool) -> io::Result<()>
+            where W: ?Sized + io::Write {
+            format_begin(writer, first)
+        }
+
+        #[inline]
+        fn begin_object_value<W>(&mut self, writer: &mut W) -> io::Result<()>
+            where W: ?Sized + io::Write {
+            writer.write_all(b": ")
+        }
+    }
+
+    #[inline]
+    pub fn to_writer<W, T>(writer: W, value: &T) -> serde_json::Result<()>
+        where W: io::Write,
+              T: ?Sized + Serialize
+    {
+        let mut ser = Serializer::with_formatter(writer, SimpleFormatter);
+        value.serialize(&mut ser)?;
+        Ok(())
+    }
+
+    #[inline]
+    pub fn to_vec<T>(value: &T) -> serde_json::Result<Vec<u8>>
+        where T: ?Sized + Serialize {
+        let mut writer = Vec::with_capacity(128);
+        to_writer(&mut writer, value)?;
+        Ok(writer)
+    }
+
+    #[inline]
+    pub fn to_string<T: ?Sized + serde::Serialize>(value: &T) -> serde_json::Result<String> {
+        // serde_json does not emit invalid UTF-8.
+        Ok(unsafe { String::from_utf8_unchecked(to_vec(value)?) })
+    }
 }
