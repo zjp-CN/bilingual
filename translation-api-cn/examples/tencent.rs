@@ -1,4 +1,5 @@
-use anyhow::{anyhow, Context, Result as AnyResult};
+use anyhow::{anyhow, Result as AnyResult};
+use reqwest::blocking::{self, Client};
 use translation_api_cn::tencent::{Header, Query, Response, User};
 
 fn main() -> AnyResult<()> {
@@ -12,13 +13,19 @@ fn main() -> AnyResult<()> {
                         to:        "zh",
                         projectid: 0,
                         q:         &["hi", "there"], };
+    // let query = Query { from:      "zh",
+    //                     to:        "en",
+    //                     projectid: 0,
+    //                     q:         &["你好", "世界"], };
     let mut header = Header::new(&user, &query);
-    println!("{}", send(&mut header)?);
+    let bytes = send(&mut header)?.bytes()?;
+    let json: Response = serde_json::from_slice(&bytes)?;
+    dbg!(&json, json.dst()?, json.is_borrowed());
+    dbg!(json.dst_owned()?);
     Ok(())
 }
 
-pub fn send(header: &mut Header) -> AnyResult<String> {
-    use reqwest::blocking::Client;
+pub fn send(header: &mut Header) -> AnyResult<blocking::Response> {
     header.authorization()?; // 更改 query 或者 user 时必须重新生成验证信息
     let map = {
         use reqwest::header::{HeaderName, HeaderValue};
@@ -34,11 +41,6 @@ pub fn send(header: &mut Header) -> AnyResult<String> {
     };
     // dbg!(&map);
     // Ok(Client::new().post(Header::URL).headers(map).json(header.query).send()?.text()?)
-    let bytes = Client::new().post(Header::URL)
-                             .headers(map)
-                             .json(header.query)
-                             .send()?
-                             .bytes()?;
-    let json: Response = serde_json::from_slice(&bytes).with_context(|| "解析 Json 失败")?;
-    Ok(format!("{:?}", json))
+    let res = Client::new().post(Header::URL).headers(map).json(header.query).send()?;
+    Ok(res)
 }
