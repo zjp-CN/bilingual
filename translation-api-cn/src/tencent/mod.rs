@@ -9,8 +9,9 @@ use time::OffsetDateTime;
 
 mod region;
 pub use region::Region;
-mod hash;
 pub mod ser_json;
+
+mod hash;
 pub use hash::*;
 
 // HMAC-SHA256 算法
@@ -56,20 +57,22 @@ pub struct Query<'q> {
 }
 
 impl<'q> Query<'q> {
-    pub fn to_hashed(&self) -> serde_json::Result<String> {
-        Ok(hash256(&serde_json::to_vec(self)?))
-    }
+    pub fn to_hashed(&self) -> Result<String> { Ok(hash256(&serde_json::to_vec(self)?)) }
 
-    pub fn to_json_string(&self) -> serde_json::Result<String> { serde_json::to_string(self) }
+    pub fn to_json_string(&self) -> Result<String> {
+        serde_json::to_string(self).map_err(|e| e.into())
+    }
 
     // 由于 [`reqwest::RequestBuilder::json`] 调用了 [`serde_json::to_vec`]，
     // 直接调用 [`reqwest::RequestBuilder::json`] 会触发
     // `{"Error":{"Code":"AuthFailure.SignatureFailure","Message":"The provided credentials
     // could not be validated. Please check your signature is correct."}"}}`
     // 。
-    pub fn to_hashed2(&self) -> serde_json::Result<String> { Ok(hash256(&ser_json::to_vec(self)?)) }
+    pub fn to_hashed2(&self) -> Result<String> { Ok(hash256(&ser_json::to_vec(self)?)) }
 
-    pub fn to_json_string2(&self) -> serde_json::Result<String> { ser_json::to_string(self) }
+    pub fn to_json_string2(&self) -> Result<String> {
+        ser_json::to_string(self).map_err(|e| e.into())
+    }
 }
 
 /// 账户信息以及一些不变的信息
