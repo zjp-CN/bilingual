@@ -209,54 +209,32 @@ pub struct Response<'r> {
 
 impl<'r> Response<'r> {
     /// 提取翻译内容。无翻译内容时，返回错误。
-    ///
-    /// TODO: [`BaiduError`] 会经过两次内存分配，这种设计的原因是
-    ///       `anyhow` crate 要求错误的类型必须是 `'static`。
-    ///       [`BaiduError`] 一次分配的例子见 `tests/baidu.rs`。
     pub fn dst(&self) -> StdResult<Vec<&str>, ResponseError> {
         match &self.res {
-            ResponseInner::Ok(s) => Ok(s.res.iter().map(|x| x.as_ref()).collect()),
-            ResponseInner::Err(e) => Err(e.error.clone()),
+            ResponseInner::Ok { res, .. } => Ok(res.iter().map(|x| x.as_ref()).collect()),
+            ResponseInner::Err { error, .. } => Err(error.clone()),
         }
     }
 
     /// 提取翻译内容。无翻译内容时，返回错误。
     pub fn dst_owned(self) -> StdResult<Vec<String>, ResponseError> {
         match self.res {
-            ResponseInner::Ok(s) => Ok(s.res.into_iter().map(|x| x.into()).collect()),
-            ResponseInner::Err(e) => Err(e.error),
+            ResponseInner::Ok { res, .. } => Ok(res.into_iter().map(|x| x.into()).collect()),
+            ResponseInner::Err { error, .. } => Err(error),
         }
     }
 
-    /// 翻译内容（即 [`SrcDst`] 的 `dst`字段）是否为 `Cow::Borrowed` 类型。
-    /// 比如英译中时，中文为代码点：
-    /// ```text
-    /// {
-    ///   "from": "en",
-    ///   "to":   "zh",
-    ///   "trans_result":[
-    ///     {"src": "hello", "dst": "\u4f60\u597d"},
-    ///     {"src": "world", "dst": "\u4e16\u754c"}
-    ///   ]
-    /// }
-    /// ```
-    /// 必须使用 `String` 或者 `Cow::Owned` 类型。
-    ///
-    /// 而 dst 为英文时，使用 `&str` 或者 `Cow::Borrowed` 类型可以减少分配。
-    ///
-    /// ## 注意
-    /// 无翻译内容时，返回 `None`。
+    /// 翻译内容是否为 `str` 类型。无翻译内容时，返回 `None`。
     pub fn is_borrowed(&self) -> Option<bool> {
         match &self.res {
-            ResponseInner::Ok(Success { res, .. }) => {
+            ResponseInner::Ok { res, .. } => {
                 if res.len() != 0 {
                     Some(true)
-                    // Some(matches!(res[0], std::borrow::Cow::Borrowed(_)))
                 } else {
                     None
                 }
             }
-            &ResponseInner::Err(_) => None,
+            ResponseInner::Err { .. } => None,
         }
     }
 }
@@ -265,31 +243,22 @@ impl<'r> Response<'r> {
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum ResponseInner<'r> {
-    #[serde(borrow)]
-    Ok(Success<'r>),
-    #[serde(borrow)]
-    Err(ResponseErr<'r>),
-}
-
-/// 返回的数据
-#[derive(Debug, Deserialize)]
-pub struct Success<'r> {
-    #[serde(rename = "RequestId")]
-    pub id:   &'r str,
-    #[serde(rename = "Source")]
-    pub from: &'r str,
-    #[serde(rename = "Target")]
-    pub to:   &'r str,
-    #[serde(rename = "TargetTextList")]
-    pub res:  Vec<&'r str>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct ResponseErr<'r> {
-    #[serde(rename = "RequestId")]
-    pub id:    &'r str,
-    #[serde(rename = "Error")]
-    pub error: ResponseError,
+    Ok {
+        #[serde(rename = "RequestId")]
+        id:   &'r str,
+        #[serde(rename = "Source")]
+        from: &'r str,
+        #[serde(rename = "Target")]
+        to:   &'r str,
+        #[serde(rename = "TargetTextList")]
+        res:  Vec<&'r str>,
+    },
+    Err {
+        #[serde(rename = "RequestId")]
+        id:    &'r str,
+        #[serde(rename = "Error")]
+        error: ResponseError,
+    },
 }
 
 /// 错误处理 / 错误码
