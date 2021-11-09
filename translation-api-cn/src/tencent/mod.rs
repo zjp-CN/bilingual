@@ -19,7 +19,7 @@ pub use hash::*;
 mod response;
 pub use response::{Response, ResponseError, ResponseInner};
 
-pub const URL: &'static str = "https://tmt.tencentcloudapi.com";
+pub const URL: &str = "https://tmt.tencentcloudapi.com";
 
 /// HMAC-SHA256 算法
 pub type HmacSha256 = Hmac<Sha256>;

@@ -120,7 +120,7 @@ fn serde_json_format_test() -> serde_json::Result<()> {
     assert_eq!(ss, PAYLOAD);
 
     // 方法二：重新实现 `serde_json::ser::Formatter`
-    let s = query.to_json_string2()?;
+    let s = query.to_json_string2().unwrap();
     assert_eq!(s, PAYLOAD);
     assert_display_snapshot!(PAYLOAD, @r###"{"Source": "en", "Target": "zh", "ProjectId": 0, "SourceTextList": ["hi", "there"]}"###);
 

@@ -27,7 +27,7 @@ impl<'r> Response<'r> {
     /// 翻译内容是否为 `str` 类型。无翻译内容或出错时，返回 `None`。
     pub fn is_borrowed(&self) -> Option<bool> {
         match &self.res {
-            ResponseInner::Ok { res, .. } if res.len() != 0 => Some(true),
+            ResponseInner::Ok { res, .. } if !res.is_empty() => Some(true),
             _ => None,
         }
     }
