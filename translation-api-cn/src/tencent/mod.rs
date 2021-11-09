@@ -190,7 +190,7 @@ impl<'u, 'q> Header<'u, 'q> {
     }
 
     pub fn header(&self) -> HashMap<&str, &str> {
-        let mut map = HashMap::new();
+        let mut map = HashMap::with_capacity(8);
         map.insert("authorization", self.authorization.as_str()).unwrap_or_default();
         map.insert("content-type", Self::CONTENTTYPE).unwrap_or_default();
         map.insert("host", Self::HOST).unwrap_or_default();

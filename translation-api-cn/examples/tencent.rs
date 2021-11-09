@@ -25,6 +25,7 @@ fn main() -> AnyResult<()> {
     Ok(())
 }
 
+#[rustfmt::skip]
 pub fn send(header: &mut Header) -> AnyResult<blocking::Response> {
     header.authorization()?; // 更改 query 或者 user 时必须重新生成验证信息
     let map = {
@@ -41,6 +42,5 @@ pub fn send(header: &mut Header) -> AnyResult<blocking::Response> {
     };
     // dbg!(&map);
     // Ok(Client::new().post(Header::URL).headers(map).json(header.query).send()?.text()?)
-    let res = Client::new().post(Header::URL).headers(map).json(header.query).send()?;
-    Ok(res)
+    Client::new().post(Header::URL).headers(map).json(header.query).send().map_err(|e| e.into())
 }
