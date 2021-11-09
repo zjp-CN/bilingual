@@ -9,6 +9,8 @@ use time::OffsetDateTime;
 
 mod region;
 pub use region::Region;
+
+// 预计会被删除的模块
 pub mod ser_json;
 
 mod hash;
@@ -16,6 +18,8 @@ pub use hash::*;
 
 mod response;
 pub use response::{Response, ResponseError, ResponseInner};
+
+pub const URL: &'static str = "https://tmt.tencentcloudapi.com";
 
 /// HMAC-SHA256 算法
 pub type HmacSha256 = Hmac<Sha256>;
@@ -145,7 +149,6 @@ impl<'u, 'q> Header<'u, 'q> {
     const HOST: &'static str = "tmt.tencentcloudapi.com";
     const HTTPREQUESTMETHOD: &'static str = "POST";
     const SIGNEDHEADERS: &'static str = "content-type;host";
-    pub const URL: &'static str = "https://tmt.tencentcloudapi.com";
 
     #[rustfmt::skip]
     pub fn new(user: &'u User, query: &'q Query) -> Self {

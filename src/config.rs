@@ -88,9 +88,9 @@ impl Config {
 }
 
 pub fn translate_via_baidu(md: &str, from: &str, to: &str, user: &Baidu) -> Result<String> {
-    use translation_api_cn::baidu::{Query, Response, API};
+    use translation_api_cn::baidu::{Query, Response, URL};
     pub fn send<T: serde::Serialize + ?Sized>(form: &T) -> Result<blocking::Response> {
-        let response = blocking::Client::new().post(API).form(form).send()?;
+        let response = blocking::Client::new().post(URL).form(form).send()?;
         debug_assert!(response.error_for_status_ref().is_ok());
         Ok(response)
     }

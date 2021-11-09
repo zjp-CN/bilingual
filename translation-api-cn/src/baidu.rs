@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
-pub const API: &str = "https://fanyi-api.baidu.com/api/trans/vip/translate";
+pub const URL: &str = "https://fanyi-api.baidu.com/api/trans/vip/translate";
 
 /// 翻译前的必要信息
 #[derive(Debug)]

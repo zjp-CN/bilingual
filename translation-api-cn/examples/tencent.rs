@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result as AnyResult};
 use reqwest::blocking::{self, Client};
-use translation_api_cn::tencent::{Header, Query, Response, User};
+use translation_api_cn::tencent::{Header, Query, Response, User, URL};
 
 fn main() -> AnyResult<()> {
     let mut user = User::default();
@@ -42,5 +42,5 @@ pub fn send(header: &mut Header) -> AnyResult<blocking::Response> {
     };
     // dbg!(&map);
     // Ok(Client::new().post(Header::URL).headers(map).json(header.query).send()?.text()?)
-    Client::new().post(Header::URL).headers(map).json(header.query).send().map_err(|e| e.into())
+    Client::new().post(URL).headers(map).json(header.query).send().map_err(|e| e.into())
 }
