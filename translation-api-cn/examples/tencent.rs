@@ -3,12 +3,12 @@ use reqwest::blocking::{self, Client};
 use translation_api_cn::tencent::{Header, Query, Response, User, URL};
 
 fn main() -> AnyResult<()> {
-    let mut user = User::default();
-    {
+    let user = {
         let mut arg = std::env::args().skip(1);
-        user.id = arg.next().ok_or(anyhow!("请输出 ID"))?;
-        user.key = arg.next().ok_or(anyhow!("请输出 Key"))?;
-    }
+        User { id: arg.next().ok_or_else(|| anyhow!("请输出 ID"))?,
+               key: arg.next().ok_or_else(|| anyhow!("请输出 Key"))?,
+               ..User::default() }
+    };
     let query = Query { from:      "en",
                         to:        "zh",
                         projectid: 0,
