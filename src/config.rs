@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use reqwest::blocking;
+use reqwest::blocking::{self, Client};
 use std::path::{Path, PathBuf};
 use translation_api_cn::baidu::User as Baidu;
 use translation_api_cn::tencent::User as Tencent;
@@ -92,7 +92,7 @@ impl Config {
 pub fn translate_via_baidu(md: &str, from: &str, to: &str, user: &Baidu) -> Result<String> {
     use translation_api_cn::baidu::{Query, Response, URL};
     pub fn send<T: serde::Serialize + ?Sized>(form: &T) -> Result<blocking::Response> {
-        let response = blocking::Client::new().post(URL).form(form).send()?;
+        let response = Client::new().post(URL).form(form).send()?;
         debug_assert!(response.error_for_status_ref().is_ok());
         Ok(response)
     }
@@ -108,9 +108,9 @@ pub fn translate_via_baidu(md: &str, from: &str, to: &str, user: &Baidu) -> Resu
 }
 
 pub fn translate_via_tencent(md: &str, from: &str, to: &str, user: &Tencent) -> Result<String> {
-    use translation_api_cn::Tencent::{Header, Query, Response, URL};
+    use translation_api_cn::tencent::{Header, Query, Response, URL};
     #[rustfmt::skip]
-    pub fn send(header: &mut Header) -> AnyResult<blocking::Response> {
+    pub fn send(header: &mut Header) -> Result<blocking::Response> {
         header.authorization()?; // 更改 query 或者 user 时必须重新生成验证信息
         let map = {
             use reqwest::header::{HeaderName, HeaderValue};
@@ -129,11 +129,11 @@ pub fn translate_via_tencent(md: &str, from: &str, to: &str, user: &Tencent) -> 
 
     let md = crate::md::Md::new(md);
     let buf = md.extract();
-    let q: Vec<&str> = buf.trim().split("\n").as_str().collect();
+    let q: Vec<&str> = buf.trim().split("\n").collect();
     let query = Query::new(&q, from, to);
     let mut header = Header::new(user, &query);
+    #[rustfmt::skip]
     let output =
-        md.done(serde_json::from_slice::<Response>(&send(&mut header)?.bytes()?)?.dst()?
-                                                                                 .into_iter());
+        md.done(serde_json::from_slice::<Response>(&send(&mut header)?.bytes()?)?.dst()?.into_iter().copied());
     Ok(output)
 }
