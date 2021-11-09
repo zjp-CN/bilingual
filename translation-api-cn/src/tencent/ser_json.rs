@@ -118,8 +118,7 @@ fn signature_to_string_test() -> super::Result<()> {
                               user: &user,
                               query: &query };
     let date = datetime.date();
-    header.credential_scope =
-        format!("{}/{}/{}", date, header.user.service, Header::CREDENTIALSCOPE);
+    header.credential_scope = format!("{}/{}/{}", date, Header::SERVICE, Header::CREDENTIALSCOPE);
     assert_eq!(header.credential_scope, "2021-11-05/tmt/tc3_request");
     let stringtosign = format!("{}\n{}\n{}\n{}",
                                Header::ALGORITHM,
@@ -131,7 +130,7 @@ fn signature_to_string_test() -> super::Result<()> {
                               ef9234630cfbd7baf254265506ed5d0193d278468d367a9c8a809d6300173df1");
     let secret_date =
         hash_2u8(format!("TC3{}", header.user.key).as_bytes(), format!("{}", date).as_bytes())?;
-    let secret_service = hash_hash_u8(secret_date, header.user.service.as_bytes())?;
+    let secret_service = hash_hash_u8(secret_date, Header::SERVICE.as_bytes())?;
     let secret_signing = hash_hash_u8(secret_service, Header::CREDENTIALSCOPE.as_bytes())?;
     let hex = hmac_sha256_string(hash_hash_u8(secret_signing, stringtosign.as_bytes())?);
     assert_eq!(hex, "5a4474831e97a0b0e37730abf8de690234fb750be49bf5033469f2b626752eb5");

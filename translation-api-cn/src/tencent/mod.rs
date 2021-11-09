@@ -100,22 +100,16 @@ pub struct User {
     #[serde(default)]
     pub region:    Region,
     /// 项目ID，可以根据控制台-账号中心-项目管理中的配置填写，如无配置请填写默认项目ID:0
-    #[serde(default)]
+    #[serde(default = "default_projectid")]
     pub projectid: u8,
     /// 每秒并发请求
-    #[serde(default)]
+    #[serde(default = "default_qps")]
     #[serde(skip_deserializing)]
     pub qps:       u8,
-    #[serde(default)]
-    #[serde(skip_deserializing)]
-    pub action:    String,
-    #[serde(default)]
-    #[serde(skip_deserializing)]
-    pub service:   String,
-    #[serde(default)]
-    #[serde(skip_deserializing)]
-    pub version:   String,
 }
+
+fn default_qps() -> u8 { 5 }
+fn default_projectid() -> u8 { 0 }
 
 impl Default for User {
     fn default() -> Self {
@@ -123,14 +117,12 @@ impl Default for User {
                key:       String::new(),
                region:    Region::default(),
                projectid: 0,
-               qps:       5,
-               action:    "TextTranslateBatch".into(),
-               service:   "tmt".into(),
-               version:   "2018-03-21".into(), }
+               qps:       5, }
     }
 }
 
 /// 生成请求结构
+#[derive(Debug)]
 pub struct Header<'u, 'q> {
     pub datetime:         OffsetDateTime,
     pub timestamp:        String,
@@ -141,6 +133,7 @@ pub struct Header<'u, 'q> {
 }
 
 impl<'u, 'q> Header<'u, 'q> {
+    const ACTION: &'static str = "TextTranslateBatch";
     const ALGORITHM: &'static str = "TC3-HMAC-SHA256";
     const CANONICALHEADERS: &'static str =
         "content-type:application/json\nhost:tmt.tencentcloudapi.com\n";
@@ -153,7 +146,9 @@ impl<'u, 'q> Header<'u, 'q> {
     const CREDENTIALSCOPE: &'static str = "tc3_request";
     const HOST: &'static str = "tmt.tencentcloudapi.com";
     const HTTPREQUESTMETHOD: &'static str = "POST";
+    const SERVICE: &'static str = "tmt";
     const SIGNEDHEADERS: &'static str = "content-type;host";
+    const VERSION: &'static str = "2018-03-21";
 
     #[rustfmt::skip]
     pub fn new(user: &'u User, query: &'q Query) -> Self {
@@ -173,7 +168,7 @@ impl<'u, 'q> Header<'u, 'q> {
                                         self.query.to_hashed()?);
 
         let date = self.datetime.date();
-        self.credential_scope = format!("{}/{}/{}", date, self.user.service, Self::CREDENTIALSCOPE);
+        self.credential_scope = format!("{}/{}/{}", date, Self::SERVICE, Self::CREDENTIALSCOPE);
         let stringtosign = format!("{}\n{}\n{}\n{}",
                                    Self::ALGORITHM,
                                    self.timestamp,
@@ -181,7 +176,7 @@ impl<'u, 'q> Header<'u, 'q> {
                                    hash256(canonical_request.as_bytes()));
         let secret_date =
             hash_2u8(format!("TC3{}", self.user.key).as_bytes(), format!("{}", date).as_bytes())?;
-        let secret_service = hash_hash_u8(secret_date, self.user.service.as_bytes())?;
+        let secret_service = hash_hash_u8(secret_date, Self::SERVICE.as_bytes())?;
         let secret_signing = hash_hash_u8(secret_service, Self::CREDENTIALSCOPE.as_bytes())?;
         Ok(hmac_sha256_string(hash_hash_u8(secret_signing, stringtosign.as_bytes())?))
     }
@@ -202,8 +197,8 @@ impl<'u, 'q> Header<'u, 'q> {
         map.insert("authorization", self.authorization.as_str()).unwrap_or_default();
         map.insert("content-type", Self::CONTENTTYPE).unwrap_or_default();
         map.insert("host", Self::HOST).unwrap_or_default();
-        map.insert("x-tc-action", &self.user.action).unwrap_or_default();
-        map.insert("x-tc-version", &self.user.version).unwrap_or_default();
+        map.insert("x-tc-action", Self::ACTION).unwrap_or_default();
+        map.insert("x-tc-version", Self::VERSION).unwrap_or_default();
         map.insert("x-tc-region", self.user.region.as_str()).unwrap_or_default();
         map.insert("x-tc-timestamp", &self.timestamp).unwrap_or_default();
         map

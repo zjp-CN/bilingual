@@ -167,16 +167,21 @@ impl ResponseError {
 #[test]
 fn response_test() {
     let success = r#"{"Response":{"RequestId":"7895050c-b0bd-45f2-ba88-c95c509020f2","Source":"en","Target":"zh","TargetTextList":["嗨","那里"]}}"#;
-    assert_eq!(format!("{:?}", serde_json::from_str::<Response>(success).unwrap()),
-               "Response { res: Ok(Success { id: \"7895050c-b0bd-45f2-ba88-c95c509020f2\", from: \
-                \"en\", to: \"zh\", res: [\"嗨\", \"那里\"] }) }");
+    let res: Response = serde_json::from_str(success).unwrap();
+    assert_eq!(format!("{:?}", res),
+               "Response { res: Ok { id: \"7895050c-b0bd-45f2-ba88-c95c509020f2\", from: \"en\", \
+                to: \"zh\", res: [\"嗨\", \"那里\"] } }");
     let error = r#"{"Response":{"Error":{"Code":"AuthFailure.SignatureFailure","Message":"The provided credentials could not be validated. Please check your signature is correct."},"RequestId":"47546ee3-767c-4671-8f90-2c02c7484a42"}}"#;
+    assert!(res.dst().is_ok());
+
+    let res: Response = serde_json::from_str(error).unwrap();
     #[rustfmt::skip]
     assert_eq!(
-               format!("{:?}", serde_json::from_str::<Response>(error).unwrap()),
-               "Response { res: Err(ResponseErr { id: \"47546ee3-767c-4671-8f90-2c02c7484a42\", \
-                error: ResponseError { code: \"AuthFailure.SignatureFailure\", \
-                msg: \"The provided credentials could not be validated. \
-                Please check your signature is correct.\" } }) }"
+               format!("{:?}", res),
+               "Response { res: Err { id: \"47546ee3-767c-4671-8f90-2c02c7484a42\", \
+				error: ResponseError { code: \"AuthFailure.SignatureFailure\", \
+				msg: \"The provided credentials could not be validated. \
+				Please check your signature is correct.\" } } }"
     );
+    assert!(res.dst().is_err());
 }
