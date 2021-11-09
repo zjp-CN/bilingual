@@ -24,7 +24,7 @@ code block
 
 <a>A</a>";
     let capacity = md.len();
-    let events: Vec<_> = Parser::new_ext(&md, cmark_opt()).collect();
+    let events: Vec<_> = Parser::new_ext(md, cmark_opt()).collect();
     assert_debug_snapshot!(events, @r###"
     [
         Start(
@@ -122,7 +122,7 @@ code block
     ]
     "###);
 
-    let content = events.clone().into_iter().filter(|event| filter_text(event));
+    let content = events.clone().into_iter().filter(filter_text);
     assert_debug_snapshot!(content.collect::<Vec<_>>(), @r###"
     [
         Text(
@@ -155,7 +155,7 @@ code block
 
     let mut buf = String::with_capacity(capacity);
     let mut select = true;
-    events.iter().map(|event| extract(event, &mut &mut select, &mut buf)).last();
+    events.iter().map(|event| extract(event, &mut select, &mut buf)).last();
     assert_display_snapshot!(buf, @r###"
     level one
     one paragraph `Inline code`
@@ -236,7 +236,7 @@ Hi!
 #[test]
 fn md_split_append() {
     fn split(raw: &str) -> String {
-        let md = Md::new(&raw);
+        let md = Md::new(raw);
         let buf = md.extract();
         let output = md.done(buf.split('\n'));
         // println!("{}", output);

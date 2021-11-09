@@ -20,7 +20,7 @@ fn main() {
     let mut outopt = OutOptions::default();
     outopt.code_block_backticks = 3;
 
-    cmark_with_options(Parser::new_ext(&md, options), &mut buf, None, outopt).unwrap();
+    cmark_with_options(Parser::new_ext(md, options), &mut buf, None, outopt).unwrap();
     stdout().write_all(buf.as_bytes()).unwrap();
 }
 
