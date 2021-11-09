@@ -286,7 +286,7 @@ mod borrowed {
         pub fn is_borrowed(&self) -> Option<bool> {
             match self {
                 Response::Ok(Success { res, .. }) => {
-                    if res.len() != 0 {
+                    if !res.is_empty() {
                         Some(matches!(res[0].dst, Cow::Borrowed(_)))
                     } else {
                         None

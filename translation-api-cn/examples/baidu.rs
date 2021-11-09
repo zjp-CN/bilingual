@@ -169,9 +169,9 @@ impl Cmd {
     fn to_query(&mut self) -> Query {
         log!(self);
         let mut query = self.multiquery.join("\n");
-        if self.query.len() != 0 {
-            if query.len() != 0 {
-                query.push_str("\n")
+        if !self.query.is_empty() {
+            if !query.is_empty() {
+                query.push('\n')
             };
             query.push_str(&self.query);
         };
