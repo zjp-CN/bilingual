@@ -10,7 +10,7 @@ arrayvec = "0.7"
 
 reqwest = {version = "0.11", features = ["json", "blocking"], optional=true}
 serde_json = {version = "1", optional = true}
-anyhow = {version = "1", optional = true}
+anyhow = {version = "1.0.45", optional = true}
 argh = {version = "0.1", optional = true}
 translation-api-cn = {path="./translation-api-cn", optional = true}
 

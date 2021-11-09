@@ -165,16 +165,17 @@ impl ResponseError {
 }
 
 #[test]
-fn response_test() {
+fn response_test() -> Result<(), Box<dyn std::error::Error>> {
     let success = r#"{"Response":{"RequestId":"7895050c-b0bd-45f2-ba88-c95c509020f2","Source":"en","Target":"zh","TargetTextList":["嗨","那里"]}}"#;
-    let res: Response = serde_json::from_str(success).unwrap();
+    let res: Response = serde_json::from_str(success)?;
     assert_eq!(format!("{:?}", res),
                "Response { res: Ok { id: \"7895050c-b0bd-45f2-ba88-c95c509020f2\", from: \"en\", \
                 to: \"zh\", res: [\"嗨\", \"那里\"] } }");
-    let error = r#"{"Response":{"Error":{"Code":"AuthFailure.SignatureFailure","Message":"The provided credentials could not be validated. Please check your signature is correct."},"RequestId":"47546ee3-767c-4671-8f90-2c02c7484a42"}}"#;
     assert!(res.dst().is_ok());
+    assert_eq!(res.dst()?, &["嗨", "那里"]);
 
-    let res: Response = serde_json::from_str(error).unwrap();
+    let error = r#"{"Response":{"Error":{"Code":"AuthFailure.SignatureFailure","Message":"The provided credentials could not be validated. Please check your signature is correct."},"RequestId":"47546ee3-767c-4671-8f90-2c02c7484a42"}}"#;
+    let res: Response = serde_json::from_str(error)?;
     #[rustfmt::skip]
     assert_eq!(
                format!("{:?}", res),
@@ -184,4 +185,22 @@ fn response_test() {
 				Please check your signature is correct.\" } } }"
     );
     assert!(res.dst().is_err());
+    // dbg!(res.dst()?); // this error leads to panic
+
+    #[rustfmt::skip]
+    let error = "{\"Response\":{\"Error\":{\"Code\":\"AuthFailure.SecretIdNotFound\",\"Message\":\
+                 \"The SecretId is not found, please ensure that your SecretId is \
+                 correct.\"},\"RequestId\":\"c3d29f67-6e56-48b9-b583-2cfcde32cad1\"}}";
+    let res: Response = serde_json::from_str(error)?;
+    #[rustfmt::skip]
+    assert_eq!(
+               format!("{:?}", res),
+               "Response { res: Err { id: \"c3d29f67-6e56-48b9-b583-2cfcde32cad1\", \
+				error: ResponseError { code: \"AuthFailure.SecretIdNotFound\", \
+				msg: \"The SecretId is not found, please ensure that your SecretId is correct.\" } } }"
+    );
+    assert!(res.dst().is_err());
+    // dbg!(res.dst()?); // this error leads to panic
+
+    Ok(())
 }

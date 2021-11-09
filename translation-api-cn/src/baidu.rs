@@ -42,6 +42,15 @@ pub struct User {
 fn default_qps() -> u8 { 1 }
 fn default_salt() -> String { String::from("0") }
 
+impl Default for User {
+    fn default() -> Self {
+        Self { appid: String::new(),
+               key:   String::new(),
+               qps:   default_qps(),
+               salt:  default_salt(), }
+    }
+}
+
 impl<'q> Query<'q> {
     /// 实例化
     pub fn new(q: &'q str, from: &'q str, to: &'q str) -> Self {

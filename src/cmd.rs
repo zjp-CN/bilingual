@@ -5,51 +5,21 @@ use std::path::PathBuf;
 
 /// bilingual
 /// 针对 markdown 文件的命令行翻译。
-#[derive(FromArgs, PartialEq, Debug)]
+#[derive(FromArgs, Debug)]
 pub struct Bilingual {
-    #[argh(subcommand)]
-    sub: SubCommand,
+    /// 翻译 API
+    #[argh(option, short = 'a')]
+    api: API,
 
-    /// 可选。打印 TopLevel（及子命令） 结构体。比如 `rustdx -p day`。
-    #[argh(switch, short = 'p', long = "print-struct")]
-    print_struct: bool,
-
-    /// 配置文件 bilingual.toml 的路径。默认是当前目录下。
-    #[argh(option, short = 't', default = "\"bilingual.toml\".into()")]
-    toml: std::path::PathBuf,
-}
-
-#[derive(FromArgs, PartialEq, Debug)]
-#[argh(subcommand)]
-enum SubCommand {
-    Baidu(Baidu),
-}
-
-impl Bilingual {
-    pub fn run(self) -> Result<Config> {
-        use SubCommand::*;
-        if self.print_struct {
-            println!("{:#?}", self);
-        }
-        let mut cf = Config::init(self.toml)?;
-        match self.sub {
-            Baidu(cmd) => cmd.run(&mut cf),
-        }
-        Ok(cf)
-    }
-}
-
-/// bilingual via Baidu API
-#[derive(FromArgs, PartialEq, Debug)]
-#[argh(subcommand, name = "baidu")]
-struct Baidu {
-    /// 百度翻译 API 提供的 appid。注意：
-    /// 命令行提供的 appid 和 key 会覆盖掉配置文件的信息。
+    /// 翻译 API 账户的 id。
+    /// 命令行提供的 id 和 key 会覆盖掉配置文件的信息。
     /// 换言之，未提供命令行的 appid 和 key，则使用配置文件的信息。
-    #[argh(option, short = 'a', default = "String::new()")]
-    appid: String,
+    #[argh(option, short = 'i', default = "String::new()")]
+    id: String,
 
-    /// 百度翻译 API 提供的 key。
+    /// 翻译 API 账户的 key。
+    /// 命令行提供的 id 和 key 会覆盖掉配置文件的信息。
+    /// 换言之，未提供命令行的 appid 和 key，则使用配置文件的信息。
     #[argh(option, short = 'k', default = "String::new()")]
     key: String,
 
@@ -73,27 +43,38 @@ struct Baidu {
     #[argh(option, short = 'd')]
     dirs: Vec<PathBuf>,
 
+    /// 配置文件 bilingual.toml 的路径。默认是当前目录下。
+    #[argh(option, short = 'l', default = "\"bilingual.toml\".into()")]
+    toml: std::path::PathBuf,
+
     /// 多行翻译文本：每行翻译文本以空格分隔。按照输入的顺序进行翻译。
     #[argh(positional)]
     multiquery: Vec<String>,
 }
 
-impl Baidu {
-    fn run(mut self, cf: &mut Config) {
-        if self.appid.len() != 0 {
-            cf.baidu.appid = self.appid;
+impl Bilingual {
+    pub fn run(mut self) -> Result<Config> {
+        #[cfg(debug_assertions)]
+        dbg!(&self);
+        let mut cf = Config::init(self.toml)?;
+        if !self.id.is_empty() {
+            if cf.tencent.is_none() {
+                cf.tencent = Some(translation_api_cn::tencent::User::default());
+            }
+            cf.tencent.as_mut().unwrap().id = self.id; // TODO
         }
-        if self.key.len() != 0 {
-            cf.baidu.key = self.key;
+        if !self.key.is_empty() {
+            cf.tencent.as_mut().unwrap().key = self.key; // TODO
         }
-        cf.api = API::Baidu;
+        cf.api = self.api;
         cf.src.from = self.from;
         cf.src.to = self.to;
         cf.src.files = self.files;
         cf.src.dirs = self.dirs;
-        if self.singlequery.len() != 0 {
+        if !self.singlequery.is_empty() {
             self.multiquery.push(self.singlequery);
         }
         cf.src.query = self.multiquery.join("\n\n");
+        Ok(cf)
     }
 }

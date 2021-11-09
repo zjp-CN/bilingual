@@ -1,28 +1,41 @@
 use anyhow::{Context, Result};
 use reqwest::blocking::{self, Client};
+use serde_json::from_slice;
 use std::path::{Path, PathBuf};
 use translation_api_cn::baidu::User as Baidu;
 use translation_api_cn::tencent::User as Tencent;
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Default, serde::Deserialize)]
 pub struct Config {
     #[serde(skip_deserializing)]
     pub src:     Src,
     #[serde(skip_deserializing)]
     pub api:     API,
-    pub baidu:   Baidu,
-    pub tencent: Tencent,
+    pub baidu:   Option<Baidu>,
+    pub tencent: Option<Tencent>,
 }
 
 #[derive(Debug)]
 pub enum API {
-    All,
+    None,
     Baidu,
     Tencent,
 }
 
 impl Default for API {
-    fn default() -> Self { Self::All }
+    fn default() -> Self { Self::None }
+}
+
+impl std::str::FromStr for API {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.as_bytes() {
+            b"baidu" => Ok(API::Baidu),
+            b"tencent" => Ok(API::Tencent),
+            _ => anyhow::bail!("请输入以下 API 之一: baidu | tencent "),
+        }
+    }
 }
 
 #[derive(Debug, Default)]
@@ -69,21 +82,31 @@ impl Iterator for Src {
 }
 
 impl Config {
-    #[rustfmt::skip]
     pub fn init(path: impl AsRef<std::path::Path>) -> Result<Self> {
-        Ok(
-            toml::from_slice(&std::fs::read(path)
-                             .with_context(|| "未找到 `bilingual.toml` 配置文件")?)
-                 .with_context(|| "请检查 `bilingual.toml` 配置文件的内容")?
-          )
+        if let Ok(f) = std::fs::read(path) {
+            Ok(toml::from_slice(&f).with_context(|| "请检查 `bilingual.toml` 配置文件的内容")?)
+        } else {
+            Ok(Self::default())
+        }
     }
 
-    /// 按照 [`files`][`Src::file`] / [`dirs`][`Src::dirs`] / [`query`][`Src::query`]
+    /// 按照 [`files`][`Src::file`] -> [`dirs`][`Src::dirs`] -> [`query`][`Src::query`] 的
     /// 顺序查询。
     pub fn do_single_query(&mut self) -> Option<String> {
         let md = self.src.next()?;
         match self.api {
-            API::Baidu => translate_via_baidu(&md, &self.src.from, &self.src.to, &self.baidu).ok(),
+            API::Baidu => {
+                self.baidu
+                    .as_ref()
+                    .map(|b| translate_via_baidu(&md, &self.src.from, &self.src.to, b).ok())
+                    .flatten()
+            }
+            API::Tencent => {
+                self.tencent
+                    .as_ref()
+                    .map(|b| translate_via_tencent(&md, &self.src.from, &self.src.to, b).ok())
+                    .flatten()
+            }
             _ => unimplemented!(),
         }
     }
@@ -100,17 +123,16 @@ pub fn translate_via_baidu(md: &str, from: &str, to: &str, user: &Baidu) -> Resu
     let md = crate::md::Md::new(md);
     let buf = md.extract();
     let mut query = Query::new(buf.trim(), from, to);
-    let output = md.done(
-                    serde_json::from_slice::<Response>(&send(&dbg!(query.sign(user)))?.bytes()?)?
-                        .dst()?.into_iter()
-                );
+    #[rustfmt::skip]
+    let output = md.done(from_slice::<Response>(&send(&dbg!(query.sign(user)))?.bytes()?)?.dst()?.into_iter());
     Ok(output)
 }
 
-pub fn translate_via_tencent(md: &str, from: &str, to: &str, user: &Tencent) -> Result<String> {
+pub fn translate_via_tencent(md: &str, from: &str, to: &str, user: &Tencent)
+                             -> std::result::Result<String, Box<dyn std::error::Error>> {
     use translation_api_cn::tencent::{Header, Query, Response, URL};
     #[rustfmt::skip]
-    pub fn send(header: &mut Header) -> Result<blocking::Response> {
+    pub fn send(header: &mut Header) -> std::result::Result<blocking::Response, Box<dyn std::error::Error>>{
         header.authorization()?; // 更改 query 或者 user 时必须重新生成验证信息
         let map = {
             use reqwest::header::{HeaderName, HeaderValue};
@@ -132,8 +154,9 @@ pub fn translate_via_tencent(md: &str, from: &str, to: &str, user: &Tencent) -> 
     let q: Vec<&str> = buf.trim().split("\n").collect();
     let query = Query::new(&q, from, to);
     let mut header = Header::new(user, &query);
-    #[rustfmt::skip]
-    let output =
-        md.done(serde_json::from_slice::<Response>(&send(&mut header)?.bytes()?)?.dst()?.into_iter().copied());
+    let bytes = send(&mut header)?.bytes()?;
+    // dbg!(&buf, &query, &header, &bytes);
+    let res = from_slice::<Response>(dbg!(&bytes))?;
+    let output = md.done(dbg!(res.dst())?.into_iter().copied());
     Ok(output)
 }
