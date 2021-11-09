@@ -2,14 +2,16 @@ use anyhow::{Context, Result};
 use reqwest::blocking;
 use std::path::{Path, PathBuf};
 use translation_api_cn::baidu::User as Baidu;
+use translation_api_cn::tencent::User as Tencent;
 
 #[derive(Debug, serde::Deserialize)]
 pub struct Config {
     #[serde(skip_deserializing)]
-    pub src:   Src,
+    pub src:     Src,
     #[serde(skip_deserializing)]
-    pub api:   API,
-    pub baidu: Baidu,
+    pub api:     API,
+    pub baidu:   Baidu,
+    pub tencent: Tencent,
 }
 
 #[derive(Debug)]
@@ -102,5 +104,36 @@ pub fn translate_via_baidu(md: &str, from: &str, to: &str, user: &Baidu) -> Resu
                     serde_json::from_slice::<Response>(&send(&dbg!(query.sign(user)))?.bytes()?)?
                         .dst()?.into_iter()
                 );
+    Ok(output)
+}
+
+pub fn translate_via_tencent(md: &str, from: &str, to: &str, user: &Tencent) -> Result<String> {
+    use translation_api_cn::Tencent::{Header, Query, Response, URL};
+    #[rustfmt::skip]
+    pub fn send(header: &mut Header) -> AnyResult<blocking::Response> {
+        header.authorization()?; // 更改 query 或者 user 时必须重新生成验证信息
+        let map = {
+            use reqwest::header::{HeaderName, HeaderValue};
+            use std::str::FromStr;
+            header.header()
+                  .into_iter()
+                  .map(|(k, v)| match (HeaderName::from_str(k), HeaderValue::from_str(v)) {
+                      (Ok(key), Ok(value)) => Some((key, value)),
+                      _ => None,
+                  })
+                  .flatten() // 遇到 Err 时，把 Ok 的部分 collect
+                  .collect()
+        };
+        Client::new().post(URL).headers(map).json(header.query).send().map_err(|e| e.into())
+    }
+
+    let md = crate::md::Md::new(md);
+    let buf = md.extract();
+    let q: Vec<&str> = buf.trim().split("\n").as_str().collect();
+    let query = Query::new(&q, from, to);
+    let mut header = Header::new(user, &query);
+    let output =
+        md.done(serde_json::from_slice::<Response>(&send(&mut header)?.bytes()?)?.dst()?
+                                                                                 .into_iter());
     Ok(output)
 }
