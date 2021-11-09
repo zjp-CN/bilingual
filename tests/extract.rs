@@ -4,13 +4,7 @@ use pulldown_cmark::{CowStr, Event, Parser, Tag};
 use pulldown_cmark_to_cmark::cmark;
 
 /// 初步排除不需要的 Event；可能废弃
-pub fn filter_text(event: &Event) -> bool {
-    match event {
-        Event::Text(_) => true,
-        // 排除行间代码
-        _ => false,
-    }
-}
+pub fn filter_text(event: &Event) -> bool { matches!(event, Event::Text(_)) }
 
 #[test]
 fn base() {

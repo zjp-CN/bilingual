@@ -17,8 +17,8 @@ fn main() {
     let mut options = Options::all();
     options.remove(Options::ENABLE_SMART_PUNCTUATION);
 
-    let mut outopt = OutOptions::default();
-    outopt.code_block_backticks = 3;
+    let outopt = OutOptions { code_block_backticks: 3,
+                              ..OutOptions::default() };
 
     cmark_with_options(Parser::new_ext(md, options), &mut buf, None, outopt).unwrap();
     stdout().write_all(buf.as_bytes()).unwrap();

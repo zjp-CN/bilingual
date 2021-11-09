@@ -4,6 +4,7 @@ use pulldown_cmark::{
     Options,
     Tag::*,
 };
+use pulldown_cmark_to_cmark::Options as OutOptions;
 
 pub struct Md<'e> {
     /// 解析 md 文件的事件
@@ -63,10 +64,9 @@ pub fn cmark_opt() -> Options {
 }
 
 /// 把 `pulldown_cmark_to_cmark::Options` 的 `code_block_backticks` 设置为 3
-pub fn cmark_to_cmark_opt() -> pulldown_cmark_to_cmark::Options {
-    let mut opt = pulldown_cmark_to_cmark::Options::default();
-    opt.code_block_backticks = 3;
-    opt
+pub fn cmark_to_cmark_opt() -> OutOptions {
+    OutOptions { code_block_backticks: 3,
+                 ..OutOptions::default() }
 }
 
 const MAXIMUM_EVENTS: usize = 4;
