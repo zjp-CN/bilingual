@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use reqwest::blocking;
 use std::path::{Path, PathBuf};
-use translation_api_cn::baidu::{User as Baidu, API as BAIDU_API};
+use translation_api_cn::baidu::User as Baidu;
 
 #[derive(Debug, serde::Deserialize)]
 pub struct Config {
@@ -16,6 +16,7 @@ pub struct Config {
 pub enum API {
     All,
     Baidu,
+    Tencent,
 }
 
 impl Default for API {
@@ -75,33 +76,31 @@ impl Config {
           )
     }
 
-    pub fn user(&self) -> &Baidu {
-        match self.api {
-            API::Baidu => &self.baidu,
-            _ => &self.baidu,
-        }
-    }
-
     /// 按照 [`files`][`Src::file`] / [`dirs`][`Src::dirs`] / [`query`][`Src::query`]
     /// 顺序查询。
     pub fn do_single_query(&mut self) -> Option<String> {
         let md = self.src.next()?;
-        translate(&md, &self.src.from, &self.src.to, &self.user()).ok()
+        match self.api {
+            API::Baidu => translate_via_baidu(&md, &self.src.from, &self.src.to, &self.baidu).ok(),
+            _ => unimplemented!(),
+        }
     }
 }
 
-pub fn send<T: serde::Serialize + ?Sized>(form: &T) -> Result<blocking::Response> {
-    let response = blocking::Client::new().post(BAIDU_API).form(form).send()?;
-    debug_assert!(response.error_for_status_ref().is_ok());
-    Ok(response)
-}
+pub fn translate_via_baidu(md: &str, from: &str, to: &str, user: &Baidu) -> Result<String> {
+    use translation_api_cn::baidu::{Query, Response, API};
+    pub fn send<T: serde::Serialize + ?Sized>(form: &T) -> Result<blocking::Response> {
+        let response = blocking::Client::new().post(API).form(form).send()?;
+        debug_assert!(response.error_for_status_ref().is_ok());
+        Ok(response)
+    }
 
-pub fn translate(md: &str, from: &str, to: &str, user: &Baidu) -> Result<String> {
-    use translation_api_cn::baidu::{Query, Response};
     let md = crate::md::Md::new(md);
     let buf = md.extract();
     let mut query = Query::new(buf.trim(), from, to);
-    let output = md.done(serde_json::from_slice::<Response>(&send(&dbg!(query.sign(user)))?
-                            .bytes()?)?.dst()?.into_iter());
+    let output = md.done(
+                    serde_json::from_slice::<Response>(&send(&dbg!(query.sign(user)))?.bytes()?)?
+                        .dst()?.into_iter()
+                );
     Ok(output)
 }
