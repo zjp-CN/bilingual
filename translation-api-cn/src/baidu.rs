@@ -92,8 +92,14 @@ impl<'f> Form<'f> {
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum Response<'r> {
-    #[serde(borrow)]
-    Ok(Success<'r>),
+    Ok {
+        from: &'r str,
+        to:   &'r str,
+        /// 原文中被 `\n` 分隔的多条翻译文本。
+        #[serde(rename = "trans_result")]
+        #[serde(borrow)]
+        res:  Vec<SrcDst<'r>>,
+    },
     Err(Error),
 }
 
@@ -105,7 +111,7 @@ impl<'r> Response<'r> {
     ///       [`BaiduError`] 一次分配的例子见 `tests/baidu.rs`。
     pub fn dst(&self) -> Result<Vec<&str>, Error> {
         match self {
-            Response::Ok(s) => Ok(s.res.iter().map(|x| x.dst.as_ref()).collect()),
+            Response::Ok { res, .. } => Ok(res.iter().map(|x| x.dst.as_ref()).collect()),
             Response::Err(e) => Err(e.clone()),
         }
     }
@@ -113,7 +119,7 @@ impl<'r> Response<'r> {
     /// 提取翻译内容。无翻译内容时，返回错误。
     pub fn dst_owned(self) -> Result<Vec<String>, Error> {
         match self {
-            Response::Ok(s) => Ok(s.res.into_iter().map(|x| x.dst.into()).collect()),
+            Response::Ok { res, .. } => Ok(res.into_iter().map(|x| x.dst.into()).collect()),
             Response::Err(e) => Err(e),
         }
     }
@@ -138,7 +144,7 @@ impl<'r> Response<'r> {
     /// 无翻译内容时，返回 `None`。
     pub fn is_borrowed(&self) -> Option<bool> {
         match self {
-            Response::Ok(Success { res, .. }) => {
+            Response::Ok { res, .. } => {
                 if res.len() != 0 {
                     Some(matches!(res[0].dst, Cow::Borrowed(_)))
                 } else {
@@ -148,17 +154,6 @@ impl<'r> Response<'r> {
             Response::Err(_) => None,
         }
     }
-}
-
-/// 返回的数据
-#[derive(Debug, Deserialize)]
-pub struct Success<'r> {
-    pub from: &'r str,
-    pub to:   &'r str,
-    /// 原文中被 `\n` 分隔的多条翻译文本。
-    #[serde(rename = "trans_result")]
-    #[serde(borrow)]
-    pub res:  Vec<SrcDst<'r>>,
 }
 
 /// 单条翻译文本
