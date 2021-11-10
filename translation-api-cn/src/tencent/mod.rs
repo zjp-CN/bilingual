@@ -11,6 +11,7 @@ mod region;
 pub use region::Region;
 
 // 预计会被删除的模块
+#[cfg(test)]
 pub mod ser_json;
 
 mod hash;
@@ -80,8 +81,10 @@ impl<'q> Query<'q> {
     // `{"Error":{"Code":"AuthFailure.SignatureFailure","Message":"The provided credentials
     // could not be validated. Please check your signature is correct."}"}}`
     // 。
+    #[cfg(test)]
     pub fn to_hashed2(&self) -> Result<String> { Ok(hash256(&ser_json::to_vec(self)?)) }
 
+    #[cfg(test)]
     pub fn to_json_string2(&self) -> Result<String> {
         ser_json::to_string(self).map_err(|e| e.into())
     }
