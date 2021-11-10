@@ -84,7 +84,7 @@ impl Iterator for Src {
 impl Config {
     pub fn init(path: impl AsRef<std::path::Path>) -> Result<Self> {
         if let Ok(f) = std::fs::read(path) {
-            Ok(toml::from_slice(&f).with_context(|| "请检查 `bilingual.toml` 配置文件的内容")?)
+            toml::from_slice(&f).with_context(|| "请检查 `bilingual.toml` 配置文件的内容")
         } else {
             Ok(Self::default())
         }
@@ -105,7 +105,7 @@ impl Config {
         self.baidu
             .as_ref()
             .or_else(|| {
-                println!("请设置百度翻译 API 帐号的 id 和 key");
+                eprintln!("请设置百度翻译 API 帐号的 id 和 key");
                 None
             })
             .map(|b| via_baidu(md, &self.src.from, &self.src.to, b).or_else(print_err).ok())
@@ -116,7 +116,7 @@ impl Config {
         self.tencent
             .as_ref()
             .or_else(|| {
-                println!("请设置腾讯云 API 帐号的 id 和 key");
+                eprintln!("请设置腾讯云 API 帐号的 id 和 key");
                 None
             })
             .map(|b| via_tencent(md, &self.src.from, &self.src.to, b).or_else(print_err).ok())
@@ -124,7 +124,7 @@ impl Config {
     }
 }
 
-fn print_err(e: anyhow::Error) -> std::result::Result<String, ()> { Err(println!("{}", e)) }
+fn print_err(e: anyhow::Error) -> Result<String, ()> { Err(println!("{}", e)) }
 
 pub fn via_baidu(md: &str, from: &str, to: &str, user: &Baidu) -> Result<String> {
     use translation_api_cn::baidu::{Query, Response, URL};

@@ -108,8 +108,8 @@ pub struct User {
     pub qps:       u8,
 }
 
-fn default_qps() -> u8 { 5 }
-fn default_projectid() -> u8 { 0 }
+pub fn default_qps() -> u8 { 5 }
+pub fn default_projectid() -> u8 { 0 }
 
 impl Default for User {
     fn default() -> Self {

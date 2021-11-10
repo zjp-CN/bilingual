@@ -1,5 +1,5 @@
 use crate::config::{Config, API};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use argh::FromArgs;
 use std::path::PathBuf;
 
@@ -52,19 +52,19 @@ pub struct Bilingual {
     multiquery: Vec<String>,
 }
 
+/// 命令行目前只输入基本的 id 和 key，指定其他请求选项需指定 toml 文件。
+/// 比如指定：
+/// - 百度：qps、salt
+/// - 腾讯：projectid
 impl Bilingual {
     pub fn run(mut self) -> Result<Config> {
         #[cfg(debug_assertions)]
         dbg!(&self);
         let mut cf = Config::init(self.toml)?;
-        if !self.id.is_empty() {
-            if cf.tencent.is_none() {
-                cf.tencent = Some(translation_api_cn::tencent::User::default());
-            }
-            cf.tencent.as_mut().unwrap().id = self.id; // TODO
-        }
-        if !self.key.is_empty() {
-            cf.tencent.as_mut().unwrap().key = self.key; // TODO
+        match self.api {
+            API::Baidu => baidu(self.id, self.key, &mut cf)?,
+            API::Tencent => tencent(self.id, self.key, &mut cf)?,
+            _ => (),
         }
         cf.api = self.api;
         cf.src.from = self.from;
@@ -77,4 +77,26 @@ impl Bilingual {
         cf.src.query = self.multiquery.join("\n\n");
         Ok(cf)
     }
+}
+
+fn tencent(id: String, key: String, cf: &mut Config) -> Result<()> {
+    cf.tencent.replace(translation_api_cn::tencent::User::default());
+    if !id.is_empty() {
+        cf.tencent.as_mut().ok_or(anyhow!("覆盖腾讯云 API.id 时出错"))?.id = id;
+    }
+    if !key.is_empty() {
+        cf.tencent.as_mut().ok_or(anyhow!("覆盖腾讯云 API.key 时出错"))?.key = key;
+    }
+    Ok(())
+}
+
+fn baidu(id: String, key: String, cf: &mut Config) -> Result<()> {
+    cf.baidu.replace(translation_api_cn::baidu::User::default());
+    if !id.is_empty() {
+        cf.baidu.as_mut().ok_or(anyhow!("覆盖百度翻译 API.id 时出错"))?.appid = id;
+    }
+    if !key.is_empty() {
+        cf.baidu.as_mut().ok_or(anyhow!("覆盖百度翻译 API.key 时出错"))?.key = key;
+    }
+    Ok(())
 }
