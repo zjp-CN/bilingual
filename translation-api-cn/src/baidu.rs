@@ -39,8 +39,8 @@ pub struct User {
     pub salt:  String,
 }
 
-pub fn default_qps() -> u8 { 1 }
-pub fn default_salt() -> String { String::from("0") }
+fn default_qps() -> u8 { 1 }
+fn default_salt() -> String { String::from("0") }
 
 impl Default for User {
     fn default() -> Self {
