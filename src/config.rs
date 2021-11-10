@@ -165,7 +165,7 @@ pub fn via_tencent(md: &str, from: &str, to: &str, user: &Tencent) -> Result<Str
     let md = crate::md::Md::new(md);
     let buf = md.extract();
     let q: Vec<&str> = buf.trim().split("\n").collect();
-    let query = Query::new(&q, from, to);
+    let query = Query::new(&q, from, to, user.projectid);
     let mut header = Header::new(user, &query);
     let bytes = send(&mut header)?.bytes()?;
     // dbg!(&buf, &query, &header, &bytes);

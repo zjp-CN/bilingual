@@ -65,8 +65,8 @@ pub struct Query<'q> {
 
 impl<'q> Query<'q> {
     #[rustfmt::skip]
-    pub fn new(q: &'q [&'q str], from: &'q str, to: &'q str) -> Self {
-        Self { q, from, to, projectid: 0 }
+    pub fn new(q: &'q [&'q str], from: &'q str, to: &'q str, projectid: u8) -> Self {
+        Self { q, from, to, projectid }
     }
 
     pub fn to_hashed(&self) -> Result<String> { Ok(hash256(&serde_json::to_vec(self)?)) }
