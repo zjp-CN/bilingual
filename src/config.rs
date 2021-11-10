@@ -95,24 +95,38 @@ impl Config {
     pub fn do_single_query(&mut self) -> Option<String> {
         let md = self.src.next()?;
         match self.api {
-            API::Baidu => {
-                self.baidu
-                    .as_ref()
-                    .map(|b| translate_via_baidu(&md, &self.src.from, &self.src.to, b).ok())
-                    .flatten()
-            }
-            API::Tencent => {
-                self.tencent
-                    .as_ref()
-                    .map(|b| translate_via_tencent(&md, &self.src.from, &self.src.to, b).ok())
-                    .flatten()
-            }
+            API::Baidu => self.do_single_query_baidu(&md),
+            API::Tencent => self.do_single_query_tencent(&md),
             _ => unimplemented!(),
         }
     }
+
+    pub fn do_single_query_baidu(&self, md: &str) -> Option<String> {
+        self.baidu
+            .as_ref()
+            .or_else(|| {
+                println!("请设置百度翻译 API 帐号的 id 和 key");
+                None
+            })
+            .map(|b| via_baidu(md, &self.src.from, &self.src.to, b).or_else(print_err).ok())
+            .flatten()
+    }
+
+    pub fn do_single_query_tencent(&self, md: &str) -> Option<String> {
+        self.tencent
+            .as_ref()
+            .or_else(|| {
+                println!("请设置腾讯云 API 帐号的 id 和 key");
+                None
+            })
+            .map(|b| via_tencent(md, &self.src.from, &self.src.to, b).or_else(print_err).ok())
+            .flatten()
+    }
 }
 
-pub fn translate_via_baidu(md: &str, from: &str, to: &str, user: &Baidu) -> Result<String> {
+fn print_err(e: anyhow::Error) -> std::result::Result<String, ()> { Err(println!("{}", e)) }
+
+pub fn via_baidu(md: &str, from: &str, to: &str, user: &Baidu) -> Result<String> {
     use translation_api_cn::baidu::{Query, Response, URL};
     pub fn send<T: serde::Serialize + ?Sized>(form: &T) -> Result<blocking::Response> {
         let response = Client::new().post(URL).form(form).send()?;
@@ -128,11 +142,10 @@ pub fn translate_via_baidu(md: &str, from: &str, to: &str, user: &Baidu) -> Resu
     Ok(output)
 }
 
-pub fn translate_via_tencent(md: &str, from: &str, to: &str, user: &Tencent)
-                             -> std::result::Result<String, Box<dyn std::error::Error>> {
+pub fn via_tencent(md: &str, from: &str, to: &str, user: &Tencent) -> Result<String> {
     use translation_api_cn::tencent::{Header, Query, Response, URL};
     #[rustfmt::skip]
-    pub fn send(header: &mut Header) -> std::result::Result<blocking::Response, Box<dyn std::error::Error>>{
+    pub fn send(header: &mut Header) -> Result<blocking::Response> {
         header.authorization()?; // 更改 query 或者 user 时必须重新生成验证信息
         let map = {
             use reqwest::header::{HeaderName, HeaderValue};
