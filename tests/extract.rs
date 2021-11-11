@@ -228,6 +228,298 @@ Hi!
 ";
 
 #[test]
+fn md_limit_test() {
+    let mut md = Md::new(MD);
+    let buf = md.extract_with_bytes();
+    assert_debug_snapshot!(md.bytes_next_range().map(|(l, i)| (l, &buf[i])).collect::<Vec<_>>(), @r###"
+    [
+        (
+            16,
+            "I/O event queue\n",
+        ),
+        (
+            317,
+            "We add the `callback_id` to the collection of callbacks to run. We pass in `Js::Undefined` since we'll not actually pass any data along here. You'll see why when we reach the Http module chapter, but the main point is that the I/O queue doesn't return any data itself, it just tells us that data is ready to be read.\n",
+        ),
+        (
+            4,
+            "Hi!\n",
+        ),
+        (
+            305,
+            "Hi! Why even keep track of how many `epoll_events` are pending? We don't use this value here, but I added it to make it easier to create some `print` statements showing the status of our runtime at different points. However, there are good reasons to keep track of these events even if we don't use them.\n",
+        ),
+        (
+            184,
+            "One area we're taking shortcuts on all the way here is security. If someone were to build a public facing server out of this, we need to account for slow networks and malicious users.\n",
+        ),
+    ]
+    "###);
+
+    assert_debug_snapshot!(md, @r###"
+    Md {
+        events: [
+            Start(
+                Heading(
+                    1,
+                ),
+            ),
+            Text(
+                Borrowed(
+                    "I/O event queue",
+                ),
+            ),
+            End(
+                Heading(
+                    1,
+                ),
+            ),
+            Start(
+                Paragraph,
+            ),
+            Text(
+                Borrowed(
+                    "We add the ",
+                ),
+            ),
+            Code(
+                Borrowed(
+                    "callback_id",
+                ),
+            ),
+            Text(
+                Borrowed(
+                    " to the collection of callbacks to run. We pass",
+                ),
+            ),
+            SoftBreak,
+            Text(
+                Borrowed(
+                    "in ",
+                ),
+            ),
+            Code(
+                Borrowed(
+                    "Js::Undefined",
+                ),
+            ),
+            Text(
+                Borrowed(
+                    " since we'll not actually pass any data along here. You'll see",
+                ),
+            ),
+            SoftBreak,
+            Text(
+                Borrowed(
+                    "why when we reach the ",
+                ),
+            ),
+            Start(
+                Link(
+                    Inline,
+                    Borrowed(
+                        "./8_3_http_module.md",
+                    ),
+                    Borrowed(
+                        "",
+                    ),
+                ),
+            ),
+            Text(
+                Borrowed(
+                    "Http module",
+                ),
+            ),
+            End(
+                Link(
+                    Inline,
+                    Borrowed(
+                        "./8_3_http_module.md",
+                    ),
+                    Borrowed(
+                        "",
+                    ),
+                ),
+            ),
+            Text(
+                Borrowed(
+                    " chapter, but the main",
+                ),
+            ),
+            SoftBreak,
+            Text(
+                Borrowed(
+                    "point is that the I/O queue doesn't return any data itself, it just tells us that",
+                ),
+            ),
+            SoftBreak,
+            Text(
+                Borrowed(
+                    "data is ready to be read.",
+                ),
+            ),
+            End(
+                Paragraph,
+            ),
+            Start(
+                CodeBlock(
+                    Fenced(
+                        Borrowed(
+                            "rust, ignored",
+                        ),
+                    ),
+                ),
+            ),
+            Text(
+                Borrowed(
+                    "fn process_epoll_events(&mut self, event_id: usize) {\n    self.callbacks_to_run.push((event_id, Js::Undefined));\n    self.epoll_pending_events -= 1;\n}\n",
+                ),
+            ),
+            End(
+                CodeBlock(
+                    Fenced(
+                        Borrowed(
+                            "rust, ignored",
+                        ),
+                    ),
+                ),
+            ),
+            Start(
+                Paragraph,
+            ),
+            Text(
+                Borrowed(
+                    "Hi!",
+                ),
+            ),
+            End(
+                Paragraph,
+            ),
+            Start(
+                BlockQuote,
+            ),
+            Start(
+                Paragraph,
+            ),
+            Text(
+                Borrowed(
+                    "Hi!",
+                ),
+            ),
+            SoftBreak,
+            Start(
+                Strong,
+            ),
+            Text(
+                Borrowed(
+                    "Why even keep track of how many ",
+                ),
+            ),
+            Code(
+                Borrowed(
+                    "epoll_events",
+                ),
+            ),
+            Text(
+                Borrowed(
+                    " are pending?",
+                ),
+            ),
+            End(
+                Strong,
+            ),
+            SoftBreak,
+            Text(
+                Borrowed(
+                    "We don't use this value here, but I added it to make it easier to create",
+                ),
+            ),
+            SoftBreak,
+            Text(
+                Borrowed(
+                    "some ",
+                ),
+            ),
+            Code(
+                Borrowed(
+                    "print",
+                ),
+            ),
+            Text(
+                Borrowed(
+                    " statements showing the status of our runtime at different points.",
+                ),
+            ),
+            SoftBreak,
+            Text(
+                Borrowed(
+                    "However, there are good reasons to keep track of these events even if we don't use them.",
+                ),
+            ),
+            End(
+                Paragraph,
+            ),
+            Start(
+                Paragraph,
+            ),
+            Text(
+                Borrowed(
+                    "One area we're taking shortcuts on all the way here is security. If someone were",
+                ),
+            ),
+            SoftBreak,
+            Text(
+                Borrowed(
+                    "to build a public facing server out of this, we need to account for slow networks",
+                ),
+            ),
+            SoftBreak,
+            Text(
+                Borrowed(
+                    "and malicious users.",
+                ),
+            ),
+            End(
+                Paragraph,
+            ),
+            End(
+                BlockQuote,
+            ),
+        ],
+        raw_len: 1055,
+        output: "",
+        bytes: [
+            Bytes {
+                pos: 0,
+                len: 16,
+            },
+            Bytes {
+                pos: 16,
+                len: 317,
+            },
+            Bytes {
+                pos: 333,
+                len: 4,
+            },
+            Bytes {
+                pos: 337,
+                len: 305,
+            },
+            Bytes {
+                pos: 642,
+                len: 184,
+            },
+            Bytes {
+                pos: 826,
+                len: 0,
+            },
+        ],
+        chars: [],
+    }
+    "###);
+}
+
+#[test]
 fn md_split_append() {
     fn split(raw: &str) -> String {
         let md = Md::new(raw);

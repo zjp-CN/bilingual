@@ -108,11 +108,11 @@ pub struct User {
     pub projectid: u8,
     /// 每秒并发请求，默认为 5。
     #[serde(default = "default_qps")]
-    #[serde(skip_deserializing)]
+    // #[serde(skip_deserializing)]
     pub qps:       u8,
     /// 每秒并发请求的限制，默认为 Char(2000)。
     #[serde(default = "default_limit")]
-    #[serde(skip_deserializing)]
+    // #[serde(skip_deserializing)]
     pub limit:     Limit,
 }
 

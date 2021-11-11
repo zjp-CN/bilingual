@@ -44,7 +44,7 @@ pub struct User {
     pub qps:    u8,
     /// 每秒并发请求的限制，默认为 Char(5000)。
     #[serde(default = "default_limit")]
-    #[serde(skip_deserializing)]
+    // #[serde(skip_deserializing)]
     pub limit:  Limit,
     /// 术语词典子库 ID
     #[serde(default)]
