@@ -1,10 +1,11 @@
+use crate::md::Md;
 use anyhow::{Context, Result};
 use reqwest::blocking::{self, Client};
 use serde_json::from_slice;
 use std::path::{Path, PathBuf};
-use translation_api_cn::baidu::User as Baidu;
-use translation_api_cn::niutrans::User as Niutrans;
-use translation_api_cn::tencent::User as Tencent;
+use translation_api_cn::{
+    baidu::User as Baidu, niutrans::User as Niutrans, tencent::User as Tencent,
+};
 
 #[derive(Debug, Default, serde::Deserialize)]
 pub struct Config {
@@ -37,7 +38,7 @@ impl std::str::FromStr for API {
             b"baidu" => Ok(API::Baidu),
             b"tencent" => Ok(API::Tencent),
             b"niutrans" => Ok(API::Niutrans),
-            _ => anyhow::bail!("请输入以下 API 之一: baidu | tencent "),
+            _ => anyhow::bail!("请输入以下 API 之一: baidu | tencent | niutrans"),
         }
     }
 }
@@ -97,16 +98,17 @@ impl Config {
     /// 按照 [`files`][`Src::file`] -> [`dirs`][`Src::dirs`] -> [`query`][`Src::query`] 的
     /// 顺序查询。
     pub fn do_single_query(&mut self) -> Option<String> {
-        let md = self.src.next()?;
+        let src = self.src.next()?;
+        let md = Md::new(&src);
         match self.api {
-            API::Baidu => self.do_single_query_baidu(&md),
-            API::Tencent => self.do_single_query_tencent(&md),
-            API::Niutrans => self.do_single_query_niutrans(&md),
+            API::Baidu => self.do_single_query_baidu(md),
+            API::Tencent => self.do_single_query_tencent(md),
+            API::Niutrans => self.do_single_query_niutrans(md),
             _ => unimplemented!(),
         }
     }
 
-    pub fn do_single_query_baidu(&self, md: &str) -> Option<String> {
+    pub fn do_single_query_baidu(&self, md: Md) -> Option<String> {
         self.baidu
             .as_ref()
             .or_else(|| {
@@ -117,7 +119,7 @@ impl Config {
             .flatten()
     }
 
-    pub fn do_single_query_tencent(&self, md: &str) -> Option<String> {
+    pub fn do_single_query_tencent(&self, md: Md) -> Option<String> {
         self.tencent
             .as_ref()
             .or_else(|| {
@@ -128,7 +130,7 @@ impl Config {
             .flatten()
     }
 
-    pub fn do_single_query_niutrans(&self, md: &str) -> Option<String> {
+    pub fn do_single_query_niutrans(&self, md: Md) -> Option<String> {
         self.niutrans
             .as_ref()
             .or_else(|| {
@@ -149,23 +151,21 @@ fn send<T: serde::Serialize + ?Sized>(url: &str, form: &T) -> Result<blocking::R
     Ok(response)
 }
 
-pub fn via_baidu(md: &str, from: &str, to: &str, user: &Baidu) -> Result<String> {
+pub fn via_baidu(md: Md, from: &str, to: &str, user: &Baidu) -> Result<String> {
     use translation_api_cn::baidu::{Query, Response, URL};
-    let md = crate::md::Md::new(md);
     let buf = md.extract();
     let mut query = Query::new(buf.trim(), from, to);
     Ok(md.done(from_slice::<Response>(&send(URL, &dbg!(query.sign(user)))?.bytes()?)?.dst()?))
 }
 
-pub fn via_niutrans(md: &str, from: &str, to: &str, user: &Niutrans) -> Result<String> {
+pub fn via_niutrans(md: Md, from: &str, to: &str, user: &Niutrans) -> Result<String> {
     use translation_api_cn::niutrans::{Query, Response, URL};
-    let md = crate::md::Md::new(md);
     let buf = md.extract();
     let query = Query::new(buf.trim(), from, to);
     Ok(md.done(from_slice::<Response>(&send(URL, &query.form(user))?.bytes()?)?.dst()?))
 }
 
-pub fn via_tencent(md: &str, from: &str, to: &str, user: &Tencent) -> Result<String> {
+pub fn via_tencent(md: Md, from: &str, to: &str, user: &Tencent) -> Result<String> {
     use translation_api_cn::tencent::{Header, Query, Response, URL};
     #[rustfmt::skip]
     fn send2(header: &mut Header) -> Result<blocking::Response> {
@@ -185,7 +185,6 @@ pub fn via_tencent(md: &str, from: &str, to: &str, user: &Tencent) -> Result<Str
         Client::new().post(URL).headers(map).json(header.query).send().map_err(|e| e.into())
     }
 
-    let md = crate::md::Md::new(md);
     let buf = md.extract();
     let q: Vec<&str> = buf.trim().split("\n").collect();
     let query = Query::new(&q, from, to, user.projectid);
