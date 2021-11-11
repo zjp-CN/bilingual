@@ -88,7 +88,7 @@ fn main() -> Result<()> {
          query, text, response.is_borrowed(), response);
 
     // 从响应数据取翻译结果（多种等价写法）：
-    println!("翻译结果：{:#?}", dst); // dst 是借用的
+    println!("翻译结果：{:#?}", dst.collect::<Vec<_>>()); // dst 是借用的
     log!("翻译结果(the same)：{:#?}", response.dst_owned()?); // dst 是有所有权的
 
     // dst 是有所有权的：链式写法

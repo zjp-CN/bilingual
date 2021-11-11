@@ -118,9 +118,9 @@ impl<'r> Response<'r> {
     /// TODO: [`BaiduError`] 会经过两次内存分配，这种设计的原因是
     ///       `anyhow` crate 要求错误的类型必须是 `'static`。
     ///       [`BaiduError`] 一次分配的例子见 `tests/baidu.rs`。
-    pub fn dst(&self) -> Result<Vec<&str>, Error> {
+    pub fn dst(&self) -> Result<impl Iterator<Item = &str>, Error> {
         match self {
-            Response::Ok { res, .. } => Ok(res.iter().map(|x| x.dst.as_ref()).collect()),
+            Response::Ok { res, .. } => Ok(res.iter().map(|x| x.dst.as_ref())),
             Response::Err(e) => Err(e.clone()),
         }
     }

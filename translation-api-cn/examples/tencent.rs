@@ -20,7 +20,7 @@ fn main() -> AnyResult<()> {
     let mut header = Header::new(&user, &query);
     let bytes = send(&mut header)?.bytes()?;
     let json: Response = serde_json::from_slice(&bytes)?;
-    dbg!(&json, json.dst()?, json.is_borrowed());
+    dbg!(&json, json.dst()?.collect::<Vec<_>>(), json.is_borrowed());
     dbg!(json.dst_owned()?);
     Ok(())
 }

@@ -9,9 +9,9 @@ pub struct Response<'r> {
 
 impl<'r> Response<'r> {
     /// 提取翻译内容。
-    pub fn dst(&self) -> Result<&[&str], ResponseError> {
+    pub fn dst(&self) -> Result<impl Iterator<Item = &str>, ResponseError> {
         match &self.res {
-            ResponseInner::Ok { res, .. } => Ok(res),
+            ResponseInner::Ok { res, .. } => Ok(res.into_iter().copied()),
             ResponseInner::Err { error, .. } => Err(error.clone()),
         }
     }
@@ -172,7 +172,7 @@ fn response_test() -> Result<(), Box<dyn std::error::Error>> {
                "Response { res: Ok { id: \"7895050c-b0bd-45f2-ba88-c95c509020f2\", from: \"en\", \
                 to: \"zh\", res: [\"嗨\", \"那里\"] } }");
     assert!(res.dst().is_ok());
-    assert_eq!(res.dst()?, &["嗨", "那里"]);
+    assert_eq!(&res.dst()?.collect::<Vec<_>>(), &["嗨", "那里"]);
 
     let error = r#"{"Response":{"Error":{"Code":"AuthFailure.SignatureFailure","Message":"The provided credentials could not be validated. Please check your signature is correct."},"RequestId":"47546ee3-767c-4671-8f90-2c02c7484a42"}}"#;
     let res: Response = serde_json::from_str(error)?;

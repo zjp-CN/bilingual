@@ -18,9 +18,10 @@ hmac = {version = "0.11", optional = true, features = ["std"]}
 time = {version = "0.3", optional = true}
 
 [features]
-default = ["baidu", "tencent"]
+default = ["baidu", "tencent", "niutrans"]
 baidu = ["md5"]
 tencent = ["sha2", "hmac", "time", "serde_json"]
+niutrans = []
 
 [dev-dependencies]
 # tokio = {version = "1", features = ["rt", "rt-multi-thread", "macros"]}

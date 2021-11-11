@@ -138,7 +138,7 @@ pub fn via_baidu(md: &str, from: &str, to: &str, user: &Baidu) -> Result<String>
     let buf = md.extract();
     let mut query = Query::new(buf.trim(), from, to);
     #[rustfmt::skip]
-    let output = md.done(from_slice::<Response>(&send(&dbg!(query.sign(user)))?.bytes()?)?.dst()?.into_iter());
+    let output = md.done(from_slice::<Response>(&send(&dbg!(query.sign(user)))?.bytes()?)?.dst()?);
     Ok(output)
 }
 
@@ -170,6 +170,6 @@ pub fn via_tencent(md: &str, from: &str, to: &str, user: &Tencent) -> Result<Str
     let bytes = send(&mut header)?.bytes()?;
     // dbg!(&buf, &query, &header, &bytes);
     let res = from_slice::<Response>(dbg!(&bytes))?;
-    let output = md.done(dbg!(res.dst())?.into_iter().copied());
+    let output = md.done(res.dst()?);
     Ok(output)
 }
