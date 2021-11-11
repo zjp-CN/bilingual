@@ -153,14 +153,10 @@ impl<'r> Response<'r> {
     /// 无翻译内容时，返回 `None`。
     pub fn is_borrowed(&self) -> Option<bool> {
         match self {
-            Response::Ok { res, .. } => {
-                if !res.is_empty() {
-                    Some(matches!(res[0].dst, Cow::Borrowed(_)))
-                } else {
-                    None
-                }
+            Response::Ok { res, .. } if !res.is_empty() => {
+                Some(matches!(res[0].dst, Cow::Borrowed(_)))
             }
-            Response::Err(_) => None,
+            _ => None,
         }
     }
 }
@@ -188,6 +184,7 @@ pub struct Error {
     pub msg:  String,
 }
 
+impl std::error::Error for Error {}
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f,
@@ -197,8 +194,6 @@ impl std::fmt::Display for Error {
                self.solution())
     }
 }
-
-impl std::error::Error for Error {}
 
 impl Error {
     /// 参考：[错误码列表](https://fanyi-api.baidu.com/doc/21)
