@@ -1,3 +1,4 @@
+use crate::Limit;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
@@ -31,23 +32,30 @@ pub struct User {
     pub appid: String,
     /// 用户申请得到的密钥，这个字段用于生成 MD5 ，不用于直接构造请求内容
     pub key:   String,
-    /// TODO: QPS：这涉及并发请求，允许不填，默认为 1
-    #[serde(default = "default_qps")]
-    pub qps:   u8,
     /// 随机的字母或数字的字符串
     #[serde(default = "default_salt")]
     pub salt:  String,
+    /// TODO: QPS：这涉及并发请求，允许不填，默认为 1。
+    /// 高级版用户可设置为 10。
+    #[serde(default = "default_qps")]
+    pub qps:   u8,
+    /// 每秒并发请求的限制，默认为 Byte(6000)。
+    #[serde(default = "default_limit")]
+    #[serde(skip_deserializing)]
+    pub limit: Limit,
 }
 
 fn default_qps() -> u8 { 1 }
 fn default_salt() -> String { String::from("0") }
+fn default_limit() -> Limit { Limit::Byte(6000) }
 
 impl Default for User {
     fn default() -> Self {
         Self { appid: String::new(),
                key:   String::new(),
+               salt:  default_salt(),
                qps:   default_qps(),
-               salt:  default_salt(), }
+               limit: default_limit(), }
     }
 }
 

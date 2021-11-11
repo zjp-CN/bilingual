@@ -1,3 +1,4 @@
+use crate::Limit;
 use std::borrow::Cow;
 
 use serde::{Deserialize, Serialize};
@@ -38,9 +39,13 @@ impl<'q> Query<'q> {
 pub struct User {
     /// 用户申请得到的密钥
     pub key:    String,
-    /// TODO: QPS：这涉及并发请求，允许不填，默认为 50
+    /// 默认为 50
     #[serde(default = "default_qps")]
     pub qps:    u8,
+    /// 每秒并发请求的限制，默认为 Char(5000)。
+    #[serde(default = "default_limit")]
+    #[serde(skip_deserializing)]
+    pub limit:  Limit,
     /// 术语词典子库 ID
     #[serde(default)]
     pub dict:   String,
@@ -50,10 +55,13 @@ pub struct User {
 }
 
 fn default_qps() -> u8 { 50 }
+fn default_limit() -> Limit { Limit::Char(5000) }
+
 impl Default for User {
     fn default() -> Self {
         Self { key:    String::new(),
                qps:    default_qps(),
+               limit:  default_limit(),
                dict:   String::new(),
                memory: String::new(), }
     }

@@ -1,3 +1,4 @@
+use crate::Limit;
 use hmac::{
     crypto_mac::{InvalidKeyLength, Output as HmacOutput},
     Hmac, Mac, NewMac,
@@ -105,13 +106,18 @@ pub struct User {
     /// 项目ID，可以根据控制台-账号中心-项目管理中的配置填写，如无配置请填写默认项目ID:0
     #[serde(default = "default_projectid")]
     pub projectid: u8,
-    /// 每秒并发请求
+    /// 每秒并发请求，默认为 5。
     #[serde(default = "default_qps")]
     #[serde(skip_deserializing)]
     pub qps:       u8,
+    /// 每秒并发请求的限制，默认为 Char(2000)。
+    #[serde(default = "default_limit")]
+    #[serde(skip_deserializing)]
+    pub limit:     Limit,
 }
 
 fn default_qps() -> u8 { 5 }
+fn default_limit() -> Limit { Limit::Char(2000) }
 fn default_projectid() -> u8 { 0 }
 
 impl Default for User {
@@ -120,7 +126,8 @@ impl Default for User {
                key:       String::new(),
                region:    Region::default(),
                projectid: 0,
-               qps:       5, }
+               qps:       5,
+               limit:     default_limit(), }
     }
 }
 
