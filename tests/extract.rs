@@ -231,6 +231,18 @@ Hi!
 fn md_limit_test() {
     let mut md = Md::new(MD);
     let buf = md.extract_with_bytes();
+    {
+        assert_debug_snapshot!(md.bytes_next_range().next().unwrap().1, @"0..16");
+    }
+    {
+        assert_debug_snapshot!(md.bytes_next_range().next().unwrap().1, @"0..16");
+        assert_debug_snapshot!(md.bytes_next_range().next().unwrap().1, @"0..16");
+    }
+    {
+        let mut range = md.bytes_next_range();
+        assert_debug_snapshot!(range.next().unwrap().1, @"0..16");
+        assert_debug_snapshot!(range.next().unwrap().1, @"16..333");
+    }
     assert_debug_snapshot!(md.bytes_next_range().map(|(l, i)| (l, &buf[i])).collect::<Vec<_>>(), @r###"
     [
         (

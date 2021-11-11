@@ -38,6 +38,7 @@ pub struct Chars {
 }
 
 const MINIMUM_CAPACITY: usize = 1 << 10;
+type Range = std::ops::Range<usize>;
 
 impl<'e> Md<'e> {
     pub fn new(md: &'e str) -> Self {
@@ -79,8 +80,7 @@ impl<'e> Md<'e> {
         buf
     }
 
-    pub fn bytes_next_range<'r>(&'r self)
-                                -> impl Iterator<Item = (usize, std::ops::Range<usize>)> + 'r {
+    pub fn bytes_next_range<'r>(&'r self) -> impl Iterator<Item = (usize, Range)> + 'r {
         self.bytes
             .iter()
             .zip(self.bytes.iter().skip(1))
