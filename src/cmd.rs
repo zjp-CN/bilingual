@@ -64,6 +64,7 @@ impl Bilingual {
         match self.api {
             API::Baidu => baidu(self.id, self.key, &mut cf)?,
             API::Tencent => tencent(self.id, self.key, &mut cf)?,
+            API::Niutrans => niutrans(self.key, &mut cf)?,
             _ => (),
         }
         cf.api = self.api;
@@ -79,8 +80,20 @@ impl Bilingual {
     }
 }
 
+fn niutrans(key: String, cf: &mut Config) -> Result<()> {
+    if cf.niutrans.is_none() {
+        cf.niutrans.replace(translation_api_cn::niutrans::User::default());
+    }
+    if !key.is_empty() {
+        cf.niutrans.as_mut().ok_or(anyhow!("覆盖腾讯云 API.key 时出错"))?.key = key;
+    }
+    Ok(())
+}
+
 fn tencent(id: String, key: String, cf: &mut Config) -> Result<()> {
-    cf.tencent.replace(translation_api_cn::tencent::User::default());
+    if cf.tencent.is_none() {
+        cf.tencent.replace(translation_api_cn::tencent::User::default());
+    }
     if !id.is_empty() {
         cf.tencent.as_mut().ok_or(anyhow!("覆盖腾讯云 API.id 时出错"))?.id = id;
     }
@@ -91,7 +104,9 @@ fn tencent(id: String, key: String, cf: &mut Config) -> Result<()> {
 }
 
 fn baidu(id: String, key: String, cf: &mut Config) -> Result<()> {
-    cf.baidu.replace(translation_api_cn::baidu::User::default());
+    if cf.baidu.is_none() {
+        cf.baidu.replace(translation_api_cn::baidu::User::default());
+    }
     if !id.is_empty() {
         cf.baidu.as_mut().ok_or(anyhow!("覆盖百度翻译 API.id 时出错"))?.appid = id;
     }

@@ -28,6 +28,8 @@ impl<'q> Query<'q> {
     /// 实例化
     #[rustfmt::skip]
     pub fn new(q: &'q str, from: &'q str, to: &'q str) -> Self { Self { q, from, to } }
+
+    pub fn form(&self, user: &'q User) -> Form { Form::new(user, self) }
 }
 
 /// 账户信息
