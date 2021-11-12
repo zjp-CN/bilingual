@@ -228,9 +228,47 @@ Hi!
 ";
 
 #[test]
+fn bytes_next_paragraph_test() {
+    let mut md = Md::new(MD);
+    let mut limit = Limit::new(400);
+    assert_display_snapshot!(md.extract_with_bytes().len(), @"826"); // 段落文本总长度
+    assert_debug_snapshot!(md.bytes_next_range().collect::<Vec<_>>(), @r###"
+    [
+        (
+            16,
+            0..16,
+        ),
+        (
+            317,
+            16..333,
+        ),
+        (
+            4,
+            333..337,
+        ),
+        (
+            305,
+            337..642,
+        ),
+        (
+            184,
+            642..826,
+        ),
+    ]
+    "###);
+    assert_debug_snapshot!(md.bytes_next_paragraph(&mut limit).collect::<Vec<_>>(), @r###"
+    [
+        "I/O event queue\nWe add the `callback_id` to the collection of callbacks to run. We pass in `Js::Undefined` since we'll not actually pass any data along here. You'll see why when we reach the Http module chapter, but the main point is that the I/O queue doesn't return any data itself, it just tells us that data is ready to be read.\nHi!\n",
+        "Hi! Why even keep track of how many `epoll_events` are pending? We don't use this value here, but I added it to make it easier to create some `print` statements showing the status of our runtime at different points. However, there are good reasons to keep track of these events even if we don't use them.\n",
+        "One area we're taking shortcuts on all the way here is security. If someone were to build a public facing server out of this, we need to account for slow networks and malicious users.\n",
+    ]
+    "###);
+}
+
+#[test]
 fn md_limit_test() {
     let mut md = Md::new(MD);
-    let buf = md.extract_with_bytes();
+    let buf = md.extract_with_bytes().to_owned();
     {
         assert_debug_snapshot!(md.bytes_next_range().next().unwrap().1, @"0..16");
     }
@@ -243,7 +281,8 @@ fn md_limit_test() {
         assert_debug_snapshot!(range.next().unwrap().1, @"0..16");
         assert_debug_snapshot!(range.next().unwrap().1, @"16..333");
     }
-    assert_debug_snapshot!(md.bytes_next_range().map(|(l, i)| (l, &buf[i])).collect::<Vec<_>>(), @r###"
+    assert_debug_snapshot!(md.bytes_next_range().map(|(l, i)| (l, &buf[i])).collect::<Vec<_>>(),
+    @r###"
     [
         (
             16,
@@ -498,35 +537,14 @@ fn md_limit_test() {
                 BlockQuote,
             ),
         ],
-        raw_len: 1055,
-        output: "",
-        bytes: [
-            Bytes {
-                pos: 0,
-                len: 16,
-            },
-            Bytes {
-                pos: 16,
-                len: 317,
-            },
-            Bytes {
-                pos: 333,
-                len: 4,
-            },
-            Bytes {
-                pos: 337,
-                len: 305,
-            },
-            Bytes {
-                pos: 642,
-                len: 184,
-            },
-            Bytes {
-                pos: 826,
-                len: 0,
-            },
+        buffer: "I/O event queue\nWe add the `callback_id` to the collection of callbacks to run. We pass in `Js::Undefined` since we'll not actually pass any data along here. You'll see why when we reach the Http module chapter, but the main point is that the I/O queue doesn't return any data itself, it just tells us that data is ready to be read.\nHi!\nHi! Why even keep track of how many `epoll_events` are pending? We don't use this value here, but I added it to make it easier to create some `print` statements showing the status of our runtime at different points. However, there are good reasons to keep track of these events even if we don't use them.\nOne area we're taking shortcuts on all the way here is security. If someone were to build a public facing server out of this, we need to account for slow networks and malicious users.\n",
+        para: [
+            16,
+            317,
+            4,
+            305,
+            184,
         ],
-        chars: [],
     }
     "###);
 }
@@ -534,14 +552,19 @@ fn md_limit_test() {
 #[test]
 fn md_split_append() {
     fn split(raw: &str) -> String {
-        let md = Md::new(raw);
-        let buf = md.extract();
+        let mut md = Md::new(raw);
+        let buf = md.extract().to_owned();
         let output = md.done(buf.split('\n'));
         // println!("{}", output);
         output
     }
 
     assert_display_snapshot!(split(MD), @r###"
+    I/O event queue
+    We add the `callback_id` to the collection of callbacks to run. We pass in `Js::Undefined` since we'll not actually pass any data along here. You'll see why when we reach the Http module chapter, but the main point is that the I/O queue doesn't return any data itself, it just tells us that data is ready to be read.
+    Hi!
+    Hi! Why even keep track of how many `epoll_events` are pending? We don't use this value here, but I added it to make it easier to create some `print` statements showing the status of our runtime at different points. However, there are good reasons to keep track of these events even if we don't use them.
+    One area we're taking shortcuts on all the way here is security. If someone were to build a public facing server out of this, we need to account for slow networks and malicious users.
     # I/O event queue
 
     I/O event queue

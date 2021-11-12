@@ -5,6 +5,7 @@ use pulldown_cmark::{
     Tag::*,
 };
 use pulldown_cmark_to_cmark::Options as OutOptions;
+use std::iter::once;
 
 #[derive(Debug)]
 pub struct Md<'e> {
@@ -15,24 +16,7 @@ pub struct Md<'e> {
     /// 大于 1024B 的文本以原文 2 倍字节长度初始化。
     buffer: String,
     /// output 的 bytes 分布
-    bytes:  Vec<Bytes>,
-    chars:  Vec<Chars>,
-}
-
-#[derive(Debug)]
-pub struct Bytes {
-    /// 字节起点
-    pos: usize,
-    /// 字节长度
-    len: usize,
-}
-
-#[derive(Debug)]
-pub struct Chars {
-    /// 字符起点
-    pos: usize,
-    /// 字符长度
-    cnt: usize,
+    para:   Vec<usize>,
 }
 
 type Range = std::ops::Range<usize>;
@@ -48,8 +32,7 @@ impl<'e> Md<'e> {
                        if capacity < MINIMUM_CAPACITY { MINIMUM_CAPACITY } else { capacity * 2 };
                    String::with_capacity(capacity)
                },
-               bytes:  Vec::with_capacity(PARAGRAPHS),
-               chars:  Vec::with_capacity(PARAGRAPHS), }
+               para:   Vec::with_capacity(PARAGRAPHS), }
     }
 
     /// 提取文本
@@ -68,21 +51,31 @@ impl<'e> Md<'e> {
     pub fn extract_with_bytes(&mut self) -> &str {
         let mut select = true;
         let buf = &mut self.buffer;
-        let mut bytes = Bytes { pos: 0, len: 0 };
-        let vec = &mut self.bytes;
+        let mut len = 0;
+        let vec = &mut self.para;
         self.events
             .iter()
-            .for_each(|event| extract_with_bytes(event, &mut select, buf, &mut bytes, vec));
-        self.bytes.push(Bytes { pos: buf.len(),
-                                len: 0 /* 最后的长度不重要 */, });
+            .for_each(|event| extract_with_bytes(event, &mut select, buf, &mut len, vec));
         &self.buffer
     }
 
+    pub fn bytes_next_paragraph<'i>(&'i self, limit: &'i mut Limit)
+                                    -> impl Iterator<Item = &str> + 'i {
+        let closure = |l: &usize| {
+            if let Some(idx) = limit.batch(*l) {
+                self.buffer.get(idx)
+            } else {
+                None
+            }
+        };
+        self.para.iter().chain(once(&usize::MAX)).filter_map(closure)
+    }
+
     pub fn bytes_next_range<'r>(&'r self) -> impl Iterator<Item = (usize, Range)> + 'r {
-        self.bytes
-            .iter()
-            .zip(self.bytes.iter().skip(1))
-            .map(|(a, b)| (a.len, a.pos..b.pos))
+        self.para.iter().scan(0, |state, &l| {
+                            *state += l;
+                            Some((l, *state - l..*state))
+                        })
     }
 
     /// 完成并返回写入翻译内容。参数 `paragraph` 为按段落翻译的译文。
@@ -97,6 +90,36 @@ impl<'e> Md<'e> {
         //      self.output.len() <= MINIMUM_CAPACITY,
         //      self.output.len() <= self.raw_len * 2 || self.output.len() <= MINIMUM_CAPACITY);
         self.buffer
+    }
+}
+
+#[derive(Debug)]
+pub struct Limit {
+    limit: usize,
+    bat:   usize,
+    pos:   usize,
+}
+
+impl Limit {
+    #[rustfmt::skip]
+    pub fn new(limit: usize) -> Self {
+        Self { limit, bat:0, pos: 0 }
+    }
+
+    pub fn batch(&mut self, len: usize) -> Option<Range> {
+        if let Some(add) = self.bat.checked_add(len) {
+            if add < self.limit {
+                self.bat += len;
+                None
+            } else {
+                let p = self.pos;
+                self.pos += if self.bat == 0 { len } else { std::mem::replace(&mut self.bat, len) };
+                Some(p..self.pos)
+            }
+        } else {
+            // 最后一位
+            Some(self.pos..self.pos + self.bat)
+        }
     }
 }
 
@@ -146,29 +169,27 @@ pub fn extract(event: &Event, select: &mut bool, buf: &mut String) {
 }
 
 /// 取出需要被翻译的内容：按照段落或标题
-pub fn extract_with_bytes(event: &Event, select: &mut bool, buf: &mut String, bytes: &mut Bytes,
-                          vec: &mut Vec<Bytes>) {
+pub fn extract_with_bytes(event: &Event, select: &mut bool, buf: &mut String, len: &mut usize,
+                          vec: &mut Vec<usize>) {
     match event {
         End(Paragraph | Heading(_)) => {
             buf.push('\n');
-            bytes.pos += vec.last().map_or_else(|| 0, |b| b.len);
-            vec.push(Bytes { pos: bytes.pos,
-                             len: bytes.len + 1, });
-            bytes.len = 0;
+            vec.push(*len + 1);
+            *len = 0;
         }
         Text(x) if *select => {
             buf.push_str(x.as_ref());
-            bytes.len += x.len();
+            *len += x.len();
         }
         SoftBreak | HardBreak => {
             buf.push(' ');
-            bytes.len += 1;
+            *len += 1;
         }
         Code(x) => {
             buf.push('`');
             buf.push_str(x.as_ref());
             buf.push('`');
-            bytes.len += x.len() + 2;
+            *len += x.len() + 2;
         }
         Start(CodeBlock(_)) => *select = false,
         End(CodeBlock(_)) => *select = true,
