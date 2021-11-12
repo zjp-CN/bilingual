@@ -5,7 +5,6 @@ use pulldown_cmark::{
     Tag::*,
 };
 use pulldown_cmark_to_cmark::Options as OutOptions;
-use std::iter::once;
 
 #[derive(Debug)]
 pub struct Md<'e> {
@@ -61,25 +60,19 @@ impl<'e> Md<'e> {
 
     pub fn bytes_next_paragraph<'i>(&'i self, limit: &'i mut Limit)
                                     -> impl Iterator<Item = &str> + 'i {
-        let closure = |l: &usize| {
-            if let Some(idx) = limit.batch(*l) {
-                self.buffer.get(idx)
-            } else {
-                None
-            }
-        };
-        self.para.iter().chain(once(&usize::MAX)).filter_map(closure)
+        let closure =
+            |l: &usize| if let Some(idx) = limit.batch(*l) { self.buffer.get(idx) } else { None };
+        self.para.iter().chain(std::iter::once(&usize::MAX)).filter_map(closure)
     }
 
+    #[rustfmt::skip]
     pub fn bytes_next_range<'r>(&'r self) -> impl Iterator<Item = (usize, Range)> + 'r {
-        self.para.iter().scan(0, |state, &l| {
-                            *state += l;
-                            Some((l, *state - l..*state))
-                        })
+        self.para.iter().scan(0, |state, &l| { Some((l, std::mem::replace(state, *state+l)..*state)) })
     }
 
     /// 完成并返回写入翻译内容。参数 `paragraph` 为按段落翻译的译文。
     pub fn done(mut self, mut paragraph: impl Iterator<Item = &'e str>) -> String {
+        self.buffer.clear(); // 清除段落缓冲
         let output = self.events.into_iter().map(|event| prepend(event, &mut paragraph)).flatten();
         let opt = cmark_to_cmark_opt();
         pulldown_cmark_to_cmark::cmark_with_options(output, &mut self.buffer, None, opt).unwrap();
@@ -103,7 +96,7 @@ pub struct Limit {
 impl Limit {
     #[rustfmt::skip]
     pub fn new(limit: usize) -> Self {
-        Self { limit, bat:0, pos: 0 }
+        Self { limit, bat: 0, pos: 0 }
     }
 
     pub fn batch(&mut self, len: usize) -> Option<Range> {
