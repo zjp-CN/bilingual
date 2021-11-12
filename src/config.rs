@@ -151,21 +151,27 @@ fn send<T: serde::Serialize + ?Sized>(url: &str, form: &T) -> Result<blocking::R
     Ok(response)
 }
 
-pub fn via_baidu(md: Md, from: &str, to: &str, user: &Baidu) -> Result<String> {
+pub fn via_baidu(mut md: Md, from: &str, to: &str, user: &Baidu) -> Result<String> {
     use translation_api_cn::baidu::{Query, Response, URL};
     let buf = md.extract();
     let mut query = Query::new(buf.trim(), from, to);
-    Ok(md.done(from_slice::<Response>(&send(URL, &dbg!(query.sign(user)))?.bytes()?)?.dst()?))
+    let bytes = send(URL, &dbg!(query.sign(user)))?.bytes()?;
+    let response = from_slice::<Response>(&bytes)?;
+    let output = md.done(response.dst()?);
+    Ok(output)
 }
 
-pub fn via_niutrans(md: Md, from: &str, to: &str, user: &Niutrans) -> Result<String> {
+pub fn via_niutrans(mut md: Md, from: &str, to: &str, user: &Niutrans) -> Result<String> {
     use translation_api_cn::niutrans::{Query, Response, URL};
     let buf = md.extract();
     let query = Query::new(buf.trim(), from, to);
-    Ok(md.done(from_slice::<Response>(&send(URL, &query.form(user))?.bytes()?)?.dst()?))
+    let bytes = send(URL, &query.form(user))?.bytes()?;
+    let response = from_slice::<Response>(&bytes)?;
+    let output = md.done(response.dst()?);
+    Ok(output)
 }
 
-pub fn via_tencent(md: Md, from: &str, to: &str, user: &Tencent) -> Result<String> {
+pub fn via_tencent(mut md: Md, from: &str, to: &str, user: &Tencent) -> Result<String> {
     use translation_api_cn::tencent::{Header, Query, Response, URL};
     #[rustfmt::skip]
     fn send2(header: &mut Header) -> Result<blocking::Response> {
@@ -191,7 +197,7 @@ pub fn via_tencent(md: Md, from: &str, to: &str, user: &Tencent) -> Result<Strin
     let mut header = Header::new(user, &query);
     let bytes = send2(&mut header)?.bytes()?;
     // dbg!(&buf, &query, &header, &bytes);
-    let res = from_slice::<Response>(dbg!(&bytes))?;
-    let output = md.done(res.dst()?);
+    let response = from_slice::<Response>(dbg!(&bytes))?;
+    let output = md.done(response.dst()?);
     Ok(output)
 }

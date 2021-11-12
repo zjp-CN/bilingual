@@ -9,16 +9,14 @@ use pulldown_cmark_to_cmark::Options as OutOptions;
 #[derive(Debug)]
 pub struct Md<'e> {
     /// 解析 md 文件的事件
-    events:  Vec<Event<'e>>,
-    /// md 原文的长度
-    raw_len: usize,
+    events: Vec<Event<'e>>,
     /// 填充翻译内容之后的 md 文件的内容。
     /// 为了减少分配，小于 1024B 的文本以 1024B 字节长度初始化；
     /// 大于 1024B 的文本以原文 2 倍字节长度初始化。
-    output:  String,
+    buffer: String,
     /// output 的 bytes 分布
-    bytes:   Vec<Bytes>,
-    chars:   Vec<Chars>,
+    bytes:  Vec<Bytes>,
+    chars:  Vec<Chars>,
 }
 
 #[derive(Debug)]
@@ -37,47 +35,47 @@ pub struct Chars {
     cnt: usize,
 }
 
-const MINIMUM_CAPACITY: usize = 1 << 10;
 type Range = std::ops::Range<usize>;
 
 impl<'e> Md<'e> {
     pub fn new(md: &'e str) -> Self {
+        const PARAGRAPHS: usize = 128;
         let capacity = md.len();
-        Self { events:  pulldown_cmark::Parser::new_ext(md, cmark_opt()).collect(),
-               raw_len: capacity,
-               output:  {
+        Self { events: pulldown_cmark::Parser::new_ext(md, cmark_opt()).collect(),
+               buffer: {
+                   const MINIMUM_CAPACITY: usize = 1 << 10;
                    let capacity =
                        if capacity < MINIMUM_CAPACITY { MINIMUM_CAPACITY } else { capacity * 2 };
                    String::with_capacity(capacity)
                },
-               bytes:   Vec::new(),
-               chars:   Vec::new(), }
+               bytes:  Vec::with_capacity(PARAGRAPHS),
+               chars:  Vec::with_capacity(PARAGRAPHS), }
     }
 
     /// 提取文本
     ///
     /// TODO: 尽可能保存原样式/结构
-    pub fn extract(&self) -> String {
+    pub fn extract(&mut self) -> &str {
         let mut select = true;
-        let mut buf = String::with_capacity(self.raw_len);
-        self.events.iter().for_each(|event| extract(event, &mut select, &mut buf));
-        buf
+        let buf = &mut self.buffer;
+        self.events.iter().for_each(|event| extract(event, &mut select, buf));
+        &self.buffer
     }
 
     /// 提取文本，并以字节单位记录段落分布。
     ///
     /// TODO: 尽可能保存原样式/结构
-    pub fn extract_with_bytes(&mut self) -> String {
+    pub fn extract_with_bytes(&mut self) -> &str {
         let mut select = true;
-        let mut buf = String::with_capacity(self.raw_len);
+        let buf = &mut self.buffer;
         let mut bytes = Bytes { pos: 0, len: 0 };
         let vec = &mut self.bytes;
         self.events
             .iter()
-            .for_each(|event| extract_with_bytes(event, &mut select, &mut buf, &mut bytes, vec));
+            .for_each(|event| extract_with_bytes(event, &mut select, buf, &mut bytes, vec));
         self.bytes.push(Bytes { pos: buf.len(),
                                 len: 0 /* 最后的长度不重要 */, });
-        buf
+        &self.buffer
     }
 
     pub fn bytes_next_range<'r>(&'r self) -> impl Iterator<Item = (usize, Range)> + 'r {
@@ -91,14 +89,14 @@ impl<'e> Md<'e> {
     pub fn done(mut self, mut paragraph: impl Iterator<Item = &'e str>) -> String {
         let output = self.events.into_iter().map(|event| prepend(event, &mut paragraph)).flatten();
         let opt = cmark_to_cmark_opt();
-        pulldown_cmark_to_cmark::cmark_with_options(output, &mut self.output, None, opt).unwrap();
-        dbg!(self.output.len(),
-             self.output.capacity(),
-             self.raw_len * 2,
-             self.output.len() <= self.raw_len * 2,
-             self.output.len() <= MINIMUM_CAPACITY,
-             self.output.len() <= self.raw_len * 2 || self.output.len() <= MINIMUM_CAPACITY);
-        self.output
+        pulldown_cmark_to_cmark::cmark_with_options(output, &mut self.buffer, None, opt).unwrap();
+        // dbg!(self.output.len(),
+        //      self.output.capacity(),
+        //      self.raw_len * 2,
+        //      self.output.len() <= self.raw_len * 2,
+        //      self.output.len() <= MINIMUM_CAPACITY,
+        //      self.output.len() <= self.raw_len * 2 || self.output.len() <= MINIMUM_CAPACITY);
+        self.buffer
     }
 }
 
