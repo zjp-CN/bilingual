@@ -72,7 +72,7 @@ impl<'e> Md<'e> {
     /// ## 注意
     /// - 请先调用一次 [`extract_with_bytes`][`Md::extract_with_bytes`] 再调用此方法。
     /// - 此方法可以多次调用：这在需要不同 limit 的分批时很有用。
-    pub fn bytes_paragraph<'p>(&'p mut self, limit: usize) -> impl Iterator<Item = &'p str> {
+    pub fn bytes_paragraph(&mut self, limit: usize) -> impl Iterator<Item = &str> {
         self.limit = Limit::new(limit);
         let limit = &mut self.limit;
         let f = |l: &usize| if let Some(i) = limit.batch(*l) { self.buffer.get(i) } else { None };
