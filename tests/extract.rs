@@ -230,9 +230,8 @@ Hi!
 #[test]
 fn bytes_next_paragraph_test() {
     let mut md = Md::new(MD);
-    let mut limit = Limit::new(400);
     assert_display_snapshot!(md.extract_with_bytes().len(), @"826"); // 段落文本总长度
-    assert_debug_snapshot!(md.bytes_next_range().collect::<Vec<_>>(), @r###"
+    assert_debug_snapshot!(md.bytes_range().collect::<Vec<_>>(), @r###"
     [
         (
             16,
@@ -256,11 +255,18 @@ fn bytes_next_paragraph_test() {
         ),
     ]
     "###);
-    assert_debug_snapshot!(md.bytes_next_paragraph(&mut limit).collect::<Vec<_>>(), @r###"
+
+    assert_debug_snapshot!(md.bytes_paragraph(400).collect::<Vec<_>>(), @r###"
     [
         "I/O event queue\nWe add the `callback_id` to the collection of callbacks to run. We pass in `Js::Undefined` since we'll not actually pass any data along here. You'll see why when we reach the Http module chapter, but the main point is that the I/O queue doesn't return any data itself, it just tells us that data is ready to be read.\nHi!\n",
         "Hi! Why even keep track of how many `epoll_events` are pending? We don't use this value here, but I added it to make it easier to create some `print` statements showing the status of our runtime at different points. However, there are good reasons to keep track of these events even if we don't use them.\n",
         "One area we're taking shortcuts on all the way here is security. If someone were to build a public facing server out of this, we need to account for slow networks and malicious users.\n",
+    ]
+    "###);
+
+    assert_debug_snapshot!(md.bytes_paragraph(1 << 10).collect::<Vec<_>>(), @r###"
+    [
+        "I/O event queue\nWe add the `callback_id` to the collection of callbacks to run. We pass in `Js::Undefined` since we'll not actually pass any data along here. You'll see why when we reach the Http module chapter, but the main point is that the I/O queue doesn't return any data itself, it just tells us that data is ready to be read.\nHi!\nHi! Why even keep track of how many `epoll_events` are pending? We don't use this value here, but I added it to make it easier to create some `print` statements showing the status of our runtime at different points. However, there are good reasons to keep track of these events even if we don't use them.\nOne area we're taking shortcuts on all the way here is security. If someone were to build a public facing server out of this, we need to account for slow networks and malicious users.\n",
     ]
     "###);
 }
@@ -270,18 +276,18 @@ fn md_limit_test() {
     let mut md = Md::new(MD);
     let buf = md.extract_with_bytes().to_owned();
     {
-        assert_debug_snapshot!(md.bytes_next_range().next().unwrap().1, @"0..16");
+        assert_debug_snapshot!(md.bytes_range().next().unwrap().1, @"0..16");
     }
     {
-        assert_debug_snapshot!(md.bytes_next_range().next().unwrap().1, @"0..16");
-        assert_debug_snapshot!(md.bytes_next_range().next().unwrap().1, @"0..16");
+        assert_debug_snapshot!(md.bytes_range().next().unwrap().1, @"0..16");
+        assert_debug_snapshot!(md.bytes_range().next().unwrap().1, @"0..16");
     }
     {
-        let mut range = md.bytes_next_range();
+        let mut range = md.bytes_range();
         assert_debug_snapshot!(range.next().unwrap().1, @"0..16");
         assert_debug_snapshot!(range.next().unwrap().1, @"16..333");
     }
-    assert_debug_snapshot!(md.bytes_next_range().map(|(l, i)| (l, &buf[i])).collect::<Vec<_>>(),
+    assert_debug_snapshot!(md.bytes_range().map(|(l, i)| (l, &buf[i])).collect::<Vec<_>>(),
     @r###"
     [
         (
@@ -545,6 +551,11 @@ fn md_limit_test() {
             305,
             184,
         ],
+        limit: Limit {
+            limit: 0,
+            bat: 0,
+            pos: 0,
+        },
     }
     "###);
 }
