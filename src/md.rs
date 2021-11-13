@@ -54,7 +54,7 @@ impl<'e> Md<'e> {
     /// # 注意
     /// - 本方法返回提取后的所有文本，而且本方法一般只需要调用一次。
     /// - 本方法比 [`extract`][`Md::extract`] 多做了一件事：计算和记录每个段落的字节长度。
-    /// - 需要每个段落的字节长度或字节范围，请调用：[`bytes_range`][`Md::bytes_range`]。
+    /// - 需要每个段落的字节长度，请调用：[`bytes`][`Md::bytes`]。
     /// - 需要对段落按字节上限分批，请调用：[`bytes_paragraph`][`Md::bytes_paragraph`]。
     ///
     /// TODO: 尽可能保存原样式/结构
@@ -76,9 +76,9 @@ impl<'e> Md<'e> {
     /// - 本方法返回提取后的所有文本，而且本方法一般只需要调用一次。
     /// - 本方法比 [`extract_with_bytes`][`Md::extract_with_bytes`]
     ///   多做了一件事：计算和记录每个段落的字符长度。 所以
-    ///   [`bytes_paragraph`][`Md::bytes_paragraph`] 和 [`bytes_range`][`Md::bytes_range`]
-    ///   方法均可调用。
-    /// - 需要每个段落的字符长度或字节范围，请调用：[`chars_range`][`Md::chars_range`]。
+    ///   [`bytes_paragraph`][`Md::bytes_paragraph`] 和 [`bytes`][`Md::bytes`] 方法均可调用。
+    /// - 需要每个段落的字符长度或字节范围，请调用：[`chars`][`Md::chars`]、
+    ///   [`chars_bytes_range`][`Md::chars_bytes_range`]。
     /// - 需要对段落按字符上限分批，请调用：[`chars_paragraph`][`Md::chars_paragraph`]。
     ///
     /// TODO: 尽可能保存原样式/结构
@@ -95,6 +95,19 @@ impl<'e> Md<'e> {
             .iter()
             .for_each(|event| extract_with_chars(event, &mut select, buf, len, bytes, cnt, chars));
         &self.buffer
+    }
+
+    /// 提取的每个原文段落的字节数。
+    pub fn bytes<'r>(&'r self) -> impl Iterator<Item = usize> + 'r { self.bytes.iter().copied() }
+
+    /// 提取的每个原文段落的字符数。
+    pub fn chars<'r>(&'r self) -> impl Iterator<Item = usize> + 'r { self.chars.iter().copied() }
+
+    /// 提取的每个原文段落的字符数、字节数和字节范围。
+    pub fn chars_bytes_range<'r>(&'r self) -> impl Iterator<Item = (usize, usize, Range)> + 'r {
+        self.chars()
+            .zip(self.bytes())
+            .scan(0, |state, (c, l)| Some((c, l, replace(state, *state + l)..*state)))
     }
 
     /// 以字节数量分割段落批次。
@@ -145,19 +158,6 @@ impl<'e> Md<'e> {
             .chain(iter.clone())
             .zip(self.bytes.iter().chain(iter))
             .filter_map(f)
-    }
-
-    /// 提取的每个原文段落的字节数。
-    pub fn bytes<'r>(&'r self) -> impl Iterator<Item = usize> + 'r { self.bytes.iter().copied() }
-
-    /// 提取的每个原文段落的字符数。
-    pub fn chars<'r>(&'r self) -> impl Iterator<Item = usize> + 'r { self.chars.iter().copied() }
-
-    /// 提取的每个原文段落的字符数、字节数和字节范围。
-    pub fn chars_bytes_range<'r>(&'r self) -> impl Iterator<Item = (usize, usize, Range)> + 'r {
-        self.chars()
-            .zip(self.bytes())
-            .scan(0, |state, (c, l)| Some((c, l, replace(state, *state + l)..*state)))
     }
 
     /// 完成并返回写入翻译内容。参数 `paragraph` 为按段落翻译的**译文**。
