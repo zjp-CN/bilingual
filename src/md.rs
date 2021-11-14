@@ -18,9 +18,11 @@ pub struct Md<'e> {
     /// 为了减少分配，小于 1024B 的文本以 1024B 字节长度初始化；
     /// 大于 1024B 的文本以原文 2 倍字节长度初始化。
     buffer: String,
-    /// output 的 bytes 分布
+    /// 提取的原文段落的 bytes 分布
     bytes:  Vec<usize>,
+    /// 提取的原文段落的 chars 分布
     chars:  Vec<usize>,
+    /// 用于段落分批
     limit:  Limit,
 }
 
@@ -39,95 +41,27 @@ impl<'e> Md<'e> {
                limit:  Limit::default(), }
     }
 
-    /// 提取原文的段落文本。
-    ///
-    /// TODO: 尽可能保存原样式/结构
-    pub fn extract(&mut self) -> &str {
-        self.buffer_clear();
-        let mut select = true;
-        let buf = &mut self.buffer;
-        self.events.iter().for_each(|event| extract(event, &mut select, buf));
-        &self.buffer
-    }
-
-    /// 提取原文的段落文本，并以字节为单位记录段落分布。
-    /// # 注意
-    /// - 本方法返回提取后的所有文本，而且本方法一般只需要调用一次。
-    /// - 本方法比 [`extract`][`Md::extract`] 多做了一件事：计算和记录每个段落的字节长度。
-    /// - 需要每个段落的字节长度，请调用：[`bytes`][`Md::bytes`]。
-    /// - 需要对段落按字节上限分批，请调用：[`bytes_paragraph`][`Md::bytes_paragraph`]。
-    ///
-    /// TODO: 尽可能保存原样式/结构
-    pub fn extract_with_bytes(&mut self) -> &str {
-        self.buffer_clear();
-        self.para_clear();
-        let mut select = true;
-        let buf = &mut self.buffer;
-        let len = &mut 0;
-        let bytes = &mut self.bytes;
-        self.events
-            .iter()
-            .for_each(|event| extract_with_bytes(event, &mut select, buf, len, bytes));
-        &self.buffer
-    }
-
     /// 提取原文的段落文本，并以字符为单位记录段落分布。
-    /// # 注意
-    /// - 本方法返回提取后的所有文本，而且本方法一般只需要调用一次。
-    /// - 本方法比 [`extract_with_bytes`][`Md::extract_with_bytes`]
-    ///   多做了一件事：计算和记录每个段落的字符长度。 所以
-    ///   [`bytes_paragraph`][`Md::bytes_paragraph`] 和 [`bytes`][`Md::bytes`] 方法均可调用。
-    /// - 需要每个段落的字符长度或字节范围，请调用：[`chars`][`Md::chars`]、
-    ///   [`chars_bytes_range`][`Md::chars_bytes_range`]。
-    /// - 需要对段落按字符上限分批，请调用：[`chars_paragraph`][`Md::chars_paragraph`]。
     ///
     /// TODO: 尽可能保存原样式/结构
-    pub fn extract_with_chars(&mut self) -> &str {
-        self.buffer_clear();
-        self.para_clear();
-        let mut select = true;
-        let buf = &mut self.buffer;
-        let len = &mut 0;
-        let cnt = &mut 0;
-        let bytes = &mut self.bytes;
-        let chars = &mut self.chars;
-        self.events
-            .iter()
-            .for_each(|event| extract_with_chars(event, &mut select, buf, len, bytes, cnt, chars));
-        &self.buffer
-    }
-
-    /// 提取的每个原文段落的字节数。
-    pub fn bytes<'r>(&'r self) -> impl Iterator<Item = usize> + 'r { self.bytes.iter().copied() }
-
-    /// 提取的每个原文段落的字符数。
-    pub fn chars<'r>(&'r self) -> impl Iterator<Item = usize> + 'r { self.chars.iter().copied() }
-
-    /// 提取的每个原文段落的字符数、字节数和字节范围。
-    pub fn chars_bytes_range<'r>(&'r self) -> impl Iterator<Item = (usize, usize, Range)> + 'r {
-        self.chars()
-            .zip(self.bytes())
-            .scan(0, |state, (c, l)| Some((c, l, replace(state, *state + l)..*state)))
-    }
-
-    /// 以字节数量分割段落批次。
-    /// 分批策略如下：
-    /// - 当返回 `Some` 时，意味着返回完整的段落，且至少返回一个段落；
-    /// - 当返回 `None` 时，意味着已经返回所有段落。
-    /// - 每次返回的段落有两种情况：
-    ///
-    ///   1. 不多于 limit 字节大小的完整段落（至少一个完整段落）；
-    ///   2. 字节大小超过 limit 的**一个**段落。
-    ///
-    /// ## 注意
-    /// - 请先调用一次 [`extract_with_bytes`][`Md::extract_with_bytes`] 或者
-    ///   [`extract_with_chars`][`Md::extract_with_chars`] 再调用此方法。
-    /// - 此方法可以多次调用：这在需要不同 limit 的分批时很有用。
-    pub fn bytes_paragraph(&mut self, limit: usize) -> impl Iterator<Item = &str> {
-        self.limit = Limit::new(limit);
-        let limit = &mut self.limit;
-        let f = |l: &usize| if let Some(i) = limit.bytes(*l) { self.buffer.get(i) } else { None };
-        self.bytes.iter().chain(std::iter::once(&usize::MAX)).filter_map(f)
+    fn extract_with_chars(&mut self) {
+        fn inner(m: &mut Md) {
+            let select = &mut true;
+            let buf = &mut m.buffer;
+            let len = &mut 0;
+            let cnt = &mut 0;
+            let bytes = &mut m.bytes;
+            let chars = &mut m.chars;
+            m.events
+             .iter()
+             .for_each(|event| extract_with_chars(event, select, buf, len, bytes, cnt, chars));
+        }
+        if self.buffer.is_empty() {
+            self.buffer.clear();
+            inner(self);
+        } else if self.chars.is_empty() {
+            inner(self);
+        }
     }
 
     /// 以字符数量分割段落批次。
@@ -136,13 +70,22 @@ impl<'e> Md<'e> {
     /// - 当返回 `None` 时，意味着已经返回所有段落。
     /// - 每次返回的段落有两种情况：
     ///
-    ///   1. 不多于 limit 字节大小的完整段落（至少一个完整段落）；
-    ///   2. 字节大小超过 limit 的**一个**段落。
+    ///   1. 不多于 limit 字符大小的完整段落（至少一个完整段落）；
+    ///   2. 字符大小超过 limit 的**一个**段落。
     ///
     /// ## 注意
-    /// - 请先调用一次 [`extract_with_chars`][`Md::extract_with_chars`] 再调用此方法。
-    /// - 此方法可以多次调用：这在需要不同 limit 的分批时很有用。
+    /// - 本方法比 [`bytes_paragraph`] 多做了一件事：计算和记录每个段落的字符长度。
+    /// - 需要每个段落的字符或字节长度，请再调用： [`chars`][`Md::chars`] 或
+    ///   [`bytes`][`Md::bytes`]。
+    /// - 此方法可以多次调用：这在需要不同 limit 的分批时很有用。但是注意：
+    ///   - 调用 [`extract`] 之后再调用此方法会重复提取段落；
+    ///   - 调用 [`bytes_paragraph`] 之后再调用此方法会重复提取段落；
+    ///   - 多次调用此方法不会重复提取段落；
+    ///
+    /// [`bytes_paragraph`]: `Md::bytes_paragraph`
+    /// [`extract`]: `Md::extract`
     pub fn chars_paragraph(&mut self, limit: usize) -> impl Iterator<Item = &str> {
+        self.extract_with_chars();
         self.limit = Limit::new(limit);
         let limit = &mut self.limit;
         let f = |(c, l): (&usize, &usize)| {
@@ -160,10 +103,97 @@ impl<'e> Md<'e> {
             .filter_map(f)
     }
 
+    /// 提取原文的段落文本，并以字节为单位记录段落分布。
+    /// # 注意
+    /// - 本方法比 [`extract`][`Md::extract`] 多做了一件事：计算和记录每个段落的字节长度。
+    /// - 需要每个段落的字节长度，请再调用：[`bytes`][`Md::bytes`]。
+    ///
+    /// TODO: 尽可能保存原样式/结构
+    fn extract_with_bytes(&mut self) {
+        fn inner(m: &mut Md) {
+            let select = &mut true;
+            let buf = &mut m.buffer;
+            let len = &mut 0;
+            let bytes = &mut m.bytes;
+            m.events
+             .iter()
+             .for_each(|event| extract_with_bytes(event, select, buf, len, bytes));
+        }
+        if self.buffer.is_empty() {
+            self.buffer.clear();
+            inner(self);
+        } else if self.bytes.is_empty() {
+            inner(self);
+        }
+    }
+
+    /// 提取原文的段落文本，并返回以字节数量分割的段落批次。
+    /// 分批策略如下：
+    /// - 当返回 `Some` 时，意味着返回完整的段落，且至少返回一个段落；
+    /// - 当返回 `None` 时，意味着已经返回所有段落。
+    /// - 每次返回的段落有两种情况：
+    ///
+    ///   1. 不多于 limit 字节大小的完整段落（至少一个完整段落）；
+    ///   2. 字节大小超过 limit 的**一个**段落。
+    ///
+    /// ## 注意
+    /// - 本方法比 [`extract`] 多做了一件事：计算和记录每个段落的字节长度。
+    /// - 需要每个段落的字节长度，请调用：[`bytes`][`Md::bytes`]。
+    /// - 此方法可以多次调用：这在需要不同 limit 的分批时很有用。但是注意：
+    ///   - 调用 [`extract`] 之后再调用此方法会重复提取段落；
+    ///   - 调用 [`chars_paragraph`] 之后再调用此方法不会重复提取段落；
+    ///   - 多次调用此方法不会重复提取段落；
+    ///
+    /// [`chars_paragraph`]: `Md::chars_paragraph`
+    /// [`extract`]: `Md::extract`
+    pub fn bytes_paragraph(&mut self, limit: usize) -> impl Iterator<Item = &str> {
+        self.extract_with_bytes();
+        self.limit = Limit::new(limit);
+        let limit = &mut self.limit;
+        let f = |l: &usize| if let Some(i) = limit.bytes(*l) { self.buffer.get(i) } else { None };
+        self.bytes.iter().chain(std::iter::once(&usize::MAX)).filter_map(f)
+    }
+
+    /// 提取原文的段落文本。
+    ///
+    /// ## 注意
+    /// - 此方法可以多次调用：
+    ///   - 调用 [`bytes_paragraph`] 之后再调用此方法不会重复提取段落；
+    ///   - 调用 [`chars_paragraph`] 之后再调用此方法不会重复提取段落；
+    ///   - 多次调用此方法不会重复提取段落；
+    ///
+    /// TODO: 尽可能保存原样式/结构
+    ///
+    /// [`bytes_paragraph`]: `Md::bytes_paragraph`
+    /// [`chars_paragraph`]: `Md::chars_paragraph`
+    pub fn extract(&mut self) -> &str {
+        if self.buffer.is_empty() {
+            let mut select = true;
+            let buf = &mut self.buffer;
+            self.events.iter().for_each(|event| extract(event, &mut select, buf));
+        }
+        &self.buffer
+    }
+
+    /// 浏览提取后的原文段落文本。
+    pub fn paragraphs(&self) -> &str { &self.buffer }
+
+    /// 提取的每个原文段落的字节数。
+    pub fn bytes<'r>(&'r self) -> impl Iterator<Item = usize> + 'r { self.bytes.iter().copied() }
+
+    /// 提取的每个原文段落的字符数。
+    pub fn chars<'r>(&'r self) -> impl Iterator<Item = usize> + 'r { self.chars.iter().copied() }
+
+    /// 提取的每个原文段落的字符数、字节数和字节范围。
+    pub fn chars_bytes_range<'r>(&'r self) -> impl Iterator<Item = (usize, usize, Range)> + 'r {
+        self.chars()
+            .zip(self.bytes())
+            .scan(0, |state, (c, l)| Some((c, l, replace(state, *state + l)..*state)))
+    }
+
     /// 完成并返回写入翻译内容。参数 `paragraph` 为按段落翻译的**译文**。
     pub fn done(mut self, mut paragraph: impl Iterator<Item = &'e str>) -> String {
-        self.buffer_clear(); // 清除段落缓冲
-                             // let events: Vec<_> = self.events.into();
+        self.buffer.clear();
         let output =
             self.events.into_vec().into_iter().map(|e| prepend(e, &mut paragraph)).flatten();
         let opt = cmark_to_cmark_opt();
@@ -175,18 +205,6 @@ impl<'e> Md<'e> {
         //      self.output.len() <= MINIMUM_CAPACITY,
         //      self.output.len() <= self.raw_len * 2 || self.output.len() <= MINIMUM_CAPACITY);
         self.buffer
-    }
-
-    fn buffer_clear(&mut self) {
-        if !self.buffer.is_empty() {
-            self.buffer.clear()
-        }
-    }
-
-    fn para_clear(&mut self) {
-        if !self.bytes.is_empty() {
-            self.bytes.clear()
-        }
     }
 }
 
@@ -205,6 +223,7 @@ impl Limit {
     fn new(limit: usize) -> Self { Self { limit, cnt: 0, len: 0, pos: 0 } }
 
     fn bytes(&mut self, len: usize) -> Option<Range> {
+        // dbg!(len, &self);
         if let Some(add) = self.len.checked_add(len) {
             if add <= self.limit {
                 self.len = add;
@@ -229,7 +248,7 @@ impl Limit {
     }
 
     fn chars(&mut self, cnt: usize, len: usize) -> Option<Range> {
-        dbg!(len, &self);
+        // dbg!(len, &self);
         if let Some(add) = self.len.checked_add(len) {
             if self.cnt + cnt <= self.limit {
                 self.len = add;

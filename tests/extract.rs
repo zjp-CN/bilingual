@@ -235,7 +235,28 @@ Hi!
 #[test]
 fn batch_paragraph() {
     let mut md = Md::new(MD);
-    assert_display_snapshot!(md.extract_with_chars().len(), @"854"); // 段落文本总字节数
+
+    // 极端情况
+    assert_debug_snapshot!(md.chars_paragraph(0).collect::<Vec<_>>(), @r###"
+    [
+        "I/O event queue\n",
+        "We add the `callback_id` to the collection of callbacks to run. We pass in `Js::Undefined` since we'll not actually pass any data along here. You'll see why when we reach the Http module chapter, but the main point is that the I/O queue doesn't return any data itself, it just tells us that data is ready to be read.\n",
+        "Hi! 你好！这里是中文！\n",
+        "Hi! Why even keep track of how many `epoll_events` are pending? We don't use this value here, but I added it to make it easier to create some `print` statements showing the status of our runtime at different points. However, there are good reasons to keep track of these events even if we don't use them.\n",
+        "One area we're taking shortcuts on all the way here is security. If someone were to build a public facing server out of this, we need to account for slow networks and malicious users.\n",
+    ]
+    "###);
+    assert_debug_snapshot!(md.bytes_paragraph(0).collect::<Vec<_>>(), @r###"
+    [
+        "I/O event queue\n",
+        "We add the `callback_id` to the collection of callbacks to run. We pass in `Js::Undefined` since we'll not actually pass any data along here. You'll see why when we reach the Http module chapter, but the main point is that the I/O queue doesn't return any data itself, it just tells us that data is ready to be read.\n",
+        "Hi! 你好！这里是中文！\n",
+        "Hi! Why even keep track of how many `epoll_events` are pending? We don't use this value here, but I added it to make it easier to create some `print` statements showing the status of our runtime at different points. However, there are good reasons to keep track of these events even if we don't use them.\n",
+        "One area we're taking shortcuts on all the way here is security. If someone were to build a public facing server out of this, we need to account for slow networks and malicious users.\n",
+    ]
+    "###);
+
+    assert_display_snapshot!(md.extract().len(), @"854"); // 段落文本总字节数
     assert_debug_snapshot!(md.chars_bytes_range().collect::<Vec<_>>(), @r###"
     [
         (
@@ -265,6 +286,7 @@ fn batch_paragraph() {
         ),
     ]
     "###);
+
     assert_debug_snapshot!(md.bytes_paragraph(1 << 10).collect::<Vec<_>>(), @r###"
     [
         "I/O event queue\nWe add the `callback_id` to the collection of callbacks to run. We pass in `Js::Undefined` since we'll not actually pass any data along here. You'll see why when we reach the Http module chapter, but the main point is that the I/O queue doesn't return any data itself, it just tells us that data is ready to be read.\nHi! 你好！这里是中文！\nHi! Why even keep track of how many `epoll_events` are pending? We don't use this value here, but I added it to make it easier to create some `print` statements showing the status of our runtime at different points. However, there are good reasons to keep track of these events even if we don't use them.\nOne area we're taking shortcuts on all the way here is security. If someone were to build a public facing server out of this, we need to account for slow networks and malicious users.\n",
@@ -295,32 +317,13 @@ fn batch_paragraph() {
         "One area we're taking shortcuts on all the way here is security. If someone were to build a public facing server out of this, we need to account for slow networks and malicious users.\n",
     ]
     "###);
-
-    // 极端情况
-    assert_debug_snapshot!(md.bytes_paragraph(0).collect::<Vec<_>>(), @r###"
-    [
-        "I/O event queue\n",
-        "We add the `callback_id` to the collection of callbacks to run. We pass in `Js::Undefined` since we'll not actually pass any data along here. You'll see why when we reach the Http module chapter, but the main point is that the I/O queue doesn't return any data itself, it just tells us that data is ready to be read.\n",
-        "Hi! 你好！这里是中文！\n",
-        "Hi! Why even keep track of how many `epoll_events` are pending? We don't use this value here, but I added it to make it easier to create some `print` statements showing the status of our runtime at different points. However, there are good reasons to keep track of these events even if we don't use them.\n",
-        "One area we're taking shortcuts on all the way here is security. If someone were to build a public facing server out of this, we need to account for slow networks and malicious users.\n",
-    ]
-    "###);
-    assert_debug_snapshot!(md.chars_paragraph(0).collect::<Vec<_>>(), @r###"
-    [
-        "I/O event queue\n",
-        "We add the `callback_id` to the collection of callbacks to run. We pass in `Js::Undefined` since we'll not actually pass any data along here. You'll see why when we reach the Http module chapter, but the main point is that the I/O queue doesn't return any data itself, it just tells us that data is ready to be read.\n",
-        "Hi! 你好！这里是中文！\n",
-        "Hi! Why even keep track of how many `epoll_events` are pending? We don't use this value here, but I added it to make it easier to create some `print` statements showing the status of our runtime at different points. However, there are good reasons to keep track of these events even if we don't use them.\n",
-        "One area we're taking shortcuts on all the way here is security. If someone were to build a public facing server out of this, we need to account for slow networks and malicious users.\n",
-    ]
-    "###);
 }
 
 #[test]
 fn md_and_range() {
     let mut md = Md::new(MD);
-    let buf = md.extract_with_chars().to_owned();
+    md.chars_paragraph(0).last();
+    let buf = md.paragraphs();
     {
         assert_debug_snapshot!(md.chars_bytes_range().next().unwrap(), @r###"
         (
@@ -644,7 +647,7 @@ fn md_and_range() {
             limit: 0,
             cnt: 0,
             len: 0,
-            pos: 0,
+            pos: 854,
         },
     }
     "###);
