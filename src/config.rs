@@ -1,10 +1,10 @@
 use crate::md::Md;
-use anyhow::{Context, Result};
+use anyhow::{Context, Error, Result};
 use reqwest::blocking::{self, Client};
 use serde_json::from_slice;
 use std::path::{Path, PathBuf};
 use translation_api_cn::{
-    baidu::User as Baidu, niutrans::User as Niutrans, tencent::User as Tencent,
+    baidu::User as Baidu, niutrans::User as Niutrans, tencent::User as Tencent, Limit,
 };
 
 #[derive(Debug, Default, serde::Deserialize)]
@@ -31,7 +31,7 @@ impl Default for API {
 }
 
 impl std::str::FromStr for API {
-    type Err = anyhow::Error;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.as_bytes() {
@@ -142,13 +142,42 @@ impl Config {
     }
 }
 
-fn print_err(e: anyhow::Error) -> Result<String, ()> { Err(println!("{}", e)) }
+fn print_err<E: Into<Error> + std::fmt::Display>(e: E) -> Result<String, ()> {
+    Err(println!("{}", e))
+}
 
 /// 以 post + 表单方式发送
 fn send<T: serde::Serialize + ?Sized>(url: &str, form: &T) -> Result<blocking::Response> {
     let response = Client::new().post(url).form(form).send()?;
     debug_assert!(response.error_for_status_ref().is_ok());
     Ok(response)
+}
+
+trait Batch {
+    fn limit<'t>(&self, m: &'t mut Md) -> Box<dyn Iterator<Item = &'t str> + 't>;
+}
+
+impl Batch for Baidu {
+    fn limit<'t>(&self, m: &'t mut Md) -> Box<dyn Iterator<Item = &'t str> + 't> {
+        match self.limit {
+            Limit::Byte(l) => Box::new(m.bytes_paragraph(l)),
+            Limit::Char(l) => Box::new(m.chars_paragraph(l)),
+        }
+    }
+}
+
+pub fn via_baidu2(mut md: Md, from: &str, to: &str, user: &Baidu) -> Result<String> {
+    use translation_api_cn::baidu::{Query, Response, URL};
+    let mut res = Vec::new();
+    let f = |buf: &str| {
+        let mut query = Query::new(buf.trim(), from, to);
+        let bytes = send(URL, &dbg!(query.sign(user)))?.bytes()?;
+        Ok::<(), Error>(res.push(bytes))
+    };
+    user.limit(&mut md).try_for_each(f)?;
+    let iter: Vec<Response> = res.iter().map(|bytes| from_slice(bytes)).collect::<Result<_, _>>()?;
+    let output = md.done(iter.iter().map(|r| r.dst().map_err(print_err).unwrap()).flatten());
+    Ok(output)
 }
 
 pub fn via_baidu(mut md: Md, from: &str, to: &str, user: &Baidu) -> Result<String> {

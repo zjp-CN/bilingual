@@ -10,7 +10,7 @@ use std::mem::replace;
 #[derive(Debug)]
 pub struct Md<'e> {
     /// 解析 md 文件的事件
-    events: Box<[Event<'e>]>,
+    events: Vec<Event<'e>>,
     /// 内部缓冲。有两个用途：
     /// 1. 提取的原文段落；
     /// 2. 原文填充翻译内容之后的 md 文本。
@@ -27,11 +27,12 @@ pub struct Md<'e> {
 }
 
 impl<'e> Md<'e> {
+    /// 构造函数。
     pub fn new(md: &'e str) -> Self {
-        let capacity = md.len();
         Self { events: pulldown_cmark::Parser::new_ext(md, cmark_opt()).collect(),
                buffer: {
                    const MINIMUM_CAPACITY: usize = 1 << 10;
+                   let capacity = md.len();
                    let capacity =
                        if capacity < MINIMUM_CAPACITY { MINIMUM_CAPACITY } else { capacity * 2 };
                    String::with_capacity(capacity)
@@ -194,8 +195,7 @@ impl<'e> Md<'e> {
     /// 完成并返回写入翻译内容。参数 `paragraph` 为按段落翻译的**译文**。
     pub fn done(mut self, mut paragraph: impl Iterator<Item = &'e str>) -> String {
         self.buffer.clear();
-        let output =
-            self.events.into_vec().into_iter().map(|e| prepend(e, &mut paragraph)).flatten();
+        let output = self.events.into_iter().map(|e| prepend(e, &mut paragraph)).flatten();
         let opt = cmark_to_cmark_opt();
         pulldown_cmark_to_cmark::cmark_with_options(output, &mut self.buffer, None, opt).unwrap();
         // dbg!(self.output.len(),

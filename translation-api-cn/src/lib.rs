@@ -12,6 +12,15 @@ pub mod niutrans;
 /// 对于百度翻译，为 Byte；对于腾讯云和小牛翻译，为 Char。
 #[derive(Debug, serde::Deserialize)]
 pub enum Limit {
-    Byte(u16),
-    Char(u16),
+    #[serde(rename = "bytes")]
+    Byte(usize),
+    #[serde(rename = "chars")]
+    Char(usize),
+}
+
+impl Limit {
+    pub fn limit(&self) -> usize {
+        let (&Limit::Byte(l) | &Limit::Char(l)) = self;
+        l
+    }
 }
