@@ -58,9 +58,9 @@ impl<'e> Md<'e> {
              .for_each(|event| extract_with_chars(event, select, buf, len, bytes, cnt, chars));
         }
         if self.buffer.is_empty() {
-            self.buffer.clear();
             inner(self);
         } else if self.chars.is_empty() {
+            self.buffer.clear();
             inner(self);
         }
     }
@@ -121,9 +121,9 @@ impl<'e> Md<'e> {
              .for_each(|event| extract_with_bytes(event, select, buf, len, bytes));
         }
         if self.buffer.is_empty() {
-            self.buffer.clear();
             inner(self);
         } else if self.bytes.is_empty() {
+            self.buffer.clear();
             inner(self);
         }
     }

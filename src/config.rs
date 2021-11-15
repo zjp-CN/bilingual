@@ -69,10 +69,10 @@ impl Iterator for Src {
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(p) = self.files.pop() {
-            std::fs::read_to_string(p).ok()
+            std::fs::read_to_string(p).map_err(print_err).ok()
         } else if let Some(d) = self.dirs.pop() {
             self.files = filter_md_files(d)?.collect();
-            std::fs::read_to_string(self.files.pop()?).ok()
+            std::fs::read_to_string(self.files.pop()?).map_err(print_err).ok()
         } else if !self.query.is_empty() {
             Some(std::mem::take(&mut self.query))
         } else {
