@@ -180,13 +180,13 @@ impl<'e> Md<'e> {
     pub fn paragraphs(&self) -> &str { &self.buffer }
 
     /// 提取的每个原文段落的字节数。
-    pub fn bytes<'r>(&'r self) -> impl Iterator<Item = usize> + 'r { self.bytes.iter().copied() }
+    pub fn bytes(&self) -> impl Iterator<Item = usize> + '_ { self.bytes.iter().copied() }
 
     /// 提取的每个原文段落的字符数。
-    pub fn chars<'r>(&'r self) -> impl Iterator<Item = usize> + 'r { self.chars.iter().copied() }
+    pub fn chars(&self) -> impl Iterator<Item = usize> + '_ { self.chars.iter().copied() }
 
     /// 提取的每个原文段落的字符数、字节数和字节范围。
-    pub fn chars_bytes_range<'r>(&'r self) -> impl Iterator<Item = (usize, usize, Range)> + 'r {
+    pub fn chars_bytes_range(&self) -> impl Iterator<Item = (usize, usize, Range)> + '_ {
         self.chars()
             .zip(self.bytes())
             .scan(0, |state, (c, l)| Some((c, l, replace(state, *state + l)..*state)))

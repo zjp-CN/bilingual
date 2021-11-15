@@ -115,7 +115,14 @@ impl Config {
                 eprintln!("请设置百度翻译 API 帐号的 id 和 key");
                 None
             })
-            .map(|b| via_baidu(md, &self.src.from, &self.src.to, b).or_else(print_err).ok())
+            .map(|b| {
+                if b.limit.limit() == 0 {
+                    via_baidu(md, &self.src.from, &self.src.to, b)
+                } else {
+                    via_baidu_batch(md, &self.src.from, &self.src.to, b)
+                }.or_else(print_err)
+                 .ok()
+            })
             .flatten()
     }
 
@@ -126,7 +133,14 @@ impl Config {
                 eprintln!("请设置腾讯云 API 帐号的 id 和 key");
                 None
             })
-            .map(|b| via_tencent(md, &self.src.from, &self.src.to, b).or_else(print_err).ok())
+            .map(|t| {
+                if t.limit.limit() == 0 {
+                    via_tencent(md, &self.src.from, &self.src.to, t)
+                } else {
+                    via_tencent_batch(md, &self.src.from, &self.src.to, t)
+                }.or_else(print_err)
+                 .ok()
+            })
             .flatten()
     }
 
@@ -137,7 +151,14 @@ impl Config {
                 eprintln!("请设置小牛翻译 API 帐号的 key");
                 None
             })
-            .map(|b| via_niutrans(md, &self.src.from, &self.src.to, b).or_else(print_err).ok())
+            .map(|n| {
+                if n.limit.limit() == 0 {
+                    via_niutrans(md, &self.src.from, &self.src.to, n)
+                } else {
+                    via_niutrans_batch(md, &self.src.from, &self.src.to, n)
+                }.or_else(print_err)
+                 .ok()
+            })
             .flatten()
     }
 }
@@ -154,19 +175,24 @@ fn send<T: serde::Serialize + ?Sized>(url: &str, form: &T) -> Result<blocking::R
 }
 
 trait Batch {
-    fn limit<'t>(&self, m: &'t mut Md) -> Box<dyn Iterator<Item = &'t str> + 't>;
-}
-
-impl Batch for Baidu {
+    fn limit_field(&self) -> &Limit;
     fn limit<'t>(&self, m: &'t mut Md) -> Box<dyn Iterator<Item = &'t str> + 't> {
-        match self.limit {
-            Limit::Byte(l) => Box::new(m.bytes_paragraph(l)),
-            Limit::Char(l) => Box::new(m.chars_paragraph(l)),
+        match self.limit_field() {
+            &Limit::Byte(l) => Box::new(m.bytes_paragraph(l)),
+            &Limit::Char(l) => Box::new(m.chars_paragraph(l)),
         }
     }
 }
 
-pub fn via_baidu2(mut md: Md, from: &str, to: &str, user: &Baidu) -> Result<String> {
+macro_rules! batch {
+    ($($i:ident),+) => {
+        $(impl Batch for $i { fn limit_field(&self) -> &Limit { &self.limit } })+
+    };
+}
+
+batch!(Baidu, Tencent, Niutrans);
+
+pub fn via_baidu_batch(mut md: Md, from: &str, to: &str, user: &Baidu) -> Result<String> {
     use translation_api_cn::baidu::{Query, Response, URL};
     let mut res = Vec::new();
     let f = |buf: &str| {
@@ -190,6 +216,20 @@ pub fn via_baidu(mut md: Md, from: &str, to: &str, user: &Baidu) -> Result<Strin
     Ok(output)
 }
 
+pub fn via_niutrans_batch(mut md: Md, from: &str, to: &str, user: &Niutrans) -> Result<String> {
+    use translation_api_cn::niutrans::{Query, Response, URL};
+    let mut res = Vec::new();
+    let f = |buf: &str| {
+        let query = Query::new(buf.trim(), from, to);
+        let bytes = send(URL, &dbg!(query.form(user)))?.bytes()?;
+        Ok::<(), Error>(res.push(bytes))
+    };
+    user.limit(&mut md).try_for_each(f)?;
+    let iter: Vec<Response> = res.iter().map(|bytes| from_slice(bytes)).collect::<Result<_, _>>()?;
+    let output = md.done(iter.iter().map(|r| r.dst().map_err(print_err).unwrap()).flatten());
+    Ok(output)
+}
+
 pub fn via_niutrans(mut md: Md, from: &str, to: &str, user: &Niutrans) -> Result<String> {
     use translation_api_cn::niutrans::{Query, Response, URL};
     let buf = md.extract();
@@ -200,25 +240,43 @@ pub fn via_niutrans(mut md: Md, from: &str, to: &str, user: &Niutrans) -> Result
     Ok(output)
 }
 
+#[rustfmt::skip]
+fn send2(header: &mut translation_api_cn::tencent::Header) -> Result<blocking::Response> {
+    header.authorization()?; // 更改 query 或者 user 时必须重新生成验证信息
+    let map = {
+        use reqwest::header::{HeaderName, HeaderValue};
+        use std::str::FromStr;
+        header.header()
+              .into_iter()
+              .map(|(k, v)| match (HeaderName::from_str(k), HeaderValue::from_str(v)) {
+                  (Ok(key), Ok(value)) => Some((key, value)),
+                  _ => None,
+              })
+              .flatten() // 遇到 Err 时，把 Ok 的部分 collect
+              .collect()
+    };
+    Client::new().post(translation_api_cn::tencent::URL).headers(map).json(header.query).send().map_err(|e| e.into())
+}
+
+pub fn via_tencent_batch(mut md: Md, from: &str, to: &str, user: &Tencent) -> Result<String> {
+    use translation_api_cn::tencent::{Header, Query, Response};
+    let mut res = Vec::new();
+    let f = |buf: &str| {
+        let q: Vec<&str> = buf.trim().split("\n").collect();
+        let query = Query::new(&q, from, to, user.projectid);
+        dbg!(&query);
+        let mut header = Header::new(user, &query);
+        let bytes = send2(&mut header)?.bytes()?;
+        Ok::<(), Error>(res.push(bytes))
+    };
+    user.limit(&mut md).try_for_each(f)?;
+    let iter: Vec<Response> = res.iter().map(|bytes| from_slice(bytes)).collect::<Result<_, _>>()?;
+    let output = md.done(iter.iter().map(|r| r.dst().map_err(print_err).unwrap()).flatten());
+    Ok(output)
+}
+
 pub fn via_tencent(mut md: Md, from: &str, to: &str, user: &Tencent) -> Result<String> {
-    use translation_api_cn::tencent::{Header, Query, Response, URL};
-    #[rustfmt::skip]
-    fn send2(header: &mut Header) -> Result<blocking::Response> {
-        header.authorization()?; // 更改 query 或者 user 时必须重新生成验证信息
-        let map = {
-            use reqwest::header::{HeaderName, HeaderValue};
-            use std::str::FromStr;
-            header.header()
-                  .into_iter()
-                  .map(|(k, v)| match (HeaderName::from_str(k), HeaderValue::from_str(v)) {
-                      (Ok(key), Ok(value)) => Some((key, value)),
-                      _ => None,
-                  })
-                  .flatten() // 遇到 Err 时，把 Ok 的部分 collect
-                  .collect()
-        };
-        Client::new().post(URL).headers(map).json(header.query).send().map_err(|e| e.into())
-    }
+    use translation_api_cn::tencent::{Header, Query, Response};
 
     let buf = md.extract();
     let q: Vec<&str> = buf.trim().split("\n").collect();
