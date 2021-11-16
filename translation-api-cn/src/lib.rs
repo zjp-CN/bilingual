@@ -24,3 +24,18 @@ impl Limit {
         l
     }
 }
+
+pub trait Sender {
+    type User;
+    type Query;
+    type Form;
+    type Header;
+    type Json;
+
+    const URL: &'static str;
+
+    fn from_user_query2(user: Self::User, query: Self::Query) -> Self;
+    fn form2(&self) -> &Self::Form;
+    fn header2(&self) -> std::collections::HashMap<&str, &str>;
+    fn json2(&self) -> &Self::Json;
+}

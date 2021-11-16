@@ -105,6 +105,24 @@ impl<'f> Form<'f> {
     }
 }
 
+impl<'f> super::Sender for Form<'f> {
+    type Form = Self;
+    type Header = ();
+    type Json = ();
+    type Query = &'f mut Query<'f>;
+    type User = &'f User;
+
+    const URL: &'static str = URL;
+
+    fn from_user_query2(user: Self::User, query: Self::Query) -> Self { query.sign(user) }
+
+    fn form2(&self) -> &Self::Form { self }
+
+    fn header2(&self) -> std::collections::HashMap<&str, &str> { std::collections::HashMap::new() }
+
+    fn json2(&self) -> &Self::Json { &() }
+}
+
 /// 响应的信息。要么返回翻译结果，要么返回错误信息。
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]

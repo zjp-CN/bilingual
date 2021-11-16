@@ -80,6 +80,31 @@ pub struct Form<'f> {
     pub memory:   &'f str,
 }
 
+impl<'f> super::Sender for Form<'f> {
+    type Form = Self;
+    type Header = ();
+    type Json = ();
+    type Query = &'f Query<'f>;
+    type User = &'f User;
+
+    const URL: &'static str = URL;
+
+    fn from_user_query2(user: Self::User, query: Self::Query) -> Self {
+        Self { src_text: query.q,
+               from:     query.from,
+               to:       query.to,
+               apikey:   &user.key,
+               dict:     &user.dict,
+               memory:   &user.dict, }
+    }
+
+    fn form2(&self) -> &Self::Form { self }
+
+    fn header2(&self) -> std::collections::HashMap<&str, &str> { std::collections::HashMap::new() }
+
+    fn json2(&self) -> &Self::Json { &() }
+}
+
 impl<'f> Form<'f> {
     pub fn new(user: &'f User, query: &'f Query) -> Self {
         Self { src_text: query.q,

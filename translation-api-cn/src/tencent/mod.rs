@@ -142,6 +142,24 @@ pub struct Header<'u, 'q> {
     pub query:            &'q Query<'q>,
 }
 
+impl<'u, 'q> super::Sender for Header<'u, 'q> {
+    type Form = ();
+    type Header = Self;
+    type Json = Query<'q>;
+    type Query = &'q Query<'q>;
+    type User = &'u User;
+
+    const URL: &'static str = URL;
+
+    fn from_user_query2(user: Self::User, query: Self::Query) -> Self { Self::new(user, query) }
+
+    fn form2(&self) -> &Self::Form { &() }
+
+    fn header2(&self) -> std::collections::HashMap<&str, &str> { self.header() }
+
+    fn json2(&self) -> &Self::Json { &self.query }
+}
+
 impl<'u, 'q> Header<'u, 'q> {
     const ACTION: &'static str = "TextTranslateBatch";
     const ALGORITHM: &'static str = "TC3-HMAC-SHA256";
