@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use std::borrow::Cow;
 
 #[derive(Debug, Deserialize)]
 pub struct Response<'r> {
@@ -11,7 +12,7 @@ impl<'r> Response<'r> {
     /// 提取翻译内容。
     pub fn dst(&self) -> Result<impl Iterator<Item = &str>, ResponseError> {
         match &self.res {
-            ResponseInner::Ok { res, .. } => Ok(res.into_iter().copied()),
+            ResponseInner::Ok { res, .. } => Ok(res.iter().map(|s| s.as_ref())),
             ResponseInner::Err { error, .. } => Err(error.clone()),
         }
     }
@@ -27,7 +28,9 @@ impl<'r> Response<'r> {
     /// 翻译内容是否为 `str` 类型。无翻译内容或出错时，返回 `None`。
     pub fn is_borrowed(&self) -> Option<bool> {
         match &self.res {
-            ResponseInner::Ok { res, .. } if !res.is_empty() => Some(true),
+            ResponseInner::Ok { res, .. } if !res.is_empty() => {
+                Some(matches!(res[0], Cow::Borrowed(_)))
+            }
             _ => None,
         }
     }
@@ -46,7 +49,7 @@ pub enum ResponseInner<'r> {
         to:   &'r str,
         #[serde(borrow)]
         #[serde(rename = "TargetTextList")]
-        res:  Vec<&'r str>,
+        res:  Vec<Cow<'r, str>>,
     },
     Err {
         #[serde(rename = "RequestId")]
