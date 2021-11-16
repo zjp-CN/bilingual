@@ -298,9 +298,15 @@ pub fn prepend<'e>(event: Event<'e>, paragraph: &mut impl Iterator<Item = &'e st
                    -> ArrayVec<Event<'e>, MAXIMUM_EVENTS> {
     let mut arr = ArrayVec::<_, MAXIMUM_EVENTS>::new();
     match event {
-        End(Paragraph | Heading(_)) => {
+        End(Paragraph) => {
             arr.push(SoftBreak); // TODO: 是否空行
             arr.extend([SoftBreak, Text(paragraph.next().unwrap().into()), event]);
+        }
+        End(Heading(n)) => {
+            arr.extend([event,
+                        Start(Heading(n)),
+                        Text(paragraph.next().unwrap().into()),
+                        End(Heading(n))]);
         }
         _ => arr.extend([event]),
     }
