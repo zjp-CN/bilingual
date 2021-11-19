@@ -164,7 +164,7 @@ code block
     assert_display_snapshot!(output_md, @r###"
     # level one
 
-    level one
+    # level one
 
     one paragraph `Inline code`
 
@@ -192,7 +192,7 @@ fn size() {
     assert_debug_snapshot!(size_of::<Option<CowStr>>(), @"24");
     assert_debug_snapshot!(size_of::<Option<Tag>>(),    @"56");
 
-    assert_debug_snapshot!(size_of::<Md>(),             @"120");
+    assert_debug_snapshot!(size_of::<Md>(),             @"128");
     assert_debug_snapshot!(size_of::<Vec<usize>>(),     @"24");
     assert_debug_snapshot!(size_of::<String>(),         @"24");
     assert_debug_snapshot!(size_of::<Box<[usize]>>(),   @"16");
@@ -667,7 +667,7 @@ fn md_split_append() {
     assert_display_snapshot!(split(MD), @r###"
     # I/O event queue
 
-    I/O event queue
+    # I/O event queue
 
     We add the `callback_id` to the collection of callbacks to run. We pass
     in `Js::Undefined` since we'll not actually pass any data along here. You'll see

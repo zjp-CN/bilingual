@@ -1,4 +1,4 @@
-use crate::config::{Config, API};
+use crate::config::{Config, DirFile, API};
 use anyhow::{anyhow, Result};
 use argh::FromArgs;
 use std::path::PathBuf;
@@ -35,16 +35,32 @@ pub struct Bilingual {
     #[argh(option, short = 'q', default = "String::new()")]
     singlequery: String,
 
-    /// md 文件路径。
-    #[argh(option, short = 'm')]
-    files: Vec<PathBuf>,
+    /// md 文件的输入路径。
+    #[argh(option, short = 'm', long = "input-dirs")]
+    input_files: Vec<PathBuf>,
 
-    /// 目录。
-    #[argh(option, short = 'd')]
-    dirs: Vec<PathBuf>,
+    /// 输入目录。
+    #[argh(option, short = 'd', long = "input-files")]
+    input_dirs: Vec<PathBuf>,
+
+    /// md 文件的输出路径。
+    #[argh(option, short = 'M', long = "output-dirs")]
+    output_files: Vec<PathBuf>,
+
+    /// 输出目录。
+    #[argh(option, short = 'D', long = "output-files")]
+    output_dirs: Vec<PathBuf>,
+
+    /// 如果输出文件已存在，是否替换。默认不替换。
+    #[argh(switch, short = 'r', long = "replace-file")]
+    replace_file: bool,
+
+    /// 在输出文件夹时不存在时，禁止创建输出文件夹。默认总是创建新文件夹。
+    #[argh(switch, long = "forbid-dir-creation")]
+    forbid_dir_creation: bool,
 
     /// 配置文件 bilingual.toml 的路径。默认是当前目录下。
-    #[argh(option, short = 'l', default = "\"bilingual.toml\".into()")]
+    #[argh(option, default = "\"bilingual.toml\".into()")]
     toml: std::path::PathBuf,
 
     /// 多行翻译文本：每行翻译文本以空格分隔。按照输入的顺序进行翻译。
@@ -65,19 +81,58 @@ impl Bilingual {
             API::Baidu => baidu(self.id, self.key, &mut cf)?,
             API::Tencent => tencent(self.id, self.key, &mut cf)?,
             API::Niutrans => niutrans(self.key, &mut cf)?,
-            _ => (),
+            _ => unimplemented!(),
         }
-        cf.api = self.api;
-        cf.src.from = self.from;
-        cf.src.to = self.to;
-        cf.src.files = self.files;
-        cf.src.dirs = self.dirs;
+
+        if self.output_files.is_empty() {
+            cf.src.output_files =
+                self.input_files.iter().map(|f| new_filename(f, &self.to)).collect();
+        } else if self.input_files.len() == self.output_files.len() {
+            cf.src.output_files = self.output_files;
+        } else {
+            anyhow::bail!("-m 与 -M 的数量必须相等")
+        }
+        cf.src.input_files = self.input_files;
+
+        if self.output_dirs.is_empty() {
+            cf.src.output_dirs = self.input_dirs.iter().map(|f| new_dir(f, &self.to)).collect();
+        } else if self.input_dirs.len() == self.output_dirs.len() {
+            cf.src.output_dirs = self.output_dirs;
+        } else {
+            anyhow::bail!("-d 与 -D 的数量必须相等")
+        }
+        cf.src.input_dirs = self.input_dirs;
+
         if !self.singlequery.is_empty() {
             self.multiquery.push(self.singlequery);
         }
         cf.src.query = self.multiquery.join("\n\n");
+
+        cf.api = self.api;
+        cf.src.from = self.from;
+        cf.src.to = self.to;
+        cf.src.dir_file = DirFile::new(self.replace_file, self.forbid_dir_creation);
         Ok(cf)
     }
+}
+
+fn new_filename(f: &PathBuf, to: &str) -> PathBuf {
+    let mut stem = f.file_stem().unwrap().to_os_string();
+    stem.reserve(6);
+    stem.push("-");
+    stem.push(to);
+    stem.push(".");
+    stem.push(f.extension().unwrap());
+    f.with_file_name(stem)
+}
+
+fn new_dir(f: &PathBuf, to: &str) -> PathBuf {
+    let mut stem = f.file_stem().unwrap().to_os_string();
+    dbg!(&stem);
+    stem.reserve(3);
+    stem.push("-");
+    stem.push(to);
+    f.with_file_name(stem)
 }
 
 fn niutrans(key: String, cf: &mut Config) -> Result<()> {
@@ -114,4 +169,16 @@ fn baidu(id: String, key: String, cf: &mut Config) -> Result<()> {
         cf.baidu.as_mut().ok_or(anyhow!("覆盖百度翻译 API.key 时出错"))?.key = key;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_filename_dir() {
+        assert_eq!(PathBuf::from("/root/test-zh.md"), new_filename(&"/root/test.md".into(), "zh"));
+        assert_eq!(PathBuf::from("/root/test-zh/"), new_dir(&"/root/test/".into(), "zh"));
+        assert_eq!(PathBuf::from("/root/test-zh"), new_dir(&"/root/test".into(), "zh"));
+    }
 }

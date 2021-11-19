@@ -46,15 +46,70 @@ impl std::str::FromStr for API {
 #[derive(Debug, Default)]
 pub struct Src {
     /// 原语言
-    pub from:  String,
+    pub from:         String,
     /// 目标语言
-    pub to:    String,
+    pub to:           String,
     /// 来自输入的命令行参数
-    pub query: String,
+    pub query:        String,
+    /// 如果输出文件已存在，是否替换。默认不替换。
+    pub dir_file:     DirFile,
     /// 未校验 md 后缀的文件
-    pub files: Vec<PathBuf>,
+    pub input_files:  Vec<PathBuf>,
     /// 会校验 md 后缀的文件
-    pub dirs:  Vec<PathBuf>,
+    pub input_dirs:   Vec<PathBuf>,
+    /// 未校验 md 后缀的文件
+    pub output_files: Vec<PathBuf>,
+    /// 会校验 md 后缀的文件
+    pub output_dirs:  Vec<PathBuf>,
+}
+
+#[derive(Debug, Default)]
+pub struct DirFile {
+    dir:          Option<std::fs::DirBuilder>,
+    replace_file: bool,
+}
+
+impl DirFile {
+    pub fn new(replace_file: bool, forbid_dir_creation: bool) -> Self {
+        Self { dir: if forbid_dir_creation {
+                   None
+               } else {
+                   let mut d = std::fs::DirBuilder::new();
+                   d.recursive(true);
+                   Some(d)
+               },
+               replace_file }
+    }
+
+    fn create_dir(&self, d: impl AsRef<Path>) -> Option<()> {
+        self.dir
+            .as_ref()
+            .map(|db| db.create(&d).map_err(print_err).ok())
+            .flatten()
+            .or_else(|| {
+                if !d.as_ref().exists() {
+                    eprintln!("{:?} 文件夹不存在，且不被允许创建。", d.as_ref());
+                    None
+                } else {
+                    Some(())
+                }
+            })
+    }
+
+    #[rustfmt::skip]
+    fn create_parent(&self, f: &PathBuf) -> Option<()> {
+        self.create_dir(f.parent().or_else(|| { eprintln!("{:?} 无父目录", f); None })?)
+    }
+
+    fn read_file(&self, from: PathBuf, into: PathBuf) -> Option<TextItem> {
+        Some(if into.exists() && !self.replace_file {
+                 // 输出文件已存在，当不被允许覆盖，因此跳过
+                 TextItem::Skip { from, into }
+             } else {
+                 let text = std::fs::read_to_string(&from).map_err(print_err).ok()?;
+                 TextItem::Normal { text, from, into }
+             })
+    }
 }
 
 #[rustfmt::skip]
@@ -65,16 +120,33 @@ fn filter_md_files(d: impl AsRef<Path>) -> Option<impl Iterator<Item = PathBuf>>
 }
 
 impl Iterator for Src {
-    type Item = String;
+    type Item = TextItem;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(p) = self.files.pop() {
-            std::fs::read_to_string(p).map_err(print_err).ok()
-        } else if let Some(d) = self.dirs.pop() {
-            self.files = filter_md_files(d)?.collect();
-            std::fs::read_to_string(self.files.pop()?).map_err(print_err).ok()
+        if let Some(from) = self.input_files.pop() {
+            let into = self.output_files.pop()?;
+            self.dir_file.create_parent(&into)?;
+            self.dir_file.read_file(from, into)
+        } else if let Some(d) = self.input_dirs.pop() {
+            self.input_files = filter_md_files(d)?.collect();
+            let d = self.output_dirs.pop()?;
+            self.dir_file.create_dir(&d)?;
+            self.output_files = self.input_files
+                                    .iter()
+                                    .map(|f| {
+                                        if let Some(fname) = f.file_name() {
+                                            Some(d.join(fname))
+                                        } else {
+                                            eprintln!("路径 {:?} 无法获取文件名", f);
+                                            None
+                                        }
+                                    })
+                                    .collect::<Option<_>>()?;
+            let from = self.input_files.pop()?;
+            let into = self.output_files.pop()?;
+            self.dir_file.read_file(from, into)
         } else if !self.query.is_empty() {
-            Some(std::mem::take(&mut self.query))
+            Some(TextItem::Stdout(std::mem::take(&mut self.query)))
         } else {
             None
         }
@@ -82,7 +154,34 @@ impl Iterator for Src {
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         let n = if self.query.is_empty() { 0 } else { 1 };
-        (n, Some(n + self.files.len() + self.dirs.iter().map(filter_md_files).count()))
+        (n,
+         Some(n
+              + self.input_files.len()
+              + self.input_dirs.iter().filter_map(filter_md_files).count()))
+    }
+}
+
+#[derive(Debug)]
+pub enum TextItem {
+    Normal {
+        text: String,
+        from: PathBuf,
+        into: PathBuf,
+    },
+    Skip {
+        from: PathBuf,
+        into: PathBuf,
+    },
+    Stdout(String),
+}
+
+impl std::fmt::Display for TextItem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            TextItem::Normal { text, .. } => text,
+            TextItem::Skip { .. } => "",
+            TextItem::Stdout(s) => s,
+        })
     }
 }
 
@@ -97,14 +196,44 @@ impl Config {
 
     /// 按照 [`files`][`Src::file`] -> [`dirs`][`Src::dirs`] -> [`query`][`Src::query`] 的
     /// 顺序查询。
-    pub fn do_single_query(&mut self) -> Option<String> {
-        let src = self.src.next()?;
-        let md = Md::new(&src);
-        match self.api {
-            API::Baidu => self.do_single_query_baidu(md),
-            API::Tencent => self.do_single_query_tencent(md),
-            API::Niutrans => self.do_single_query_niutrans(md),
-            _ => unimplemented!(),
+    pub fn do_single_query(&mut self) -> Option<TextItem> {
+        use TextItem::*;
+        let text_item = self.src.next()?;
+        let doit = |text: &str| {
+            let md = Md::new(text);
+            match self.api {
+                API::Baidu => self.do_single_query_baidu(md),
+                API::Tencent => self.do_single_query_tencent(md),
+                API::Niutrans => self.do_single_query_niutrans(md),
+                _ => unimplemented!(),
+            }
+        };
+        Some(match text_item {
+            Normal { ref text, from, into } => Normal { text: doit(text)?,
+                                                        from,
+                                                        into },
+            Stdout(ref s) => Stdout(doit(s)?),
+            x => x,
+        })
+    }
+
+    pub fn do_single_query_write(&mut self) -> Option<String> {
+        match self.do_single_query()? {
+            TextItem::Normal { text, from, into } => {
+                std::fs::write(&into, text.as_bytes()).map_err(print_err).ok()?;
+                println!("翻译成功：{:?} => {:?}", from, into);
+                Some(text)
+            }
+            TextItem::Stdout(text) => {
+                println!("命令行翻译内容：\n{}", text);
+                Some(text)
+            }
+            TextItem::Skip { from, into } => {
+                eprintln!("翻译未开始：\n * {:?} 被跳过，因为 {:?} \
+                           已存在，而且不被允许覆盖。\n请指明 `-r` 参数或者手动删除已存在的文件",
+                          from, into);
+                None
+            }
         }
     }
 

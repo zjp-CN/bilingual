@@ -6,12 +6,14 @@ use insta::{assert_debug_snapshot, assert_display_snapshot};
 #[test]
 fn size() {
     use std::mem::size_of;
-    assert_debug_snapshot!(size_of::<Config>(), @"208");
-    assert_debug_snapshot!(size_of::<Src>(), @"120");
-    assert_debug_snapshot!(size_of::<translation_api_cn::baidu::User>(), @"80");
+    assert_debug_snapshot!(size_of::<Config>(), @"456");
+    assert_debug_snapshot!(size_of::<Src>(), @"184");
+    assert_debug_snapshot!(size_of::<translation_api_cn::baidu::User>(), @"96");
 }
 
+// 需要指定 api，但是这个测试仅仅用作例子。
 #[test]
+#[should_panic]
 fn translation() {
     if let Ok(mut cf) = Config::init("bilingual.toml") {
         cf.src.from = "en".into();
