@@ -361,7 +361,11 @@ pub fn via_niutrans_batch(mut md: Md, from: &str, to: &str, user: &Niutrans) -> 
     let mut res = Vec::new();
     let f = |q: &str| {
         let query = Query::new(q.trim(), from, to);
-        let bytes = send(URL, &dbg!(query.form(user)))?.bytes()?;
+        let bytes = send(URL, &{
+                        let form = query.form(user);
+                        debug!("form = {:#?}", form);
+                        form
+                    })?.bytes()?;
         debug!("\nq = {:?}\nquery = {:#?}\nbytes = {:?}", q, query, bytes);
         Ok::<(), Error>(res.push(bytes))
     };
@@ -376,7 +380,11 @@ pub fn via_niutrans(mut md: Md, from: &str, to: &str, user: &Niutrans) -> Result
     use translation_api_cn::niutrans::{Query, Response, URL};
     let q = md.extract();
     let query = Query::new(q.trim(), from, to);
-    let bytes = send(URL, &query.form(user))?.bytes()?;
+    let bytes = send(URL, &{
+                    let form = query.form(user);
+                    debug!("form = {:#?}", form);
+                    form
+                })?.bytes()?;
     let response = from_slice::<Response>(&bytes)?;
     debug!("\nq = {:?}\nquery = {:#?}\nbytes = {:?}\nresponse = {:#?}", q, query, bytes, response);
     let output = md.done(response.dst()?);
