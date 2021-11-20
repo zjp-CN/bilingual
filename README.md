@@ -29,6 +29,26 @@
 
 ## 使用
 
+`bilingual.toml` 样例：
+
+```toml
+[baidu]
+appid = "xxxxxxxxxxxxxxxxx"
+key = "xxxxxxxxxxxxxxxxxxxx"
+# limit = { bytes = 6000 }
+
+[tencent]
+id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+# limit = { chars = 2000 }
+
+[niutrans]
+key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+# limit = { chars = 5000 }
+```
+
+命令行帮助：
+
 ```md
 $ bilingual --help
 
@@ -73,6 +93,18 @@ Options:
 ```
 
 实际使用例子：
+- `bilingual -a tencent "# 标题" "正文：模拟 markdown 文件的内容。" -f zh -t en`（等价于使用 `\` 转义的例子）结果：
+ 
+ ```md
+ # 标题
+
+ # Title
+
+ 正文：模拟 markdown 文件的内容。
+
+ Body: simulates the contents of the markdown file.
+ ```
+
 - (8_6_io_eventqueue-zh.md)[https://github.com/zjp-CN/bilingual/blob/main/assets/8_6_io_eventqueue-zh.md]：源文件来自于[此处](https://github.com/cfsamson/book-exploring-async-basics)
 - (markdown-it)[https://github.com/zjp-CN/bilingual/blob/main/assets/markdown-it.md] 的 (各种 API 翻译后的版本)[https://github.com/zjp-CN/bilingual/blob/main/assets/markdown-it]：源文件来自于[此处](https://markdown-it.github.io/)
 
