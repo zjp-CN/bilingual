@@ -50,7 +50,7 @@ jobs:
           # name: Release ${{ github.ref }}
           draft: true
           files: |
-            ./target/release/rustdx-*
-            ./target/release/rustdx.exe
+            ./target/release/bilingual-*
+            ./target/release/bilingual.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # You don't need to add this in secrets it's by default.
