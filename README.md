@@ -3,6 +3,8 @@
 [<img alt="github" src="https://img.shields.io/github/license/zjp-CN/bilingual?color=blue" height="20">](https://github.com/zjp-CN/bilingual)
 [<img alt="github" src="https://img.shields.io/github/issues/zjp-CN/bilingual?color=db2043" height="20">](https://github.com/zjp-CN/bilingual/issues)
 [<img alt="build status" src="https://github.com/zjp-CN/bilingual/workflows/Release%20CI/badge.svg" height="20">](https://github.com/zjp-CN/bilingual/actions)
+[<img alt="crates.io" src="https://img.shields.io/crates/v/bilingual?style=flat&color=fc8d62&logo=rust&label=bilingual" height="20">](https://crates.io/crates/bilingual)
+[<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-translation_api_cn-66c2a5?style=flat&labelColor=555555&logoColor=white&logo=data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDUxMiA1MTIiPjxwYXRoIGZpbGw9IiNmNWY1ZjUiIGQ9Ik00ODguNiAyNTAuMkwzOTIgMjE0VjEwNS41YzAtMTUtOS4zLTI4LjQtMjMuNC0zMy43bC0xMDAtMzcuNWMtOC4xLTMuMS0xNy4xLTMuMS0yNS4zIDBsLTEwMCAzNy41Yy0xNC4xIDUuMy0yMy40IDE4LjctMjMuNCAzMy43VjIxNGwtOTYuNiAzNi4yQzkuMyAyNTUuNSAwIDI2OC45IDAgMjgzLjlWMzk0YzAgMTMuNiA3LjcgMjYuMSAxOS45IDMyLjJsMTAwIDUwYzEwLjEgNS4xIDIyLjEgNS4xIDMyLjIgMGwxMDMuOS01MiAxMDMuOSA1MmMxMC4xIDUuMSAyMi4xIDUuMSAzMi4yIDBsMTAwLTUwYzEyLjItNi4xIDE5LjktMTguNiAxOS45LTMyLjJWMjgzLjljMC0xNS05LjMtMjguNC0yMy40LTMzLjd6TTM1OCAyMTQuOGwtODUgMzEuOXYtNjguMmw4NS0zN3Y3My4zek0xNTQgMTA0LjFsMTAyLTM4LjIgMTAyIDM4LjJ2LjZsLTEwMiA0MS40LTEwMi00MS40di0uNnptODQgMjkxLjFsLTg1IDQyLjV2LTc5LjFsODUtMzguOHY3NS40em0wLTExMmwtMTAyIDQxLjQtMTAyLTQxLjR2LS42bDEwMi0zOC4yIDEwMiAzOC4ydi42em0yNDAgMTEybC04NSA0Mi41di03OS4xbDg1LTM4Ljh2NzUuNHptMC0xMTJsLTEwMiA0MS40LTEwMi00MS40di0uNmwxMDItMzguMiAxMDIgMzguMnYuNnoiPjwvcGF0aD48L3N2Zz4K" height="20">](https://docs.rs/bilingual)
 
 针对 markdown 文件的命令行翻译。
 使用翻译云服务（百度、腾讯、小牛），
@@ -11,10 +13,17 @@
 ## 安装
 
 1. 下载 [已编译的版本](https://github.com/zjp-CN/bilingual/releases)；
-2. 或者源码编译
+2. 或者 cargo 安装：
+
+    ```console
+    CARGO_PROFILE_RELEASE_LTO=yes CARGO_PROFILE_RELEASE_OPT_LEVEL=3 cargo install bilingual --features bin
+    ```
+
+2. 或者源码编译：
 
     ```console
     git clone https://github.com/zjp-CN/bilingual.git
+    cd bilingual
     cargo build --release --features bin
     ```
 
@@ -63,6 +72,8 @@ Options:
   --help            display usage information
 ```
 
-
+实际使用例子：
+- (8_6_io_eventqueue-zh.md)[https://github.com/zjp-CN/bilingual/blob/main/assets/8_6_io_eventqueue-zh.md]：源文件来自于[此处](https://github.com/cfsamson/book-exploring-async-basics)
+- (markdown-it)[https://github.com/zjp-CN/bilingual/blob/main/assets/markdown-it.md] 的 (各种 API 翻译后的版本)[https://github.com/zjp-CN/bilingual/blob/main/assets/markdown-it]：源文件来自于[此处](https://markdown-it.github.io/)
 
 
