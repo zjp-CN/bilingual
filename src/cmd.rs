@@ -74,8 +74,7 @@ pub struct Bilingual {
 /// - 腾讯：projectid
 impl Bilingual {
     pub fn run(mut self) -> Result<Config> {
-        #[cfg(debug_assertions)]
-        dbg!(&self);
+        log::debug!("{:#?}", self);
         let mut cf = Config::init(self.toml)?;
         match self.api {
             API::Baidu => baidu(self.id, self.key, &mut cf)?,
@@ -128,7 +127,6 @@ fn new_filename(f: &PathBuf, to: &str) -> PathBuf {
 
 fn new_dir(f: &PathBuf, to: &str) -> PathBuf {
     let mut stem = f.file_stem().unwrap().to_os_string();
-    dbg!(&stem);
     stem.reserve(3);
     stem.push("-");
     stem.push(to);

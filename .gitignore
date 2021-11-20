@@ -1,3 +1,4 @@
 /target
 *.log
 bilingual.toml
+bilingual.log

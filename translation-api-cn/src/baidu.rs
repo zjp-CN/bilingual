@@ -78,7 +78,7 @@ impl<'q> Query<'q> {
     /// [key]: `User::key`
     pub fn sign<'f>(&'f mut self, user: &'f User) -> Form<'f> {
         let data = format!("{}{}{}{}", &user.appid, self.q, &user.salt, &user.key);
-        self.sign = format!("{:x}", md5::compute(dbg!(data)));
+        self.sign = format!("{:x}", md5::compute(data));
         Form::from_user_query(user, self)
     }
 }
