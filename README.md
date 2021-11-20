@@ -6,11 +6,11 @@
 
 针对 markdown 文件的命令行翻译。
 使用翻译云服务（百度、腾讯、小牛），
-我整理了一份 (API 选择方案)[https://github.com/zjp-CN/bilingual/issues/2]。
+我整理了一份 [API 选择方案](https://github.com/zjp-CN/bilingual/issues/2)。
 
 ## 安装
 
-1. 下载 (已编译的版本)[https://github.com/zjp-CN/bilingual/releases]；
+1. 下载 [已编译的版本](https://github.com/zjp-CN/bilingual/releases)；
 2. 或者源码编译
 
     ```console
