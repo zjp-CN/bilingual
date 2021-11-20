@@ -6,9 +6,9 @@ license = "MIT"
 readme  = "../README.md"
 authors = ["zjp <jiping_zhou@foxmail.com>"]
 exclude = ["assets", "examples", "benches", "tests", "*.log"]
-license-file = "../LICENSE"
-repository   = "https://github.com/zjp-CN/bilingual"
-description  = "Some useful structs for calling Chinese translation api cloud services. A helper tool for `bilingual` cmdline tool."
+categories  = ["api-bindings", "text-processing"]
+repository  = "https://github.com/zjp-CN/bilingual"
+description = "Some useful structs for calling Chinese translation api cloud services. A helper tool for `bilingual` cmdline tool."
 
 [dependencies]
 # reqwest = {version = "0.11", features = ["json"]}
