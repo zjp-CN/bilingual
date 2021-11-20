@@ -25,10 +25,7 @@ version  = "0.8"
 default-features = false
 
 [features]
-bin = [
-        "argh", "reqwest", "serde_json", "anyhow", "translation-api-cn", "serde", "toml",
-        "log", "simplelog"
-      ]
+bin = ["argh", "reqwest", "serde_json", "anyhow", "translation-api-cn", "serde", "toml", "log", "simplelog"]
 
 [[bin]]
 name = "bilingual"
