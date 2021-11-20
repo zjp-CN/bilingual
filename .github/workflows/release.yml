@@ -23,7 +23,7 @@ jobs:
           default: true
           profile: minimal
       - name: Build
-        run: cargo build --release
+        run: cargo build --release --features bin
 
       # Condition to only run this whenever the runner os is Mac
       - name: Strip Release on Mac
