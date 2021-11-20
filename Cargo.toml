@@ -2,7 +2,12 @@
 name = "bilingual"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
 exclude = ["assets", "examples", "benches", "tests", "CHANGELOG.md", "bilingual.*"]
+authors = ["zjp <jiping_zhou@foxmail.com>"]
+repository  = "https://github.com/zjp-CN/bilingual"
+categories  = ["command-line-utilities", "text-processing"]
+description = "A cmdline tool used for markdown translation via calling Chinese translation api cloud services."
 
 [dependencies]
 pulldown-cmark-to-cmark = "6"
