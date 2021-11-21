@@ -80,10 +80,6 @@ pub struct Bilingual {
     multiquery: Vec<String>,
 }
 
-/// 命令行目前只输入基本的 id 和 key，指定其他请求选项需指定 toml 文件。
-/// 比如指定：
-/// - 百度：qps、salt
-/// - 腾讯：projectid
 impl Bilingual {
     pub fn run(mut self) -> Result<Config> {
         log::debug!("{:#?}", self);
