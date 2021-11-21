@@ -19,7 +19,7 @@ use std::path::PathBuf;
 注意：本程序使用翻译云服务，因此需要自行申请翻译 API。
       命令行提供的 id 和 key 会覆盖掉配置文件的信息。
       换言之，未提供命令行的 appid 和 key，则使用配置文件的信息。
-      建议将账户信息统一写在当前路径下的 bilingual.toml 目录（或者由 --toml 指定的路径）。
+      建议将账户信息统一写在当前目录下的 bilingual.toml 文件（或者由 --toml 指定的路径）。
 "#)]
 pub struct Bilingual {
     /// 翻译 API。必选参数。目前支持：baidu | tencent | niutrans。
@@ -150,7 +150,7 @@ fn niutrans(key: String, cf: &mut Config) -> Result<()> {
         cf.niutrans.replace(translation_api_cn::niutrans::User::default());
     }
     if !key.is_empty() {
-        cf.niutrans.as_mut().ok_or(anyhow!("覆盖腾讯云 API.key 时出错"))?.key = key;
+        cf.niutrans.as_mut().ok_or(anyhow!("覆盖小牛翻译 API.key 时出错"))?.key = key;
     }
     Ok(())
 }
