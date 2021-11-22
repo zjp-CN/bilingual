@@ -70,6 +70,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simplelog",
+ "tl",
  "toml",
  "translation-api-cn",
 ]
@@ -1083,6 +1084,12 @@ name = "tinyvec_macros"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
+
+[[package]]
+name = "tl"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c2e69d861808d18932513525fd65dd1cd6f4c909b3b77f7bc107688ab6fb1ff0"
 
 [[package]]
 name = "tokio"

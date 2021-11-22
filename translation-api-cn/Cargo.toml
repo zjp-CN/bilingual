@@ -11,30 +11,25 @@ repository  = "https://github.com/zjp-CN/bilingual"
 description = "Some useful structs for calling Chinese translation api cloud services. A helper tool for `bilingual` cmdline tool."
 
 [dependencies]
-# reqwest = {version = "0.11", features = ["json"]}
-thiserror = "1"
 serde = {version = "1", features = ["derive"]}
-serde_json = {version = "1", optional = true}
 
 md5 = {version = "0.7", optional = true}
-# nanorand = {version = "0.6", optional = true}
 
 sha2 = {version = "0.9", optional = true}
 hmac = {version = "0.11", optional = true, features = ["std"]}
-# chrono = {version = "0.4", optional = true}
 time = {version = "0.3", optional = true}
+thiserror = {version = "1", optional = true}
+serde_json = {version = "1", optional = true}
 
 [features]
 default = ["baidu", "tencent", "niutrans"]
 baidu = ["md5"]
-tencent = ["sha2", "hmac", "time", "serde_json"]
+tencent = ["sha2", "hmac", "time", "serde_json", "thiserror"]
 niutrans = []
 
 [dev-dependencies]
-# tokio = {version = "1", features = ["rt", "rt-multi-thread", "macros"]}
 reqwest = {version = "0.11", features = ["json", "blocking"]}
 serde_json = "1"
 argh = "0.1"
-# nanorand = "0.6"
 anyhow = "1"
 insta = "1.8"
