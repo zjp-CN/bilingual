@@ -48,23 +48,23 @@ pub struct Bilingual {
 
     /// md 文件的输入路径。此工具把读取到的文件内容只当作 md 文件进行处理。且不修改 API
     /// 返回的任何内容。
-    #[argh(option, short = 'm', long = "input-dirs")]
+    #[argh(option, short = 'm', long = "input-files")]
     input_files: Vec<PathBuf>,
 
     /// 输入目录。此工具只识别和读取目录下以 `.md` 结尾的文件。
-    #[argh(option, short = 'd', long = "input-files")]
+    #[argh(option, short = 'd', long = "input-dirs")]
     input_dirs: Vec<PathBuf>,
 
     /// md 文件的输出路径。默认在输入的文件路径下，但是翻译后的文件名会增加 `--to` 标识。
-    #[argh(option, short = 'M', long = "output-dirs")]
+    #[argh(option, short = 'M', long = "output-files")]
     output_files: Vec<PathBuf>,
 
     /// 输出目录。默认在输入的目录旁，但是翻译后的目录会增加 `--to` 标识。
-    #[argh(option, short = 'D', long = "output-files")]
+    #[argh(option, short = 'D', long = "output-dirs")]
     output_dirs: Vec<PathBuf>,
 
     /// 如果输出文件已存在，是否替换。默认不替换。
-    #[argh(switch, short = 'r', long = "replace-file")]
+    #[argh(switch, short = 'r', long = "replace-files")]
     replace_file: bool,
 
     /// 在输出文件夹时不存在时，禁止创建输出文件夹。默认总是创建新文件夹。
