@@ -5,7 +5,7 @@ use pulldown_cmark::{
     Tag::*,
 };
 use pulldown_cmark_to_cmark::Options as OutOptions;
-use std::mem::replace;
+use std::mem::{replace, take};
 
 #[derive(Debug)]
 pub struct Md<'e> {
@@ -47,19 +47,22 @@ impl<'e> Md<'e> {
     /// TODO: 尽可能保存原样式/结构
     fn extract_with_chars(&mut self) {
         fn inner(m: &mut Md) {
-            let select = &mut true;
+            let not_codeblock = &mut true;
+            let table = &mut false;
             let buf = &mut m.buffer;
             let len = &mut 0;
             let cnt = &mut 0;
             let bytes = &mut m.bytes;
             let chars = &mut m.chars;
-            m.events
-             .iter()
-             .for_each(|event| extract_with_chars(event, select, buf, len, bytes, cnt, chars));
+            #[rustfmt::skip]
+            m.events.iter().for_each(|e| { extract_with_chars(e, not_codeblock, table, buf, len, bytes, cnt, chars) });
         }
         if self.buffer.is_empty() {
             inner(self);
         } else if self.chars.is_empty() {
+            if !self.bytes.is_empty() {
+                self.bytes.clear();
+            }
             self.buffer.clear();
             inner(self);
         }
@@ -112,13 +115,14 @@ impl<'e> Md<'e> {
     /// TODO: 尽可能保存原样式/结构
     fn extract_with_bytes(&mut self) {
         fn inner(m: &mut Md) {
-            let select = &mut true;
+            let not_codeblock = &mut true;
+            let table = &mut false;
             let buf = &mut m.buffer;
             let len = &mut 0;
             let bytes = &mut m.bytes;
             m.events
              .iter()
-             .for_each(|event| extract_with_bytes(event, select, buf, len, bytes));
+             .for_each(|event| extract_with_bytes(event, not_codeblock, table, buf, len, bytes));
         }
         if self.buffer.is_empty() {
             inner(self);
@@ -169,9 +173,10 @@ impl<'e> Md<'e> {
     /// [`chars_paragraph`]: `Md::chars_paragraph`
     pub fn extract(&mut self) -> &str {
         if self.buffer.is_empty() {
-            let mut select = true;
+            let not_codeblock = &mut true;
+            let table = &mut false;
             let buf = &mut self.buffer;
-            self.events.iter().for_each(|event| extract(event, &mut select, buf));
+            self.events.iter().for_each(|event| extract(event, not_codeblock, table, buf));
         }
         &self.buffer
     }
@@ -195,7 +200,8 @@ impl<'e> Md<'e> {
     /// 完成并返回写入翻译内容。参数 `paragraph` 为按段落翻译的**译文**。
     pub fn done(mut self, mut paragraph: impl Iterator<Item = &'e str>) -> String {
         self.buffer.clear();
-        let output = self.events.into_iter().map(|e| prepend(e, &mut paragraph)).flatten();
+        let table = &mut false;
+        let output = self.events.into_iter().map(|e| prepend(e, table, &mut paragraph)).flatten();
         let opt = cmark_to_cmark_opt();
         pulldown_cmark_to_cmark::cmark_with_options(output, &mut self.buffer, None, opt).unwrap();
         // dbg!(self.output.len(),
@@ -248,7 +254,7 @@ impl Limit {
     }
 
     fn chars(&mut self, cnt: usize, len: usize) -> Option<Range> {
-        // dbg!(len, &self);
+        // dbg!(cnt, len, &self);
         if let Some(add) = self.len.checked_add(len) {
             if self.cnt + cnt <= self.limit {
                 self.len = add;
@@ -294,9 +300,11 @@ pub fn cmark_to_cmark_opt() -> OutOptions {
 
 const MAXIMUM_EVENTS: usize = 4;
 
-pub fn prepend<'e>(event: Event<'e>, paragraph: &mut impl Iterator<Item = &'e str>)
+pub fn prepend<'e>(event: Event<'e>, table: &mut bool,
+                   paragraph: &mut impl Iterator<Item = &'e str>)
                    -> ArrayVec<Event<'e>, MAXIMUM_EVENTS> {
     let mut arr = ArrayVec::<_, MAXIMUM_EVENTS>::new();
+    // dbg!(&event);
     match event {
         End(Paragraph) => {
             arr.push(SoftBreak); // TODO: 是否空行
@@ -308,40 +316,62 @@ pub fn prepend<'e>(event: Event<'e>, paragraph: &mut impl Iterator<Item = &'e st
                         Text(paragraph.next().unwrap().into()),
                         End(Heading(n))]);
         }
+        event @ End(Table(_)) => {
+            *table = false;
+            arr.extend([event])
+        }
+        event @ Start(Table(_)) => {
+            *table = true;
+            arr.extend([event])
+        }
+        event @ Text(_) if *table => {
+            arr.extend([event, Text('\t'.into()), Text(paragraph.next().unwrap().into())])
+        }
         _ => arr.extend([event]),
     }
     arr
 }
 
 /// 取出需要被翻译的内容：按照段落或标题
-pub fn extract(event: &Event, select: &mut bool, buf: &mut String) {
+pub fn extract(event: &Event, not_codeblock: &mut bool, table: &mut bool, buf: &mut String) {
     match event {
         End(Paragraph | Heading(_)) => buf.push('\n'),
-        Text(x) if *select => buf.push_str(x.as_ref()),
+        Text(x) if *not_codeblock => {
+            buf.push_str(x.as_ref());
+            if *table {
+                buf.push('\n');
+            }
+        }
         SoftBreak | HardBreak => buf.push(' '),
         Code(x) => {
             buf.push('`');
             buf.push_str(x.as_ref());
             buf.push('`');
         }
-        Start(CodeBlock(_)) => *select = false,
-        End(CodeBlock(_)) => *select = true,
+        Start(CodeBlock(_)) => *not_codeblock = false,
+        End(CodeBlock(_)) => *not_codeblock = true,
+        End(Table(_)) => *table = false,
+        Start(Table(_)) => *table = true,
         _ => (),
     }
 }
 
 /// 取出需要被翻译的内容：按照段落或标题。
-pub fn extract_with_bytes(event: &Event, select: &mut bool, buf: &mut String, len: &mut usize,
-                          vec: &mut Vec<usize>) {
+pub fn extract_with_bytes(event: &Event, not_codeblock: &mut bool, table: &mut bool,
+                          buf: &mut String, len: &mut usize, vec: &mut Vec<usize>) {
     match event {
         End(Paragraph | Heading(_)) => {
             buf.push('\n');
-            vec.push(*len + 1);
-            *len = 0;
+            vec.push(take(len) + 1);
         }
-        Text(x) if *select => {
+        Text(x) if *not_codeblock => {
             buf.push_str(x.as_ref());
-            *len += x.len();
+            if *table {
+                buf.push('\n');
+                vec.push(take(len) + x.len() + 1);
+            } else {
+                *len += x.len();
+            };
         }
         SoftBreak | HardBreak => {
             buf.push(' ');
@@ -353,27 +383,34 @@ pub fn extract_with_bytes(event: &Event, select: &mut bool, buf: &mut String, le
             buf.push('`');
             *len += x.len() + 2;
         }
-        Start(CodeBlock(_)) => *select = false,
-        End(CodeBlock(_)) => *select = true,
+        Start(CodeBlock(_)) => *not_codeblock = false,
+        End(CodeBlock(_)) => *not_codeblock = true,
+        End(Table(_)) => *table = false,
+        Start(Table(_)) => *table = true,
         _ => (),
     }
 }
 
 /// 取出需要被翻译的内容：按照段落或标题
-pub fn extract_with_chars(event: &Event, select: &mut bool, buf: &mut String, len: &mut usize,
-                          bytes: &mut Vec<usize>, cnt: &mut usize, chars: &mut Vec<usize>) {
+pub fn extract_with_chars(event: &Event, not_codeblock: &mut bool, table: &mut bool,
+                          buf: &mut String, len: &mut usize, bytes: &mut Vec<usize>,
+                          cnt: &mut usize, chars: &mut Vec<usize>) {
     match event {
         End(Paragraph | Heading(_)) => {
             buf.push('\n');
-            bytes.push(*len + 1);
-            chars.push(*cnt + 1);
-            *len = 0;
-            *cnt = 0;
+            bytes.push(take(len) + 1);
+            chars.push(take(cnt) + 1);
         }
-        Text(x) if *select => {
+        Text(x) if *not_codeblock => {
             buf.push_str(x.as_ref());
-            *len += x.len();
-            *cnt += x.chars().count();
+            if *table {
+                buf.push('\n');
+                bytes.push(take(len) + x.len() + 1);
+                chars.push(take(cnt) + x.chars().count() + 1);
+            } else {
+                *len += x.len();
+                *cnt += x.chars().count();
+            }
         }
         SoftBreak | HardBreak => {
             buf.push(' ');
@@ -387,8 +424,10 @@ pub fn extract_with_chars(event: &Event, select: &mut bool, buf: &mut String, le
             *len += x.len() + 2;
             *cnt += x.chars().count() + 2;
         }
-        Start(CodeBlock(_)) => *select = false,
-        End(CodeBlock(_)) => *select = true,
+        Start(CodeBlock(_)) => *not_codeblock = false,
+        End(CodeBlock(_)) => *not_codeblock = true,
+        End(Table(_)) => *table = false,
+        Start(Table(_)) => *table = true,
         _ => (),
     }
 }

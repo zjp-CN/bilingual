@@ -148,8 +148,9 @@ code block
     "###);
 
     let mut buf = String::with_capacity(capacity);
-    let mut select = true;
-    events.iter().map(|event| extract(event, &mut select, &mut buf)).last();
+    let select = &mut true;
+    let table = &mut false;
+    events.iter().map(|event| extract(event, select, table, &mut buf)).last();
     assert_display_snapshot!(buf, @r###"
     level one
     one paragraph `Inline code`
@@ -158,7 +159,8 @@ code block
     "###);
 
     let mut paragraphs = buf.split('\n');
-    let output = events.into_iter().map(|event| prepend(event, &mut paragraphs)).flatten();
+    let table = &mut false;
+    let output = events.into_iter().map(|event| prepend(event, table, &mut paragraphs)).flatten();
     let mut output_md = String::with_capacity(capacity * 2);
     cmark(output, &mut output_md, None).unwrap();
     assert_display_snapshot!(output_md, @r###"

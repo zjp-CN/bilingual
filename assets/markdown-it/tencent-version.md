@@ -198,7 +198,7 @@ console.log(foo(5));
 
 Right aligned columns
 
-OptionDescriptionDataPath到数据文件，以提供将传递到templates.Engineengine以用于处理模板的数据。HANDLEBARS是用于DEST文件的default.extExtension。右对齐列
+选项
 
 |Option|Description|
 |-----:|----------:|
@@ -208,117 +208,117 @@ OptionDescriptionDataPath到数据文件，以提供将传递到templates.Engine
 
 ## Links
 
-## OptionDescriptionDataPath到数据文件，以提供将传递到templates.Engineengine以用于处理模板的数据。Handlebar是用于DEST文件的default.extExtension。链接
+## 描述
 
 [link text](http://dev.nodeca.com)
 
-链接文本
+数据
 
 [link with title](http://nodeca.github.io/pica/demo/ "title text!")
 
-与标题链接
+数据文件的路径，以提供将传递到模板的数据。
 
 [ref link](http://dev.nodeca.com)
 
-参考链接
+发动机
 
 Autoconverted link https://github.com/nodeca/pica (enable linkify to see)
 
-自动转换的链接https://github.com/nodeca/pica(启用Linkify查看)
+用于处理模板的引擎。车把是默认设置。
 
 ## Images
 
-## 图像
+## 分机
 
 ![Minion](https://octodex.github.com/images/minion.png)
 ![Stormtroopocat](https://octodex.github.com/images/stormtroopocat.jpg "The Stormtroopocat")
 
-米诺暴风雨猫(Minion Stormtroopocat)
+要用于DEST文件的扩展名。
 
 Like links, Images also have a footnote style syntax
 
-与链接一样，图像也具有脚注样式语法
+右对齐列
 
 ![Alt text](https://octodex.github.com/images/dojocat.jpg "The Dojocat")
 
-替代文本
+选项
 
 With a reference later in the document defining the URL location:
 
-在定义URL位置的文档后面有一个引用：
+描述
 
 ## Plugins
 
-## 插件
+## 数据
 
 The killer feature of `markdown-it` is very effective support of
 [syntax plugins](https://www.npmjs.org/browse/keyword/markdown-it-plugin).
 
-\`markdown-it`的杀手级特性是对语法插件的支持非常有效。
+数据文件的路径，以提供将传递到模板的数据。
 
 ### [Emojies](https://github.com/markdown-it/markdown-it-emoji)
 
-### 埃莫杰斯
+### 发动机
 
  > 
  > Classic markup: :wink: :crush: :cry: :tear: :laughing: :yum:
  > 
- > Classic Markup：：WINK：：CRUSH：：CREY：：TREAT：：LING：：LING：：YUM：
+ > 用于处理模板的引擎。车把是默认设置。
  > 
  > Shortcuts (emoticons): :-) :-( 8-) ;)
  > 
- > 快捷键(表情符号)：：-)：-(8-)；)
+ > 分机
 
 see [how to change output](https://github.com/markdown-it/markdown-it-emoji#change-output) with twemoji.
 
-了解如何使用双表情符号更改输出。
+要用于DEST文件的扩展名。
 
 ### [Subscript](https://github.com/markdown-it/markdown-it-sub) / [Superscript](https://github.com/markdown-it/markdown-it-sup)
 
-### 下标/上标
+### 链接
 
 * 19^th^
 * H~2~O
 
 ### [\<ins>](https://github.com/markdown-it/markdown-it-ins)
 
-### 第19^^H~2~O<INS>
+### 链接文本
 
 ++Inserted text++
 
-++插入的文本++
+与标题链接
 
 ### [\<mark>](https://github.com/markdown-it/markdown-it-mark)
 
-### \<标记>
+### 参考链接
 
 ==Marked text==
 
-==标记文本==
+自动转换的链接https://github.com/nodeca/pica(启用Linkify查看)
 
 ### [Footnotes](https://github.com/markdown-it/markdown-it-footnote)
 
-### 脚注
+### 图像
 
 Footnote 1 link[^first].
 
-脚注1链接。
+米诺暴风雨猫(Minion Stormtroopocat)
 
 Footnote 2 link[^second].
 
-脚注2链接。
+与链接一样，图像也具有脚注样式语法
 
 Inline footnote^\[Text of inline footnote\] definition.
 
-内联脚注^[内联脚注文本]定义。
+替代文本
 
 Duplicated footnote reference[^second].
 
-重复的脚注引用。
+在定义URL位置的文档后面有一个引用：
 
 [^first]: Footnote **can have markup**
 
-脚注可以有标记
+插件
 
 ```
 and multiple paragraphs.
@@ -326,28 +326,28 @@ and multiple paragraphs.
 
 [^second]: Footnote text.
 
-脚注文本。
+\`markdown-it`的杀手级特性是对语法插件的支持非常有效。
 
 ### [Definition lists](https://github.com/markdown-it/markdown-it-deflist)
 
-### 定义列表
+### 埃莫杰斯
 
 Term 1
 
-术语1
+Classic Markup：：WINK：：CRUSH：：CREY：：TREAT：：LING：：LING：：YUM：
 
 :   Definition 1
 with lazy continuation.
 
-：定义1，带有惰性延续。
+快捷键(表情符号)：：-)：-(8-)；)
 
 Term 2 with *inline markup*
 
-带有内联标记的术语2
+了解如何使用双表情符号更改输出。
 
 :   Definition 2
 
-：定义2
+下标/上标
 
 ```
     { some code, part of Definition 2 }
@@ -357,41 +357,41 @@ Third paragraph of definition 2.
 
 *Compact style:*
 
-紧凑风格：
+第19^^H~2~O<INS>
 
 Term 1
 ~ Definition 1
 
-术语1~定义1
+++插入的文本++
 
 Term 2
 ~ Definition 2a
 ~ Definition 2b
 
-术语2~定义2a~定义2b
+\<标记>
 
 ### [Abbreviations](https://github.com/markdown-it/markdown-it-abbr)
 
-### 缩写
+### ==标记文本==
 
 This is HTML abbreviation example.
 
-这是HTML缩写示例。
+脚注
 
 It converts "HTML", but keep intact partial entries like "xxxHTMLyyy" and so on.
 
-它转换“HTML”，但保留部分条目，如“xxxHTMLyyy”等。
+脚注1链接。
 
 \*\[HTML\]: Hyper Text Markup Language
 
-\*[HTML]：超文本标记语言
+脚注2链接。
 
 ### [Custom containers](https://github.com/markdown-it/markdown-it-container)
 
-### 自定义容器
+### 内联脚注^[内联脚注文本]定义。
 
 ::: warning
 *here be dragons*
 :::
 
-：警告此处为龙：
+重复的脚注引用。

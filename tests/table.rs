@@ -1,5 +1,6 @@
+use bilingual::md::Md;
 use insta::{assert_debug_snapshot, assert_display_snapshot};
-use pulldown_cmark::{CowStr, Event, Parser, Tag};
+use pulldown_cmark::{Event, Parser};
 
 const TABLE: &str = "
 | Option | Description |
@@ -8,6 +9,182 @@ const TABLE: &str = "
 | engine | engine to be used for processing templates. Handlebars is the default. |
 | ext    | extension to be used for dest files. |
 ";
+
+#[test]
+fn bilingual_test() {
+    let mut md = Md::new(TABLE);
+    let text = md.extract().to_owned();
+    assert_debug_snapshot!(text, @r###""Option\nDescription\ndata\npath to data files to supply the data that will be passed into templates.\nengine\nengine to be used for processing templates. Handlebars is the default.\next\nextension to be used for dest files.\n""###);
+    md.bytes_paragraph(0).last();
+    assert_eq!(text, md.paragraphs());
+    md.chars_paragraph(0).last();
+    assert_eq!(text, md.paragraphs());
+    md.bytes_paragraph(1000).last();
+    assert_eq!(text, md.paragraphs());
+    assert_debug_snapshot!(md, @r###"
+    Md {
+        events: [
+            Start(
+                Table(
+                    [
+                        Right,
+                        Right,
+                    ],
+                ),
+            ),
+            Start(
+                TableHead,
+            ),
+            Start(
+                TableCell,
+            ),
+            Text(
+                Borrowed(
+                    "Option",
+                ),
+            ),
+            End(
+                TableCell,
+            ),
+            Start(
+                TableCell,
+            ),
+            Text(
+                Borrowed(
+                    "Description",
+                ),
+            ),
+            End(
+                TableCell,
+            ),
+            End(
+                TableHead,
+            ),
+            Start(
+                TableRow,
+            ),
+            Start(
+                TableCell,
+            ),
+            Text(
+                Borrowed(
+                    "data",
+                ),
+            ),
+            End(
+                TableCell,
+            ),
+            Start(
+                TableCell,
+            ),
+            Text(
+                Borrowed(
+                    "path to data files to supply the data that will be passed into templates.",
+                ),
+            ),
+            End(
+                TableCell,
+            ),
+            End(
+                TableRow,
+            ),
+            Start(
+                TableRow,
+            ),
+            Start(
+                TableCell,
+            ),
+            Text(
+                Borrowed(
+                    "engine",
+                ),
+            ),
+            End(
+                TableCell,
+            ),
+            Start(
+                TableCell,
+            ),
+            Text(
+                Borrowed(
+                    "engine to be used for processing templates. Handlebars is the default.",
+                ),
+            ),
+            End(
+                TableCell,
+            ),
+            End(
+                TableRow,
+            ),
+            Start(
+                TableRow,
+            ),
+            Start(
+                TableCell,
+            ),
+            Text(
+                Borrowed(
+                    "ext",
+                ),
+            ),
+            End(
+                TableCell,
+            ),
+            Start(
+                TableCell,
+            ),
+            Text(
+                Borrowed(
+                    "extension to be used for dest files.",
+                ),
+            ),
+            End(
+                TableCell,
+            ),
+            End(
+                TableRow,
+            ),
+            End(
+                Table(
+                    [
+                        Right,
+                        Right,
+                    ],
+                ),
+            ),
+        ],
+        buffer: "Option\nDescription\ndata\npath to data files to supply the data that will be passed into templates.\nengine\nengine to be used for processing templates. Handlebars is the default.\next\nextension to be used for dest files.\n",
+        bytes: [
+            7,
+            12,
+            5,
+            74,
+            7,
+            71,
+            4,
+            37,
+        ],
+        chars: [
+            7,
+            12,
+            5,
+            74,
+            7,
+            71,
+            4,
+            37,
+        ],
+        limit: Limit {
+            limit: 1000,
+            cnt: 0,
+            len: 217,
+            pos: 0,
+        },
+    }
+    "###);
+    md.chars_paragraph(1000).last();
+    assert_eq!(text, md.paragraphs());
+}
 
 #[test]
 fn table_test() {
@@ -170,6 +347,7 @@ fn table_test() {
                            .collect::<Vec<_>>()
                            .join("\n");
     assert_debug_snapshot!(paragraphs, @r###""Option\nDescription\ndata\npath to data files to supply the data that will be passed into templates.\nengine\nengine to be used for processing templates. Handlebars is the default.\next\nextension to be used for dest files.""###);
+    assert_eq!(paragraphs, Md::new(TABLE).extract().trim());
 
     let translated = &mut paragraphs.split("\n");
     let events = events.into_iter()

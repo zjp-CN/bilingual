@@ -411,9 +411,11 @@ fn send2(header: &mut translation_api_cn::tencent::Header) -> Result<blocking::R
 
 pub fn via_tencent_batch(mut md: Md, from: &str, to: &str, user: &Tencent) -> Result<String> {
     use translation_api_cn::tencent::{Header, Query, Response};
+    // debug!("raw md = {:#?}", md.extract());
     let mut res = Vec::new();
     let f = |buf: &str| {
         let q: Vec<&str> = buf.trim().split("\n").collect();
+        debug!("\nq = {:?}", q);
         let query = Query::new(&q, from, to, user.projectid);
         let mut header = Header::new(user, &query);
         let bytes = send2(&mut header)?.bytes()?;
