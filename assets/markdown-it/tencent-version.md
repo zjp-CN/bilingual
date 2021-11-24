@@ -190,135 +190,135 @@ console.log(foo(5));
 
 ## 表格
 
-|Option|Description|
+|Option	选项|Description	描述|
 |------|-----------|
-|data|path to data files to supply the data that will be passed into templates.|
-|engine|engine to be used for processing templates. Handlebars is the default.|
-|ext|extension to be used for dest files.|
+|data	数据|path to data files to supply the data that will be passed into templates.	数据文件的路径，以提供将传递到模板的数据。|
+|engine	发动机|engine to be used for processing templates. Handlebars is the default.	用于处理模板的引擎。车把是默认设置。|
+|ext	分机|extension to be used for dest files.	要用于DEST文件的扩展名。|
 
 Right aligned columns
 
-选项
+右对齐列
 
-|Option|Description|
+|Option	选项|Description	描述|
 |-----:|----------:|
-|data|path to data files to supply the data that will be passed into templates.|
-|engine|engine to be used for processing templates. Handlebars is the default.|
-|ext|extension to be used for dest files.|
+|data	数据|path to data files to supply the data that will be passed into templates.	数据文件的路径，以提供将传递到模板的数据。|
+|engine	发动机|engine to be used for processing templates. Handlebars is the default.	用于处理模板的引擎。车把是默认设置。|
+|ext	分机|extension to be used for dest files.	要用于DEST文件的扩展名。|
 
 ## Links
 
-## 描述
+## 链接
 
 [link text](http://dev.nodeca.com)
 
-数据
+链接文本
 
 [link with title](http://nodeca.github.io/pica/demo/ "title text!")
 
-数据文件的路径，以提供将传递到模板的数据。
+与标题链接
 
 [ref link](http://dev.nodeca.com)
 
-发动机
+参考链接
 
 Autoconverted link https://github.com/nodeca/pica (enable linkify to see)
 
-用于处理模板的引擎。车把是默认设置。
+自动转换的链接https://github.com/nodeca/pica(启用Linkify查看)
 
 ## Images
 
-## 分机
+## 图像
 
 ![Minion](https://octodex.github.com/images/minion.png)
 ![Stormtroopocat](https://octodex.github.com/images/stormtroopocat.jpg "The Stormtroopocat")
 
-要用于DEST文件的扩展名。
+米诺暴风雨猫(Minion Stormtroopocat)
 
 Like links, Images also have a footnote style syntax
 
-右对齐列
+与链接一样，图像也具有脚注样式语法
 
 ![Alt text](https://octodex.github.com/images/dojocat.jpg "The Dojocat")
 
-选项
+替代文本
 
 With a reference later in the document defining the URL location:
 
-描述
+在定义URL位置的文档后面有一个引用：
 
 ## Plugins
 
-## 数据
+## 插件
 
 The killer feature of `markdown-it` is very effective support of
 [syntax plugins](https://www.npmjs.org/browse/keyword/markdown-it-plugin).
 
-数据文件的路径，以提供将传递到模板的数据。
+\`markdown-it`的杀手级特性是对语法插件的支持非常有效。
 
 ### [Emojies](https://github.com/markdown-it/markdown-it-emoji)
 
-### 发动机
+### 埃莫杰斯
 
  > 
  > Classic markup: :wink: :crush: :cry: :tear: :laughing: :yum:
  > 
- > 用于处理模板的引擎。车把是默认设置。
+ > Classic Markup：：WINK：：CRUSH：：CREY：：TREAT：：LING：：LING：：YUM：
  > 
  > Shortcuts (emoticons): :-) :-( 8-) ;)
  > 
- > 分机
+ > 快捷键(表情符号)：：-)：-(8-)；)
 
 see [how to change output](https://github.com/markdown-it/markdown-it-emoji#change-output) with twemoji.
 
-要用于DEST文件的扩展名。
+了解如何使用双表情符号更改输出。
 
 ### [Subscript](https://github.com/markdown-it/markdown-it-sub) / [Superscript](https://github.com/markdown-it/markdown-it-sup)
 
-### 链接
+### 下标/上标
 
 * 19^th^
 * H~2~O
 
 ### [\<ins>](https://github.com/markdown-it/markdown-it-ins)
 
-### 链接文本
+### 第19^^H~2~O<INS>
 
 ++Inserted text++
 
-与标题链接
+++插入的文本++
 
 ### [\<mark>](https://github.com/markdown-it/markdown-it-mark)
 
-### 参考链接
+### \<标记>
 
 ==Marked text==
 
-自动转换的链接https://github.com/nodeca/pica(启用Linkify查看)
+==标记文本==
 
 ### [Footnotes](https://github.com/markdown-it/markdown-it-footnote)
 
-### 图像
+### 脚注
 
 Footnote 1 link[^first].
 
-米诺暴风雨猫(Minion Stormtroopocat)
+脚注1链接。
 
 Footnote 2 link[^second].
 
-与链接一样，图像也具有脚注样式语法
+脚注2链接。
 
 Inline footnote^\[Text of inline footnote\] definition.
 
-替代文本
+内联脚注^[内联脚注文本]定义。
 
 Duplicated footnote reference[^second].
 
-在定义URL位置的文档后面有一个引用：
+重复的脚注引用。
 
 [^first]: Footnote **can have markup**
 
-插件
+脚注可以有标记
 
 ```
 and multiple paragraphs.
@@ -326,28 +326,28 @@ and multiple paragraphs.
 
 [^second]: Footnote text.
 
-\`markdown-it`的杀手级特性是对语法插件的支持非常有效。
+脚注文本。
 
 ### [Definition lists](https://github.com/markdown-it/markdown-it-deflist)
 
-### 埃莫杰斯
+### 定义列表
 
 Term 1
 
-Classic Markup：：WINK：：CRUSH：：CREY：：TREAT：：LING：：LING：：YUM：
+术语1
 
 :   Definition 1
 with lazy continuation.
 
-快捷键(表情符号)：：-)：-(8-)；)
+：定义1，带有惰性延续。
 
 Term 2 with *inline markup*
 
-了解如何使用双表情符号更改输出。
+带有内联标记的术语2
 
 :   Definition 2
 
-下标/上标
+：定义2
 
 ```
     { some code, part of Definition 2 }
@@ -357,41 +357,41 @@ Third paragraph of definition 2.
 
 *Compact style:*
 
-第19^^H~2~O<INS>
+紧凑风格：
 
 Term 1
 ~ Definition 1
 
-++插入的文本++
+术语1~定义1
 
 Term 2
 ~ Definition 2a
 ~ Definition 2b
 
-\<标记>
+术语2~定义2a~定义2b
 
 ### [Abbreviations](https://github.com/markdown-it/markdown-it-abbr)
 
-### ==标记文本==
+### 缩写
 
 This is HTML abbreviation example.
 
-脚注
+这是HTML缩写示例。
 
 It converts "HTML", but keep intact partial entries like "xxxHTMLyyy" and so on.
 
-脚注1链接。
+它转换“HTML”，但保留部分条目，如“xxxHTMLyyy”等。
 
 \*\[HTML\]: Hyper Text Markup Language
 
-脚注2链接。
+\*[HTML]：超文本标记语言
 
 ### [Custom containers](https://github.com/markdown-it/markdown-it-container)
 
-### 内联脚注^[内联脚注文本]定义。
+### 自定义容器
 
 ::: warning
 *here be dragons*
 :::
 
-重复的脚注引用。
+：警告此处为龙：

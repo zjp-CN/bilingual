@@ -19,7 +19,7 @@
 
 不足：
 - 非异步 I/O：由于 API 调用的 QPS 限制，异步请求暂时不是考虑的重点。
-- 可以处理简单的 md 样式，但是复杂样式尚未支持：含有表格、HTML 样式的地方，其翻译内容不会是你想要的结果。见
+- 含有 HTML 样式的地方，其翻译内容不会是你想要的结果。见
   [#10](https://github.com/zjp-CN/bilingual/issues/10)。
 - 未支持更多翻译 API 服务：性价比是我考虑翻译 API 的主要原因，见 [#2](https://github.com/zjp-CN/bilingual/issues/2)。
 
