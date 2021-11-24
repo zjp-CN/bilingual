@@ -307,8 +307,8 @@ pub fn prepend<'e>(event: Event<'e>, table: &mut bool,
     // dbg!(&event);
     match event {
         End(Paragraph) => {
-            arr.push(SoftBreak); // TODO: 是否空行
-            arr.extend([SoftBreak, Text(paragraph.next().unwrap().into()), event]);
+            // arr.push(SoftBreak); // TODO: 是否空行
+            arr.extend([SoftBreak, SoftBreak, Text(paragraph.next().unwrap().into()), event]);
         }
         End(Heading(n)) => {
             arr.extend([event,
@@ -316,16 +316,16 @@ pub fn prepend<'e>(event: Event<'e>, table: &mut bool,
                         Text(paragraph.next().unwrap().into()),
                         End(Heading(n))]);
         }
-        event @ End(Table(_)) => {
-            *table = false;
-            arr.extend([event])
-        }
-        event @ Start(Table(_)) => {
+        Start(Table(_)) => {
             *table = true;
-            arr.extend([event])
+            arr.extend([event]);
         }
-        event @ Text(_) if *table => {
-            arr.extend([event, Text('\t'.into()), Text(paragraph.next().unwrap().into())])
+        End(Table(_)) => {
+            *table = false;
+            arr.extend([event]);
+        }
+        Text(_) if *table => {
+            arr.extend([event, Text('\t'.into()), Text(paragraph.next().unwrap().into())]);
         }
         _ => arr.extend([event]),
     }
@@ -349,9 +349,9 @@ pub fn extract(event: &Event, not_codeblock: &mut bool, table: &mut bool, buf: &
             buf.push('`');
         }
         Start(CodeBlock(_)) => *not_codeblock = false,
+        Start(Table(_)) => *table = true,
         End(CodeBlock(_)) => *not_codeblock = true,
         End(Table(_)) => *table = false,
-        Start(Table(_)) => *table = true,
         _ => (),
     }
 }
@@ -384,9 +384,9 @@ pub fn extract_with_bytes(event: &Event, not_codeblock: &mut bool, table: &mut b
             *len += x.len() + 2;
         }
         Start(CodeBlock(_)) => *not_codeblock = false,
+        Start(Table(_)) => *table = true,
         End(CodeBlock(_)) => *not_codeblock = true,
         End(Table(_)) => *table = false,
-        Start(Table(_)) => *table = true,
         _ => (),
     }
 }
@@ -425,9 +425,9 @@ pub fn extract_with_chars(event: &Event, not_codeblock: &mut bool, table: &mut b
             *cnt += x.chars().count() + 2;
         }
         Start(CodeBlock(_)) => *not_codeblock = false,
+        Start(Table(_)) => *table = true,
         End(CodeBlock(_)) => *not_codeblock = true,
         End(Table(_)) => *table = false,
-        Start(Table(_)) => *table = true,
         _ => (),
     }
 }
