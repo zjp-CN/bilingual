@@ -304,17 +304,28 @@ pub fn prepend<'e>(event: Event<'e>, table: &mut bool,
                    paragraph: &mut impl Iterator<Item = &'e str>)
                    -> ArrayVec<Event<'e>, MAXIMUM_EVENTS> {
     let mut arr = ArrayVec::<_, MAXIMUM_EVENTS>::new();
-    // dbg!(&event);
+    log::debug!("event: {:?}", event);
     match event {
         End(Paragraph) => {
-            // arr.push(SoftBreak); // TODO: 是否空行
-            arr.extend([SoftBreak, SoftBreak, Text(paragraph.next().unwrap().into()), event]);
+            // ATTENTION: `if let` guards are experimental
+            if let Some(p) = paragraph.next() {
+                // log::debug!("paragraph: {:?}", p);
+                // arr.push(SoftBreak); // TODO: 是否空行
+                arr.extend([SoftBreak, SoftBreak, Text(p.into()), event]);
+            } else {
+                log::warn!("翻译内容提前结束写入，输出文件从某处起只有原文，没有译文：\
+                            因此可能存在 bug，如果方便的话请提交 issue 帮助排查。");
+                arr.extend([event]);
+            }
         }
         End(Heading(n)) => {
-            arr.extend([event,
-                        Start(Heading(n)),
-                        Text(paragraph.next().unwrap().into()),
-                        End(Heading(n))]);
+            if let Some(p) = paragraph.next() {
+                arr.extend([event, Start(Heading(n)), Text(p.into()), End(Heading(n))]);
+            } else {
+                log::warn!("翻译内容提前结束写入，输出文件从某处起只有原文，没有译文：\
+                            因此可能存在 bug，如果方便的话请提交 issue 帮助排查。");
+                arr.extend([event]);
+            }
         }
         Start(Table(_)) => {
             *table = true;
@@ -325,7 +336,13 @@ pub fn prepend<'e>(event: Event<'e>, table: &mut bool,
             arr.extend([event]);
         }
         Text(_) if *table => {
-            arr.extend([event, Text('\t'.into()), Text(paragraph.next().unwrap().into())]);
+            if let Some(p) = paragraph.next() {
+                arr.extend([event, Text('\t'.into()), Text(p.into())]);
+            } else {
+                log::warn!("翻译内容提前结束写入，输出文件从某处起只有原文，没有译文：\
+                            因此可能存在 bug，如果方便的话请提交 issue 帮助排查。");
+                arr.extend([event]);
+            }
         }
         _ => arr.extend([event]),
     }
