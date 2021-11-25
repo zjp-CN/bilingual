@@ -1,7 +1,7 @@
 use crate::config::{Config, DirFile, API};
 use anyhow::{anyhow, Result};
 use argh::FromArgs;
-use std::path::PathBuf;
+use std::{env::var, path::PathBuf};
 
 #[derive(FromArgs, Debug)]
 #[argh(description = r#"
@@ -16,10 +16,8 @@ use std::path::PathBuf;
 * `bilingual -a tencent \#\ 标题 正文：模拟\ markdown\ 文件的内容。 -f zh -t en`
 * `bilingual -a tencent -m xx.md -M xx-中文.md -d path -D path-中文`
 
-注意：本程序使用翻译云服务，因此需要自行申请翻译 API。
-      命令行提供的 id 和 key 会覆盖掉配置文件的信息。
-      换言之，未提供命令行的 id 和 key，则使用配置文件的信息。
-      建议将账户信息统一写在当前目录下的 bilingual.toml 文件（或者由 --toml 指定的路径）。
+注意：本程序使用翻译云服务，因此需要自行申请翻译 API。命令行提供的 id 和 key 会覆盖掉配置文件的信息。
+      支持从环境变量或者配置文件 `bilingual.toml` 中获取信息，见 https://github.com/zjp-CN/bilingual/issues/27
 "#)]
 pub struct Bilingual {
     /// 翻译 API。必选参数。目前支持：baidu | tencent | niutrans。
@@ -71,13 +69,26 @@ pub struct Bilingual {
     #[argh(switch, long = "forbid-dir-creation")]
     forbid_dir_creation: bool,
 
-    /// 配置文件 bilingual.toml 的路径。默认是当前目录下，即 `./bilingual.toml`。
-    #[argh(option, default = "\"bilingual.toml\".into()")]
-    toml: std::path::PathBuf,
+    /// 配置文件 bilingual.toml 的路径。默认是 `./bilingual.toml`、`~/.config/bilingual.toml`。
+    #[argh(option, default = "default_toml()")]
+    toml: PathBuf,
 
     /// 多行翻译文本：每行翻译文本以空格分隔。按照输入的顺序进行翻译。特殊符号需以 `\` 转义。
     #[argh(positional)]
     multiquery: Vec<String>,
+}
+
+fn default_toml() -> PathBuf {
+    use std::path::Path;
+    const GLOBAL_BILINGUAL_TOML: &str = "~/.config/bilingual.toml";
+    const PWD_BILINGUAL_TOML: &str = "bilingual.toml";
+    if let Ok(s) = var("BILINGUAL_TOML") {
+        s.into()
+    } else if Path::new(PWD_BILINGUAL_TOML).exists() {
+        PWD_BILINGUAL_TOML.into()
+    } else {
+        GLOBAL_BILINGUAL_TOML.into()
+    }
 }
 
 impl Bilingual {
@@ -147,6 +158,8 @@ fn niutrans(key: String, cf: &mut Config) -> Result<()> {
     }
     if !key.is_empty() {
         cf.niutrans.as_mut().ok_or(anyhow!("覆盖小牛翻译 API.key 时出错"))?.key = key;
+    } else if let Ok(s) = var("BILINGUAL_NIUTRANS_KEY") {
+        cf.niutrans.as_mut().ok_or(anyhow!("覆盖小牛翻译 API.key 时出错"))?.key = s;
     }
     Ok(())
 }
@@ -157,9 +170,13 @@ fn tencent(id: String, key: String, cf: &mut Config) -> Result<()> {
     }
     if !id.is_empty() {
         cf.tencent.as_mut().ok_or(anyhow!("覆盖腾讯云 API.id 时出错"))?.id = id;
+    } else if let Ok(s) = var("BILINGUAL_TENCENT_ID") {
+        cf.tencent.as_mut().ok_or(anyhow!("覆盖腾讯云 API.id 时出错"))?.id = s;
     }
     if !key.is_empty() {
         cf.tencent.as_mut().ok_or(anyhow!("覆盖腾讯云 API.key 时出错"))?.key = key;
+    } else if let Ok(s) = var("BILINGUAL_TENCENT_KEY") {
+        cf.tencent.as_mut().ok_or(anyhow!("覆盖腾讯云 API.key 时出错"))?.key = s;
     }
     Ok(())
 }
@@ -170,9 +187,13 @@ fn baidu(id: String, key: String, cf: &mut Config) -> Result<()> {
     }
     if !id.is_empty() {
         cf.baidu.as_mut().ok_or(anyhow!("覆盖百度翻译 API.id 时出错"))?.appid = id;
+    } else if let Ok(s) = var("BILINGUAL_BAIDU_ID") {
+        cf.baidu.as_mut().ok_or(anyhow!("覆盖百度翻译 API.id 时出错"))?.appid = s;
     }
     if !key.is_empty() {
         cf.baidu.as_mut().ok_or(anyhow!("覆盖百度翻译 API.key 时出错"))?.key = key;
+    } else if let Ok(s) = var("BILINGUAL_BAIDU_KEY") {
+        cf.baidu.as_mut().ok_or(anyhow!("覆盖百度翻译 API.key 时出错"))?.key = s;
     }
     Ok(())
 }

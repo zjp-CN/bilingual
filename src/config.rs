@@ -188,8 +188,8 @@ impl std::fmt::Display for TextItem {
 
 impl Config {
     pub fn init(path: impl AsRef<std::path::Path>) -> Result<Self> {
-        if let Ok(f) = std::fs::read(path) {
-            toml::from_slice(&f).with_context(|| "请检查 `bilingual.toml` 配置文件的内容")
+        if let Ok(ref f) = std::fs::read(path) {
+            toml::from_slice(f).with_context(|| "请检查 `bilingual.toml` 配置文件的内容")
         } else {
             Ok(Self::default())
         }
@@ -294,7 +294,7 @@ impl Config {
     }
 }
 
-fn print_err<E: Into<Error> + std::fmt::Display>(e: E) -> () { info!("{}", e) }
+fn print_err<E: Into<Error> + std::fmt::Display>(e: E) -> () { error!("{}", e) }
 
 /// 以 post + 表单方式发送
 fn send<T: serde::Serialize + ?Sized>(url: &str, form: &T) -> Result<blocking::Response> {
