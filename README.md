@@ -63,7 +63,7 @@ key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 命令行帮助：
 
 ```md
-Usage: bilingual [<multiquery...>] -a <api> [-i <id>] [-k <key>] [-f <from>] [-t <to>] [-q <singlequery>] [-m <input- <input-dirs...>] [-M <output-files...>] [-D <output-dirs...>] [-r] [--forbid-dir-creation] [--toml <toml>]
+Usage: bilingual [<multiquery...>] -a <api> [-i <id>] [-k <key>] [-f <from>] [-t <to>] [-q <singlequery>] [-m <input-files...>] [-d <input-dirs...>] [-M <output-files...>] [-D <output-dirs...>] [-r] [--forbid-dir-creation] [--toml <toml>]
 
 【bilingual】 作者：苦瓜小仔
 
@@ -75,6 +75,8 @@ Usage: bilingual [<multiquery...>] -a <api> [-i <id>] [-k <key>] [-f <from>] [-t
 * `bilingual -a niutrans -d ./dir-path`
 * `bilingual -a tencent \#\ 标题 正文：模拟\ markdown\ 文件的内容。 -f zh -t en`
 * `bilingual -a tencent -m xx.md -M xx-中文.md -d path -D path-中文`
+* `bilingual -a tencent -m a.md -M a.md -m b.md -M b.md -d assets -D assets -d test -D test -r`
+  这个命令表明：将 a.md、b.md 文件以及 assets 目录、test 目录下的 md 文件的翻译结果直接替换掉源文件。
 
 注意：本程序使用翻译云服务，因此需要自行申请翻译 API。命令行提供的 id 和 key 会覆盖掉配置文件的信息。
       支持从环境变量或者配置文件 `bilingual.toml` 中获取信息，见 https://github.com/zjp-CN/bilingual/issues/27
@@ -86,11 +88,11 @@ Options:
   -f, --from        原语言。默认为 en。
   -t, --to          目标语言。默认为 zh。
   -q, --singlequery 单行翻译文本：翻译文本内特殊符号以 `\` 转义。翻译的顺序位于所有多行翻译文本之后。
-  -m, --input-files md 文件的输入路径。此工具把读取到的文件内容只当作 md 文件进行处理。且不修改 API 返回的任何内容。
-  -d, --input-dirs  输入目录。此工具只识别和读取目录下以 `.md` 结尾的文件。
+  -m, --input-files md 文件的输入路径。此工具把读取到的文件内容只当作 md 文件进行处理。且不修改 API 返回的任何内容。可多次指定。
+  -d, --input-dirs  输入目录。此工具只识别和读取目录下以 `.md` 结尾的文件。可多次指定。
   -M, --output-files
-                    md 文件的输出路径。默认在输入的文件路径下，但是翻译后的文件名会增加 `--to` 标识。
-  -D, --output-dirs 输出目录。默认在输入的目录旁，但是翻译后的目录会增加 `--to` 标识。
+                    md 文件的输出路径。默认在输入的文件路径下，但是翻译后的文件名会增加 `--to` 标识。可多次指定。
+  -D, --output-dirs 输出目录。默认在输入的目录旁，但是翻译后的目录会增加 `--to` 标识。可多次指定。
   -r, --replace-files
                     如果输出文件已存在，是否替换。默认不替换。
   --forbid-dir-creation

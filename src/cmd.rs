@@ -16,7 +16,7 @@ use std::{env::var, path::PathBuf};
 * `bilingual -a tencent \#\ 标题 正文：模拟\ markdown\ 文件的内容。 -f zh -t en`
 * `bilingual -a tencent -m xx.md -M xx-中文.md -d path -D path-中文`
 * `bilingual -a tencent -m a.md -M a.md -m b.md -M b.md -d assets -D assets -d test -D test -r`
-  这个命令表明：将 a.md、b.md 文件以及 assets 目录、test 目录下的 md 文件的翻译结果直接被替换。 
+  这个命令表明：将 a.md、b.md 文件以及 assets 目录、test 目录下的 md 文件的翻译结果直接替换掉源文件。 
 
 注意：本程序使用翻译云服务，因此需要自行申请翻译 API。命令行提供的 id 和 key 会覆盖掉配置文件的信息。
       支持从环境变量或者配置文件 `bilingual.toml` 中获取信息，见 https://github.com/zjp-CN/bilingual/issues/27
