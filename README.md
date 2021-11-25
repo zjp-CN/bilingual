@@ -116,4 +116,6 @@ Options:
 - [8_6_io_eventqueue-zh.md](https://github.com/zjp-CN/bilingual/blob/main/assets/8_6_io_eventqueue-zh.md)：源文件来自于[此处](https://github.com/cfsamson/book-exploring-async-basics)
 - [markdown-it](https://github.com/zjp-CN/bilingual/blob/main/assets/markdown-it.md) 的 [各种 API 翻译后的版本](https://github.com/zjp-CN/bilingual/blob/main/assets/markdown-it)：源文件来自于[此处](https://markdown-it.github.io/)
 
+# 更新记录
 
+[CHANGELOG](https://github.com/zjp-CN/bilingual/blob/main/CHANGELOG.md)

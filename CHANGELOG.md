@@ -1,8 +1,8 @@
 # Changelog
 
-## [Unreleased](https://github.com/zjp-CN/bilingual/tree/HEAD)
+## [v0.1.1](https://github.com/zjp-CN/bilingual/tree/v0.1.1) (2021-11-25)
 
-[Full Changelog](https://github.com/zjp-CN/bilingual/compare/v0.1.0...HEAD)
+[Full Changelog](https://github.com/zjp-CN/bilingual/compare/v0.1.0...v0.1.1)
 
 **Implemented enhancements:**
 
