@@ -35,7 +35,7 @@ fn log_init() -> Result<()> {
     let info = format!("log-level: term => {}, file => {}; log-file => {}", term, file, logf);
     let mut config = ConfigBuilder::default();
     config.set_time_to_local(true);
-    let config_term = config.clone().set_time_level(LevelFilter::Warn).build();
+    let config_term = config.clone().set_time_level(LevelFilter::Debug).build();
 
     CombinedLogger::init(
         vec![TermLogger::new(term, config_term, TerminalMode::Mixed, ColorChoice::Auto),
