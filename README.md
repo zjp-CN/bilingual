@@ -32,7 +32,7 @@
     CARGO_PROFILE_RELEASE_LTO=yes CARGO_PROFILE_RELEASE_OPT_LEVEL=3 cargo install bilingual --features bin
     ```
 
-2. 或者源码编译：
+2. 或者源码编译最新版本：
 
     ```console
     git clone https://github.com/zjp-CN/bilingual.git
@@ -115,6 +115,8 @@ Options:
 
 - [8_6_io_eventqueue-zh.md](https://github.com/zjp-CN/bilingual/blob/main/assets/8_6_io_eventqueue-zh.md)：源文件来自于[此处](https://github.com/cfsamson/book-exploring-async-basics)
 - [markdown-it](https://github.com/zjp-CN/bilingual/blob/main/assets/markdown-it.md) 的 [各种 API 翻译后的版本](https://github.com/zjp-CN/bilingual/blob/main/assets/markdown-it)：源文件来自于[此处](https://markdown-it.github.io/)
+
+日志控制见：[#29](https://github.com/zjp-CN/bilingual/issues/29)
 
 # 更新记录
 

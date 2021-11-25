@@ -26,10 +26,10 @@ fn log_init() -> Result<()> {
 
     let (term, file) = if let Ok(ref s) = var("LOG") {
         (s.parse().unwrap_or(LevelFilter::Warn),
-         s.parse().unwrap_or(LevelFilter::Info))
+         s.parse().unwrap_or(LevelFilter::Off))
     } else {
         (var("TERM_LOG").ok().map(|s| s.parse().ok()).flatten().unwrap_or(LevelFilter::Warn),
-         var("FILE_LOG").ok().map(|s| s.parse().ok()).flatten().unwrap_or(LevelFilter::Info))
+         var("FILE_LOG").ok().map(|s| s.parse().ok()).flatten().unwrap_or(LevelFilter::Off))
     };
     let logf = var("FILE").unwrap_or("bilingual.log".into());
     let info = format!("log-level: term => {}, file => {}; log-file => {}", term, file, logf);
@@ -37,10 +37,11 @@ fn log_init() -> Result<()> {
     config.set_time_to_local(true);
     let config_term = config.clone().set_time_level(LevelFilter::Debug).build();
 
-    CombinedLogger::init(
+    let logger: Vec<Box<dyn SharedLogger>> = if file != LevelFilter::Off {
         vec![TermLogger::new(term, config_term, TerminalMode::Mixed, ColorChoice::Auto),
              WriteLogger::new(file, config.build(), std::fs::File::create(logf)?)]
-        )
-        .map(|_| log::info!("{}", info))
-        .map_err(|e| e.into())
+    } else {
+        vec![TermLogger::new(term, config_term, TerminalMode::Mixed, ColorChoice::Auto)]
+    };
+    CombinedLogger::init(logger).map(|_| log::info!("{}", info)).map_err(|e| e.into())
 }
