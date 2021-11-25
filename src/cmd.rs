@@ -69,7 +69,8 @@ pub struct Bilingual {
     #[argh(switch, long = "forbid-dir-creation")]
     forbid_dir_creation: bool,
 
-    /// 配置文件 bilingual.toml 的路径。默认是 `./bilingual.toml`、`~/.config/bilingual.toml`。
+    /// 配置文件 bilingual.toml 的路径。默认为 `./bilingual.toml` 或者
+    /// `~/.config/bilingual.toml`。
     #[argh(option, default = "default_toml()")]
     toml: PathBuf,
 

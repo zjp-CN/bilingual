@@ -63,9 +63,7 @@ key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 命令行帮助：
 
 ```md
-$ bilingual --help
-
-Usage: bilingual [<multiquery...>] -a <api> [-i <id>] [-k <key>] [-f <from>] [-t <to>] [-q <singlequery>] [-m <input-files...>] [-d <input-dirs...>] [-M <output-files...>] [-D <output-dirs...>] [-r] [--forbid-dir-creation] [--toml <toml>]
+Usage: bilingual [<multiquery...>] -a <api> [-i <id>] [-k <key>] [-f <from>] [-t <to>] [-q <singlequery>] [-m <input- <input-dirs...>] [-M <output-files...>] [-D <output-dirs...>] [-r] [--forbid-dir-creation] [--toml <toml>]
 
 【bilingual】 作者：苦瓜小仔
 
@@ -78,10 +76,8 @@ Usage: bilingual [<multiquery...>] -a <api> [-i <id>] [-k <key>] [-f <from>] [-t
 * `bilingual -a tencent \#\ 标题 正文：模拟\ markdown\ 文件的内容。 -f zh -t en`
 * `bilingual -a tencent -m xx.md -M xx-中文.md -d path -D path-中文`
 
-注意：本程序使用翻译云服务，因此需要自行申请翻译 API。
-      命令行提供的 id 和 key 会覆盖掉配置文件的信息。
-      换言之，未提供命令行的 id 和 key，则使用配置文件的信息。
-      建议将账户信息统一写在当前目录下的 bilingual.toml 文件（或者由 --toml 指定的路径）。
+注意：本程序使用翻译云服务，因此需要自行申请翻译 API。命令行提供的 id 和 key 会覆盖掉配置文件的信息。
+      支持从环境变量或者配置文件 `bilingual.toml` 中获取信息，见 https://github.com/zjp-CN/bilingual/issues/27
 
 Options:
   -a, --api         翻译 API。必选参数。目前支持：baidu | tencent | niutrans。
@@ -99,7 +95,8 @@ Options:
                     如果输出文件已存在，是否替换。默认不替换。
   --forbid-dir-creation
                     在输出文件夹时不存在时，禁止创建输出文件夹。默认总是创建新文件夹。
-  --toml            配置文件 bilingual.toml 的路径。默认是当前目录下，即 `./bilingual.toml`。
+  --toml            配置文件 bilingual.toml 的路径。默认为 `./bilingual.toml` 或者
+                    `~/.config/bilingual.toml`。
   --help            display usage information
 ```
 
