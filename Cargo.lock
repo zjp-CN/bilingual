@@ -62,6 +62,7 @@ dependencies = [
  "anyhow",
  "argh",
  "arrayvec",
+ "comment",
  "insta",
  "log",
  "pulldown-cmark 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -133,6 +134,15 @@ version = "0.1.0"
 dependencies = [
  "insta",
  "pulldown-cmark 0.8.0 (git+https://github.com/raphlinus/pulldown-cmark.git)",
+]
+
+[[package]]
+name = "comment"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f6cbeac9d80a6fbec9a0ad6d9359932ca67f10d46597633436aa2e9133648d5"
+dependencies = [
+ "quick-error",
 ]
 
 [[package]]
@@ -738,6 +748,12 @@ checksum = "1f5925e2c68fb0c3c189cd0f6bbcf1e16402a070d4fcaf7600e239e8302dd0e8"
 dependencies = [
  "pulldown-cmark 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "quick-error"
+version = "1.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quote"
