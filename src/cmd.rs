@@ -221,7 +221,7 @@ mod tests {
     fn version_test() {
         insta::assert_display_snapshot!(VERSION, @r###"
         v0.1.1
-        git: v0.1.1-5-g918d958
+        git ref: v0.1.1-6-g754d353
         "###);
     }
 
