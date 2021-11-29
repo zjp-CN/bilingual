@@ -3,6 +3,8 @@ use anyhow::{anyhow, Result};
 use argh::FromArgs;
 use std::{env::var, path::PathBuf};
 
+const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/VERSION"));
+
 #[derive(FromArgs, Debug)]
 #[argh(description = r#"
 【bilingual】 作者：苦瓜小仔
@@ -23,7 +25,7 @@ use std::{env::var, path::PathBuf};
 "#)]
 pub struct Bilingual {
     /// 翻译 API。必选参数。目前支持：baidu | tencent | niutrans。
-    #[argh(option, short = 'a')]
+    #[argh(option, short = 'a', default = "API::default()")]
     api: API,
 
     /// 翻译 API 账户的 id。
@@ -72,6 +74,10 @@ pub struct Bilingual {
     #[argh(switch, long = "forbid-dir-creation")]
     forbid_dir_creation: bool,
 
+    /// 版本号。
+    #[argh(switch, short = 'v')]
+    version: bool,
+
     /// 配置文件 bilingual.toml 的路径。默认为 `./bilingual.toml` 或者
     /// `~/.config/bilingual.toml`。
     #[argh(option, default = "default_toml()")]
@@ -83,21 +89,26 @@ pub struct Bilingual {
 }
 
 fn default_toml() -> PathBuf {
-    use std::path::Path;
-    const GLOBAL_BILINGUAL_TOML: &str = "~/.config/bilingual.toml";
     const PWD_BILINGUAL_TOML: &str = "bilingual.toml";
     if let Ok(s) = var("BILINGUAL_TOML") {
         s.into()
-    } else if Path::new(PWD_BILINGUAL_TOML).exists() {
+    } else if std::path::Path::new(PWD_BILINGUAL_TOML).exists() {
         PWD_BILINGUAL_TOML.into()
+    } else if let Some(mut config_dir) = dirs::config_dir() {
+        config_dir.push(PWD_BILINGUAL_TOML); // GLOBAL_BILINGUAL_TOML
+        config_dir
     } else {
-        GLOBAL_BILINGUAL_TOML.into()
+        PathBuf::new()
     }
 }
 
 impl Bilingual {
     pub fn run(mut self) -> Result<Config> {
         log::debug!("{:#?}", self);
+        if self.version {
+            println!("{}", VERSION);
+            std::process::exit(0);
+        }
         let mut cf = Config::init(self.toml)?;
         match self.api {
             API::Baidu => baidu(self.id, self.key, &mut cf)?,
@@ -205,6 +216,14 @@ fn baidu(id: String, key: String, cf: &mut Config) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn version_test() {
+        insta::assert_display_snapshot!(VERSION, @r###"
+        v0.1.1
+        git: v0.1.1-5-g918d958
+        "###);
+    }
 
     #[test]
     fn test_new_filename_dir() {
