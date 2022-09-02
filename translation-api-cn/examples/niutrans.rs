@@ -8,9 +8,7 @@ fn main() -> AnyResult<()> {
         User { key: arg.next().ok_or_else(|| anyhow!("请输出 Key"))?,
                ..User::default() }
     };
-    let query = Query { from: "en",
-                        to:   "zh",
-                        q:    "hi there", };
+    let query = Query { from: "en", to: "zh", q: "hi there" };
     // let query = Query { from: "en",
     //                     to:   "zh",
     //                     q:    "hi\nthere", };

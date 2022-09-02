@@ -109,11 +109,11 @@ pub struct User {
     /// 每秒并发请求，默认为 5。
     #[serde(default = "default_qps")]
     // #[serde(skip_deserializing)]
-    pub qps:       u8,
+    pub qps: u8,
     /// 每秒并发请求的限制，默认为 Char(2000)。
     #[serde(default = "default_limit")]
     // #[serde(skip_deserializing)]
-    pub limit:     Limit,
+    pub limit: Limit,
 }
 
 fn default_qps() -> u8 { 5 }

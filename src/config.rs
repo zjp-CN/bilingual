@@ -210,9 +210,7 @@ impl Config {
             }
         };
         Some(match text_item {
-            Normal { ref text, from, into } => Normal { text: doit(text)?,
-                                                        from,
-                                                        into },
+            Normal { ref text, from, into } => Normal { text: doit(text)?, from, into },
             Stdout(ref s) => Stdout(doit(s)?),
             x => x,
         })

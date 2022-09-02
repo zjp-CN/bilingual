@@ -62,10 +62,7 @@ impl Default for User {
 impl<'q> Query<'q> {
     /// 实例化
     pub fn new(q: &'q str, from: &'q str, to: &'q str) -> Self {
-        Self { q,
-               from,
-               to,
-               sign: "".into() }
+        Self { q, from, to, sign: "".into() }
     }
 
     /// 计算 MD5 值，返回以表单方式提交的数据，用于身份验证/登录。

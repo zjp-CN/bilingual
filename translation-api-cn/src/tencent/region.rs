@@ -1,4 +1,3 @@
-
 /// | 地域 | 取值 |
 /// | --- | --- |
 /// | 亚太东南(曼谷) | ap-bangkok |
@@ -21,7 +20,7 @@
 /// ## 注意
 /// 金融区需要单独申请，而且只为金融客户服务。具体见：
 /// https://cloud.tencent.com/document/product/304/2766
-#[derive(Debug,serde:: Deserialize,serde:: Serialize)]
+#[derive(Debug, serde:: Deserialize, serde:: Serialize)]
 pub enum Region {
     #[serde(rename = "ap-beijing")]
     Beijing,

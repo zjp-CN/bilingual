@@ -355,7 +355,7 @@ fn table_test() {
                            t @ Event::Text(_) => {
                                vec![t,
                                     Event::Text('\t'.into()),
-                                    Event::Text(translated.next().unwrap().into())]
+                                    Event::Text(translated.next().unwrap().into()),]
                            }
                            x => vec![x],
                        })

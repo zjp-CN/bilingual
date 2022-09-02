@@ -33,8 +33,11 @@ impl<'e> Md<'e> {
                buffer: {
                    const MINIMUM_CAPACITY: usize = 1 << 10;
                    let capacity = md.len();
-                   let capacity =
-                       if capacity < MINIMUM_CAPACITY { MINIMUM_CAPACITY } else { capacity * 2 };
+                   let capacity = if capacity < MINIMUM_CAPACITY {
+                       MINIMUM_CAPACITY
+                   } else {
+                       capacity * 2
+                   };
                    String::with_capacity(capacity)
                },
                bytes:  Vec::with_capacity(128), // 预先分配 128 个段落
@@ -155,7 +158,13 @@ impl<'e> Md<'e> {
         self.extract_with_bytes();
         self.limit = Limit::new(limit);
         let limit = &mut self.limit;
-        let f = |l: &usize| if let Some(i) = limit.bytes(*l) { self.buffer.get(i) } else { None };
+        let f = |l: &usize| {
+            if let Some(i) = limit.bytes(*l) {
+                self.buffer.get(i)
+            } else {
+                None
+            }
+        };
         self.bytes.iter().chain(std::iter::once(&usize::MAX)).filter_map(f)
     }
 
@@ -236,7 +245,11 @@ impl Limit {
                 return None;
             } else {
                 let p = self.pos;
-                let rhs = if self.len == 0 { len } else { replace(&mut self.len, len) };
+                let rhs = if self.len == 0 {
+                    len
+                } else {
+                    replace(&mut self.len, len)
+                };
                 // 到达最后一批时：当 bat=0, len=usize::Max 时会出现 Err
                 if let Some(add) = self.pos.checked_add(rhs) {
                     self.pos = add;
@@ -294,8 +307,7 @@ pub fn cmark_opt() -> Options {
 
 /// 把 `pulldown_cmark_to_cmark::Options` 的 `code_block_backticks` 设置为 3
 pub fn cmark_to_cmark_opt() -> OutOptions {
-    OutOptions { code_block_backticks: 3,
-                 ..OutOptions::default() }
+    OutOptions { code_block_token_count: 3, ..OutOptions::default() }
 }
 
 const MAXIMUM_EVENTS: usize = 4;
