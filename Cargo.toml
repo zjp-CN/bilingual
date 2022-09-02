@@ -11,7 +11,7 @@ categories  = ["command-line-utilities", "text-processing"]
 description = "A cmdline tool used for markdown translation via calling Chinese translation api cloud services."
 
 [dependencies]
-pulldown-cmark-to-cmark = "6"
+pulldown-cmark-to-cmark = "10"
 arrayvec = "0.7"
 log = {version = "0.4"}
 
@@ -24,12 +24,12 @@ translation-api-cn = {version="0.1.0", path="./translation-api-cn", optional = t
 serde = {version = "1", features = ["derive"], optional = true}
 toml = {version = "0.5", optional = true}
 
-simplelog = {version = "0.11", optional = true}
+simplelog = {version = "0.12", optional = true}
 dirs = {version = "4", optional = true}
 
 
 [dependencies.pulldown-cmark]
-version  = "0.8"
+version  = "0.9"
 default-features = false
 
 [features]
@@ -41,7 +41,7 @@ required-features = ["bin"]
 
 [dev-dependencies]
 insta = "1.8"
-tl = "0.2"
+tl = "0.7"
 comment = "0.1"
 
 [profile.release]
