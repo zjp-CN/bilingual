@@ -1,4 +1,4 @@
-use bilingual::md::Md;
+use bilingual::md::{cmark_to_cmark_opt, Md};
 use insta::{assert_debug_snapshot, assert_display_snapshot};
 use pulldown_cmark::{Event, Parser};
 
@@ -361,10 +361,7 @@ fn table_test() {
                        })
                        .flatten();
     let mut buffer = String::new();
-    pulldown_cmark_to_cmark::cmark_with_options(events,
-                                                &mut buffer,
-                                                None,
-                                                bilingual::md::cmark_to_cmark_opt()).unwrap();
+    pulldown_cmark_to_cmark::cmark_with_options(events, &mut buffer, cmark_to_cmark_opt()).unwrap();
     // std::fs::write("assets/tmp/table.md", buffer.as_bytes()).unwrap();
     assert_debug_snapshot!(buffer, @r###""|Option\tOption|Description\tDescription|\n|-----:|----------:|\n|data\tdata|path to data files to supply the data that will be passed into templates.\tpath to data files to supply the data that will be passed into templates.|\n|engine\tengine|engine to be used for processing templates. Handlebars is the default.\tengine to be used for processing templates. Handlebars is the default.|\n|ext\text|extension to be used for dest files.\textension to be used for dest files.|""###);
     assert_display_snapshot!(buffer, @r###"

@@ -2,10 +2,12 @@ use insta::assert_debug_snapshot;
 use std::borrow::Cow;
 use tl::*;
 
+fn parse(s: &str) -> VDom { tl::parse(s, tl::ParserOptions::default()).unwrap() }
+
 #[test]
 fn simple_test() {
     let dom = parse(&"<p>hi </p>");
-    assert_debug_snapshot!(dom.children().into_iter().filter_map(|n|n.as_tag()).collect::<Vec<_>>(), @r###"
+    assert_debug_snapshot!(dom.nodes().iter().filter_map(|n| n.as_tag()).collect::<Vec<_>>(), @r###"
     [
         HTMLTag {
             _name: Some(
@@ -31,12 +33,13 @@ fn simple_test() {
         },
     ]
     "###);
-    let tags = dom.children()
-                  .into_iter()
-                  .filter_map(|n| match n.as_ref() {
+    let parser = dom.parser();
+    let tags = dom.nodes()
+                  .iter()
+                  .filter_map(|n| match n {
                       Node::Tag(t) => {
-                          if matches!(t.name(), Some(x) if x == &Bytes::from("p")) {
-                              Some(t.inner_text())
+                          if t.name() == &Bytes::from("p") {
+                              Some(t.inner_text(parser))
                           } else {
                               None
                           }
@@ -52,12 +55,12 @@ fn simple_test() {
 }
 
 pub fn filter_script<'a>(dom: &VDom<'a>) -> Vec<Cow<'a, str>> {
-    dom.children().into_iter().map(|n| inner_text(n)).collect()
+    dom.nodes().iter().map(|n| inner_text(n)).collect()
 }
 
 // 排除掉 script 标签
 pub fn inner_text_filter_script<'a>(tag: &HTMLTag<'a>) -> Cow<'a, str> {
-    fn script(tag: &HTMLTag) -> bool { tag.name() == &Some(Bytes::from("script")) }
+    fn script(tag: &HTMLTag) -> bool { tag.name() == &Bytes::from("script") }
     fn pushdown<'a>(node: &Node<'a>, s: &mut String) {
         match node {
             Node::Tag(t) if !script(t) => {
@@ -72,17 +75,18 @@ pub fn inner_text_filter_script<'a>(tag: &HTMLTag<'a>) -> Cow<'a, str> {
         }
     }
 
-    let len = tag.children().len();
+    let ch = tag.children().top();
+    let len = ch.len();
 
     if len == 0 {
         // If there are no subnodes, we can just return a static, empty, string slice
         return Cow::Borrowed("");
     }
 
-    let first = &tag.children()[0];
+    let first = &ch[0];
 
     if len == 1 {
-        match &**first {
+        match first {
             Node::Tag(t) if !script(t) => return inner_text_filter_script(t),
             Node::Raw(e) => return e.as_utf8_str(),
             _ => return Cow::Borrowed(""),

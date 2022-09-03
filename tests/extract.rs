@@ -162,7 +162,7 @@ code block
     let table = &mut false;
     let output = events.into_iter().map(|event| prepend(event, table, &mut paragraphs)).flatten();
     let mut output_md = String::with_capacity(capacity * 2);
-    cmark(output, &mut output_md, None).unwrap();
+    cmark(output, &mut output_md).unwrap();
     assert_display_snapshot!(output_md, @r###"
     # level one
 

@@ -119,7 +119,7 @@ impl<'r> Response<'r> {
     /// 提取翻译内容。
     pub fn dst(&self) -> Result<impl Iterator<Item = &str>, Error> {
         match self {
-            Response::Ok { tgt_text, .. } => Ok(tgt_text.trim_end().split("\n")),
+            Response::Ok { tgt_text, .. } => Ok(tgt_text.trim_end().split('\n')),
             Response::Err { error, .. } => Err(error.clone()),
         }
     }
@@ -128,7 +128,7 @@ impl<'r> Response<'r> {
     pub fn dst_owned(self) -> Result<Vec<String>, Error> {
         match self {
             Response::Ok { tgt_text, .. } => {
-                Ok(tgt_text.trim_end().split("\n").map(|s| s.into()).collect())
+                Ok(tgt_text.trim_end().split('\n').map(|s| s.into()).collect())
             }
             Response::Err { error, .. } => Err(error),
         }
