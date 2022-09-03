@@ -210,9 +210,9 @@ impl<'e> Md<'e> {
     pub fn done(mut self, mut paragraph: impl Iterator<Item = &'e str>) -> String {
         self.buffer.clear();
         let table = &mut false;
-        let output = self.events.into_iter().map(|e| prepend(e, table, &mut paragraph)).flatten();
+        let output = self.events.into_iter().flat_map(|e| prepend(e, table, &mut paragraph));
         let opt = cmark_to_cmark_opt();
-        pulldown_cmark_to_cmark::cmark_with_options(output, &mut self.buffer, None, opt).unwrap();
+        pulldown_cmark_to_cmark::cmark_with_options(output, &mut self.buffer, opt).unwrap();
         // dbg!(self.output.len(),
         //      self.output.capacity(),
         //      self.raw_len * 2,
@@ -306,7 +306,7 @@ pub fn cmark_opt() -> Options {
 }
 
 /// 把 `pulldown_cmark_to_cmark::Options` 的 `code_block_backticks` 设置为 3
-pub fn cmark_to_cmark_opt() -> OutOptions {
+pub fn cmark_to_cmark_opt() -> OutOptions<'static> {
     OutOptions { code_block_token_count: 3, ..OutOptions::default() }
 }
 
@@ -317,7 +317,7 @@ pub fn prepend<'e>(event: Event<'e>, table: &mut bool,
                    -> ArrayVec<Event<'e>, MAXIMUM_EVENTS> {
     let mut arr = ArrayVec::<_, MAXIMUM_EVENTS>::new();
     log::debug!("event: {:?}", event);
-    match event {
+    match event.clone() {
         End(Paragraph) => {
             // ATTENTION: `if let` guards are experimental
             if let Some(p) = paragraph.next() {
@@ -330,9 +330,12 @@ pub fn prepend<'e>(event: Event<'e>, table: &mut bool,
                 arr.extend([event]);
             }
         }
-        End(Heading(n)) => {
+        End(Heading(n, opt, v)) => {
             if let Some(p) = paragraph.next() {
-                arr.extend([event, Start(Heading(n)), Text(p.into()), End(Heading(n))]);
+                arr.extend([event,
+                            Start(Heading(n, opt, v.clone())),
+                            Text(p.into()),
+                            End(Heading(n, opt, v.clone()))]);
             } else {
                 log::warn!("翻译内容提前结束写入，输出文件从某处起只有原文，没有译文：\
                             因此可能存在 bug，如果方便的话请提交 issue 帮助排查。");
@@ -364,7 +367,7 @@ pub fn prepend<'e>(event: Event<'e>, table: &mut bool,
 /// 取出需要被翻译的内容：按照段落或标题
 pub fn extract(event: &Event, not_codeblock: &mut bool, table: &mut bool, buf: &mut String) {
     match event {
-        End(Paragraph | Heading(_)) => buf.push('\n'),
+        End(Paragraph | Heading(..)) => buf.push('\n'),
         Text(x) if *not_codeblock => {
             buf.push_str(x.as_ref());
             if *table {
@@ -389,7 +392,7 @@ pub fn extract(event: &Event, not_codeblock: &mut bool, table: &mut bool, buf: &
 pub fn extract_with_bytes(event: &Event, not_codeblock: &mut bool, table: &mut bool,
                           buf: &mut String, len: &mut usize, vec: &mut Vec<usize>) {
     match event {
-        End(Paragraph | Heading(_)) => {
+        End(Paragraph | Heading(..)) => {
             buf.push('\n');
             vec.push(take(len) + 1);
         }
@@ -425,7 +428,7 @@ pub fn extract_with_chars(event: &Event, not_codeblock: &mut bool, table: &mut b
                           buf: &mut String, len: &mut usize, bytes: &mut Vec<usize>,
                           cnt: &mut usize, chars: &mut Vec<usize>) {
     match event {
-        End(Paragraph | Heading(_)) => {
+        End(Paragraph | Heading(..)) => {
             buf.push('\n');
             bytes.push(take(len) + 1);
             chars.push(take(cnt) + 1);
