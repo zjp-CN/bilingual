@@ -18,8 +18,8 @@ fn main() -> AnyResult<()> {
     // let query = Query { from: "zh",
     //                     to:   "en",
     //                     q:    "你好，\n世界！", };
-    let mut form = Form::new(&user, &query);
-    let bytes = send(&mut form)?.bytes()?;
+    let form = Form::new(&user, &query);
+    let bytes = send(&form)?.bytes()?;
     let json: Response = serde_json::from_slice(&bytes)?;
     dbg!(&json, json.dst()?.collect::<Vec<_>>(), json.is_borrowed());
     dbg!(json.dst_owned()?);

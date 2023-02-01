@@ -424,6 +424,7 @@ pub fn extract_with_bytes(event: &Event, not_codeblock: &mut bool, table: &mut b
 }
 
 /// 取出需要被翻译的内容：按照段落或标题
+#[allow(clippy::too_many_arguments)]
 pub fn extract_with_chars(event: &Event, not_codeblock: &mut bool, table: &mut bool,
                           buf: &mut String, len: &mut usize, bytes: &mut Vec<usize>,
                           cnt: &mut usize, chars: &mut Vec<usize>) {

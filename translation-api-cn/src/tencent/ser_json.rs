@@ -91,9 +91,9 @@ fn signature_to_string_test() -> super::Result<()> {
     // sample starts
     let datetime = OffsetDateTime::from_unix_timestamp(1636111645)?;
     let timestamp = datetime.unix_timestamp().to_string();
-    let mut user = User::default();
-    user.id = "0".into();
-    user.key = "0".into();
+    let user = User { id: "0".into(),
+                      key: "0".into(),
+                      ..Default::default() };
     let query = Query { from:      "en",
                         to:        "zh",
                         projectid: 0,
@@ -129,7 +129,7 @@ fn signature_to_string_test() -> super::Result<()> {
     assert_eq!(stringtosign, "TC3-HMAC-SHA256\n1636111645\n2021-11-05/tmt/tc3_request\n\
                               ef9234630cfbd7baf254265506ed5d0193d278468d367a9c8a809d6300173df1");
     let secret_date =
-        hash_2u8(format!("TC3{}", header.user.key).as_bytes(), format!("{}", date).as_bytes())?;
+        hash_2u8(format!("TC3{}", header.user.key).as_bytes(), format!("{date}").as_bytes())?;
     let secret_service = hash_hash_u8(secret_date, Header::SERVICE.as_bytes())?;
     let secret_signing = hash_hash_u8(secret_service, Header::CREDENTIALSCOPE.as_bytes())?;
     let hex = hmac_sha256_string(hash_hash_u8(secret_signing, stringtosign.as_bytes())?);

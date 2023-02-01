@@ -171,7 +171,7 @@ impl ResponseError {
 fn response_test() -> Result<(), Box<dyn std::error::Error>> {
     let success = r#"{"Response":{"RequestId":"7895050c-b0bd-45f2-ba88-c95c509020f2","Source":"en","Target":"zh","TargetTextList":["嗨","那里"]}}"#;
     let res: Response = serde_json::from_str(success)?;
-    assert_eq!(format!("{:?}", res),
+    assert_eq!(format!("{res:?}"),
                "Response { res: Ok { id: \"7895050c-b0bd-45f2-ba88-c95c509020f2\", from: \"en\", \
                 to: \"zh\", res: [\"嗨\", \"那里\"] } }");
     assert!(res.dst().is_ok());
@@ -181,7 +181,7 @@ fn response_test() -> Result<(), Box<dyn std::error::Error>> {
     let res: Response = serde_json::from_str(error)?;
     #[rustfmt::skip]
     assert_eq!(
-               format!("{:?}", res),
+               format!("{res:?}"),
                "Response { res: Err { id: \"47546ee3-767c-4671-8f90-2c02c7484a42\", \
 				error: ResponseError { code: \"AuthFailure.SignatureFailure\", \
 				msg: \"The provided credentials could not be validated. \
@@ -197,7 +197,7 @@ fn response_test() -> Result<(), Box<dyn std::error::Error>> {
     let res: Response = serde_json::from_str(error)?;
     #[rustfmt::skip]
     assert_eq!(
-               format!("{:?}", res),
+               format!("{res:?}"),
                "Response { res: Err { id: \"c3d29f67-6e56-48b9-b583-2cfcde32cad1\", \
 				error: ResponseError { code: \"AuthFailure.SecretIdNotFound\", \
 				msg: \"The SecretId is not found, please ensure that your SecretId is correct.\" } } }"

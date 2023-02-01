@@ -11,9 +11,6 @@ fn usage_test() -> Result<()> {
     let datetime = OffsetDateTime::from_unix_timestamp(1636111645)?;
     // let timestamp = datetime.unix_timestamp().to_string();
     assert_display_snapshot!(datetime, @"2021-11-05 11:27:25.0 +00:00:00");
-    let mut user = User::default();
-    user.id = "0".into();
-    user.key = "0".into();
     let _query = Query { from:      "en",
                          to:        "zh",
                          projectid: 0,

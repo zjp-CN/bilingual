@@ -11,7 +11,7 @@ pub struct MdComment<'t> {
 impl<'t> MdComment<'t> {
     fn new(text: &'t str, l: &str) -> Self {
         Self { text,
-               language: l[..l.find(',').unwrap_or(l.len())].to_lowercase().to_string(),
+               language: l[..l.find(',').unwrap_or(l.len())].to_lowercase(),
                cm: Vec::new() }
     }
 
@@ -30,7 +30,7 @@ impl<'t> MdComment<'t> {
         self.cm
             .iter()
             .map(|m| {
-                unsafe { self.text.get_unchecked(m.from..m.to) }.trim_start_matches("/").trim()
+                unsafe { self.text.get_unchecked(m.from..m.to) }.trim_start_matches('/').trim()
             })
             .collect::<Vec<_>>()
             .join("\n")
