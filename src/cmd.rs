@@ -117,7 +117,7 @@ impl Bilingual {
             API::Baidu => baidu(self.id, self.key, &mut cf)?,
             API::Tencent => tencent(self.id, self.key, &mut cf)?,
             API::Niutrans => niutrans(self.key, &mut cf)?,
-            _ => unimplemented!(),
+            _ => anyhow::bail!("请输入 `-a` 参数来指定 baidu | tencent | niutrans 中的一个"),
         }
 
         if self.output_files.is_empty() {
