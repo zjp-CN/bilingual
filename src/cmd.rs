@@ -98,6 +98,7 @@ fn default_toml() -> PathBuf {
     } else if std::path::Path::new(PWD_BILINGUAL_TOML).exists() {
         PWD_BILINGUAL_TOML.into()
     } else if let Some(mut config_dir) = dirs::config_dir() {
+        debug!("配置目录为 {config_dir:?}");
         config_dir.push(PWD_BILINGUAL_TOML); // GLOBAL_BILINGUAL_TOML
         config_dir
     } else {
