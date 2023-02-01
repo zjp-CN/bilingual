@@ -28,11 +28,11 @@ fn log_init() -> Result<()> {
         (s.parse().unwrap_or(LevelFilter::Warn),
          s.parse().unwrap_or(LevelFilter::Off))
     } else {
-        (var("TERM_LOG").ok().map(|s| s.parse().ok()).flatten().unwrap_or(LevelFilter::Warn),
-         var("FILE_LOG").ok().map(|s| s.parse().ok()).flatten().unwrap_or(LevelFilter::Off))
+        (var("TERM_LOG").ok().and_then(|s| s.parse().ok()).unwrap_or(LevelFilter::Warn),
+         var("FILE_LOG").ok().and_then(|s| s.parse().ok()).unwrap_or(LevelFilter::Off))
     };
     let logf = var("FILE").unwrap_or("bilingual.log".into());
-    let info = format!("log-level: term => {}, file => {}; log-file => {}", term, file, logf);
+    let info = format!("log-level: term => {term}, file => {file}; log-file => {logf}");
     let mut config = ConfigBuilder::default();
     config.set_time_offset_to_local().map_err(|_| anyhow::anyhow!("simplelog 无法确定 time offset 来获取本地时间"))?;
     let config_term = config.clone().set_time_level(LevelFilter::Debug).build();

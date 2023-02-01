@@ -1,7 +1,10 @@
 use crate::config::{Config, DirFile, API};
 use anyhow::{anyhow, Result};
 use argh::FromArgs;
-use std::{env::var, path::PathBuf};
+use std::{
+    env::var,
+    path::{Path, PathBuf},
+};
 
 const VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/VERSION"));
 
@@ -106,7 +109,7 @@ impl Bilingual {
     pub fn run(mut self) -> Result<Config> {
         log::debug!("{:#?}", self);
         if self.version {
-            println!("{}", VERSION);
+            println!("{VERSION}");
             std::process::exit(0);
         }
         let mut cf = Config::init(self.toml)?;
@@ -149,7 +152,7 @@ impl Bilingual {
     }
 }
 
-fn new_filename(f: &PathBuf, to: &str) -> PathBuf {
+fn new_filename(f: &Path, to: &str) -> PathBuf {
     let mut stem = f.file_stem().unwrap().to_os_string();
     stem.reserve(6);
     stem.push("-");
@@ -159,7 +162,7 @@ fn new_filename(f: &PathBuf, to: &str) -> PathBuf {
     f.with_file_name(stem)
 }
 
-fn new_dir(f: &PathBuf, to: &str) -> PathBuf {
+fn new_dir(f: &Path, to: &str) -> PathBuf {
     let mut stem = f.file_stem().unwrap().to_os_string();
     stem.reserve(3);
     stem.push("-");
@@ -227,8 +230,8 @@ mod tests {
 
     #[test]
     fn test_new_filename_dir() {
-        assert_eq!(PathBuf::from("/root/test-zh.md"), new_filename(&"/root/test.md".into(), "zh"));
-        assert_eq!(PathBuf::from("/root/test-zh/"), new_dir(&"/root/test/".into(), "zh"));
-        assert_eq!(PathBuf::from("/root/test-zh"), new_dir(&"/root/test".into(), "zh"));
+        assert_eq!(PathBuf::from("/root/test-zh.md"), new_filename("/root/test.md".as_ref(), "zh"));
+        assert_eq!(PathBuf::from("/root/test-zh/"), new_dir("/root/test/".as_ref(), "zh"));
+        assert_eq!(PathBuf::from("/root/test-zh"), new_dir("/root/test".as_ref(), "zh"));
     }
 }

@@ -19,6 +19,7 @@ pub struct Config {
     pub niutrans: Option<Niutrans>,
 }
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug)]
 pub enum API {
     None,
@@ -85,8 +86,7 @@ impl DirFile {
     fn create_dir(&self, d: impl AsRef<Path>) -> Option<()> {
         self.dir
             .as_ref()
-            .map(|db| db.create(&d).map_err(print_err).ok())
-            .flatten()
+            .and_then(|db| db.create(&d).map_err(print_err).ok())
             .or_else(|| {
                 if !d.as_ref().exists() {
                     error!("{:?} 文件夹不存在，且不被允许创建。", d.as_ref());
@@ -225,7 +225,7 @@ impl Config {
             }
             TextItem::Stdout(text) => {
                 info!("命令行翻译内容：\n{:?}", text);
-                println!("{}", text);
+                println!("{text}");
                 Some(text)
             }
             TextItem::Skip { from, into } => {
@@ -244,15 +244,16 @@ impl Config {
                 error!("请设置百度翻译 API 帐号的 id 和 key");
                 None
             })
-            .map(|b| {
+            .and_then(|b| {
                 if b.limit.limit() == 0 {
                     via_baidu(md, &self.src.from, &self.src.to, b)
                 } else {
                     via_baidu_batch(md, &self.src.from, &self.src.to, b)
-                }.or_else(|e| Err(print_err(e)))
+                }.map_err(|e| {
+                     print_err(e);
+                 })
                  .ok()
             })
-            .flatten()
     }
 
     pub fn do_single_query_tencent(&self, md: Md) -> Option<String> {
@@ -262,15 +263,16 @@ impl Config {
                 error!("请设置腾讯云 API 帐号的 id 和 key");
                 None
             })
-            .map(|t| {
+            .and_then(|t| {
                 if t.limit.limit() == 0 {
                     via_tencent(md, &self.src.from, &self.src.to, t)
                 } else {
                     via_tencent_batch(md, &self.src.from, &self.src.to, t)
-                }.or_else(|e| Err(print_err(e)))
+                }.map_err(|e| {
+                     print_err(e);
+                 })
                  .ok()
             })
-            .flatten()
     }
 
     pub fn do_single_query_niutrans(&self, md: Md) -> Option<String> {
@@ -280,19 +282,20 @@ impl Config {
                 error!("请设置小牛翻译 API 帐号的 key");
                 None
             })
-            .map(|n| {
+            .and_then(|n| {
                 if n.limit.limit() == 0 {
                     via_niutrans(md, &self.src.from, &self.src.to, n)
                 } else {
                     via_niutrans_batch(md, &self.src.from, &self.src.to, n)
-                }.or_else(|e| Err(print_err(e)))
+                }.map_err(|e| {
+                     print_err(e);
+                 })
                  .ok()
             })
-            .flatten()
     }
 }
 
-fn print_err<E: Into<Error> + std::fmt::Display>(e: E) -> () { error!("{}", e) }
+fn print_err<E: Into<Error> + std::fmt::Display>(e: E) { error!("{}", e) }
 
 /// 以 post + 表单方式发送
 fn send<T: serde::Serialize + ?Sized>(url: &str, form: &T) -> Result<blocking::Response> {
@@ -304,9 +307,9 @@ fn send<T: serde::Serialize + ?Sized>(url: &str, form: &T) -> Result<blocking::R
 trait Batch {
     fn limit_field(&self) -> &Limit;
     fn limit<'t>(&self, m: &'t mut Md) -> Box<dyn Iterator<Item = &'t str> + 't> {
-        match self.limit_field() {
-            &Limit::Byte(l) => Box::new(m.bytes_paragraph(l)),
-            &Limit::Char(l) => Box::new(m.chars_paragraph(l)),
+        match *self.limit_field() {
+            Limit::Byte(l) => Box::new(m.bytes_paragraph(l)),
+            Limit::Char(l) => Box::new(m.chars_paragraph(l)),
         }
     }
 }
@@ -330,12 +333,13 @@ pub fn via_baidu_batch(mut md: Md, from: &str, to: &str, user: &Baidu) -> Result
                         sign
                     })?.bytes()?;
         debug!("\nq = {:?}\nquery = {:#?}\nbytes = {:?}", q, query, bytes);
-        Ok::<(), Error>(res.push(bytes))
+        res.push(bytes);
+        Ok::<(), Error>(())
     };
     user.limit(&mut md).try_for_each(f)?;
     let iter: Vec<Response> = res.iter().map(|bytes| from_slice(bytes)).collect::<Result<_, _>>()?;
     debug!("iter = {:#?}", iter);
-    let output = md.done(iter.iter().map(|r| r.dst().map_err(print_err).unwrap()).flatten());
+    let output = md.done(iter.iter().flat_map(|r| r.dst().map_err(print_err).unwrap()));
     Ok(output)
 }
 
@@ -365,12 +369,13 @@ pub fn via_niutrans_batch(mut md: Md, from: &str, to: &str, user: &Niutrans) -> 
                         form
                     })?.bytes()?;
         debug!("\nq = {:?}\nquery = {:#?}\nbytes = {:?}", q, query, bytes);
-        Ok::<(), Error>(res.push(bytes))
+        res.push(bytes);
+        Ok::<(), Error>(())
     };
     user.limit(&mut md).try_for_each(f)?;
     let iter: Vec<Response> = res.iter().map(|bytes| from_slice(bytes)).collect::<Result<_, _>>()?;
     debug!("iter = {:#?}", iter);
-    let output = md.done(iter.iter().map(|r| r.dst().map_err(print_err).unwrap()).flatten());
+    let output = md.done(iter.iter().flat_map(|r| r.dst().map_err(print_err).unwrap()));
     Ok(output)
 }
 
@@ -397,11 +402,10 @@ fn send2(header: &mut translation_api_cn::tencent::Header) -> Result<blocking::R
         use std::str::FromStr;
         header.header()
               .into_iter()
-              .map(|(k, v)| match (HeaderName::from_str(k), HeaderValue::from_str(v)) {
+              .filter_map(|(k, v)| match (HeaderName::from_str(k), HeaderValue::from_str(v)) {
                   (Ok(key), Ok(value)) => Some((key, value)),
                   _ => None,
-              })
-              .flatten() // 遇到 Err 时，把 Ok 的部分 collect
+              }) // 遇到 Err 时，把 Ok 的部分 collect
               .collect()
     };
     Client::new().post(translation_api_cn::tencent::URL).headers(map).json(header.query).send().map_err(|e| e.into())
@@ -412,18 +416,19 @@ pub fn via_tencent_batch(mut md: Md, from: &str, to: &str, user: &Tencent) -> Re
     // debug!("raw md = {:#?}", md.extract());
     let mut res = Vec::new();
     let f = |buf: &str| {
-        let q: Vec<&str> = buf.trim().split("\n").collect();
+        let q: Vec<&str> = buf.trim().split('\n').collect();
         debug!("\nq = {:?}", q);
         let query = Query::new(&q, from, to, user.projectid);
         let mut header = Header::new(user, &query);
         let bytes = send2(&mut header)?.bytes()?;
         debug!("\nq = {:?}\nquery = {:#?}\nheader = {:#?}\nbytes = {:#?}", q, query, header, bytes);
-        Ok::<(), Error>(res.push(bytes))
+        res.push(bytes);
+        Ok::<(), Error>(())
     };
     user.limit(&mut md).try_for_each(f)?;
     let iter: Vec<Response> = res.iter().map(|bytes| from_slice(bytes)).collect::<Result<_, _>>()?;
     debug!("iter = {:#?}", iter);
-    let output = md.done(iter.iter().map(|r| r.dst().map_err(print_err).unwrap()).flatten());
+    let output = md.done(iter.iter().flat_map(|r| r.dst().map_err(print_err).unwrap()));
     Ok(output)
 }
 
@@ -431,7 +436,7 @@ pub fn via_tencent(mut md: Md, from: &str, to: &str, user: &Tencent) -> Result<S
     use translation_api_cn::tencent::{Header, Query, Response};
 
     let buf = md.extract();
-    let q: Vec<&str> = buf.trim().split("\n").collect();
+    let q: Vec<&str> = buf.trim().split('\n').collect();
     let query = Query::new(&q, from, to, user.projectid);
     let mut header = Header::new(user, &query);
     let bytes = send2(&mut header)?.bytes()?;
