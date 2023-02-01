@@ -349,17 +349,15 @@ fn table_test() {
     assert_debug_snapshot!(paragraphs, @r###""Option\nDescription\ndata\npath to data files to supply the data that will be passed into templates.\nengine\nengine to be used for processing templates. Handlebars is the default.\next\nextension to be used for dest files.""###);
     assert_eq!(paragraphs, Md::new(TABLE).extract().trim());
 
-    let translated = &mut paragraphs.split("\n");
-    let events = events.into_iter()
-                       .map(|e| match e {
-                           t @ Event::Text(_) => {
-                               vec![t,
-                                    Event::Text('\t'.into()),
-                                    Event::Text(translated.next().unwrap().into()),]
-                           }
-                           x => vec![x],
-                       })
-                       .flatten();
+    let translated = &mut paragraphs.split('\n');
+    let events = events.into_iter().flat_map(|e| match e {
+                                       t @ Event::Text(_) => {
+                                           vec![t,
+                                                Event::Text('\t'.into()),
+                                                Event::Text(translated.next().unwrap().into()),]
+                                       }
+                                       x => vec![x],
+                                   });
     let mut buffer = String::new();
     pulldown_cmark_to_cmark::cmark_with_options(events, &mut buffer, cmark_to_cmark_opt()).unwrap();
     // std::fs::write("assets/tmp/table.md", buffer.as_bytes()).unwrap();
