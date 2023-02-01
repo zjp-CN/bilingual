@@ -54,7 +54,10 @@
 
 use anyhow::{Context, Result};
 use reqwest::blocking;
-use translation_api_cn::baidu::{Form, Query, Response, User};
+use translation_api_cn::{
+    baidu::{Form, Query, Response, User},
+    Limit,
+};
 
 macro_rules! log {
     (display: $v:expr) => {
@@ -74,7 +77,7 @@ macro_rules! log {
 fn main() -> Result<()> {
     let mut cmd: Cmd = argh::from_env();
     let user = cmd.to_user();
-    let mut query = cmd.to_query();
+    let mut query = cmd.as_query();
 
     let form = query.sign(&user);
     let text = translate(dbg!(&form))?;
@@ -166,7 +169,7 @@ struct Cmd {
 // }
 
 impl Cmd {
-    fn to_query(&mut self) -> Query {
+    fn as_query(&mut self) -> Query {
         log!(self);
         let mut query = self.multiquery.join("\n");
         if !self.query.is_empty() {
@@ -185,6 +188,7 @@ impl Cmd {
         User { appid: self.appid.clone(),
                key:   self.key.clone(),
                qps:   1,
-               salt:  "0".into(), }
+               salt:  "0".into(),
+               limit: Limit::Byte(6000), }
     }
 }
