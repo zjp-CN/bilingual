@@ -22,7 +22,7 @@ argh = {version = "0.1", optional = true}
 translation-api-cn = {version="0.1.0", path="./translation-api-cn", optional = true}
 
 serde = {version = "1", features = ["derive"], optional = true}
-toml = {version = "0.5", optional = true}
+toml = {version = "0.7", optional = true}
 
 simplelog = {version = "0.12", optional = true}
 dirs = {version = "4", optional = true}
@@ -49,4 +49,4 @@ lto = true
 opt-level = 3
 
 [workspace]
-members = ["translation-api-cn", "tests/pulldown-cmark"]
+members = ["translation-api-cn"]
