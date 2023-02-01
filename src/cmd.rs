@@ -185,17 +185,22 @@ fn niutrans(key: String, cf: &mut Config) -> Result<()> {
 fn tencent(id: String, key: String, cf: &mut Config) -> Result<()> {
     if cf.tencent.is_none() {
         cf.tencent.replace(translation_api_cn::tencent::User::default());
+        debug!("由于未找到配置文件，先使用默认配置（无 id 和 key）");
     }
     let c = cf.tencent.as_mut().ok_or(anyhow!("覆盖腾讯云 API.id 时出错"))?;
     if !id.is_empty() {
         c.id = id;
+        debug!("id 被命令行参数覆盖");
     } else if let Ok(s) = var("BILINGUAL_TENCENT_ID") {
         c.id = s;
+        debug!("id 被 BILINGUAL_TENCENT_ID 环境变量覆盖");
     }
     if !key.is_empty() {
         c.key = key;
+        debug!("key 被命令行参数覆盖");
     } else if let Ok(s) = var("BILINGUAL_TENCENT_KEY") {
         c.key = s;
+        debug!("id 被 BILINGUAL_TENCENT_KEY 环境变量覆盖");
     }
     anyhow::ensure!(!c.id.is_empty(), "id 不应该为空");
     anyhow::ensure!(!c.key.is_empty(), "key 不应该为空");
