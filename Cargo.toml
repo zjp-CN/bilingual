@@ -33,6 +33,7 @@ version  = "0.9"
 default-features = false
 
 [features]
+default = ["bin"]
 bin = ["argh", "reqwest", "serde_json", "anyhow", "translation-api-cn", "serde", "toml", "simplelog", "dirs"]
 
 [[bin]]

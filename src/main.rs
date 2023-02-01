@@ -34,7 +34,7 @@ fn log_init() -> Result<()> {
     let logf = var("FILE").unwrap_or("bilingual.log".into());
     let info = format!("log-level: term => {}, file => {}; log-file => {}", term, file, logf);
     let mut config = ConfigBuilder::default();
-    config.set_time_to_local(true);
+    config.set_time_offset_to_local().map_err(|_| anyhow::anyhow!("simplelog 无法确定 time offset 来获取本地时间"))?;
     let config_term = config.clone().set_time_level(LevelFilter::Debug).build();
 
     let logger: Vec<Box<dyn SharedLogger>> = if file != LevelFilter::Off {

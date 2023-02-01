@@ -188,8 +188,8 @@ impl std::fmt::Display for TextItem {
 
 impl Config {
     pub fn init(path: impl AsRef<std::path::Path>) -> Result<Self> {
-        if let Ok(ref f) = std::fs::read(path) {
-            toml::from_slice(f).with_context(|| "请检查 `bilingual.toml` 配置文件的内容")
+        if let Ok(ref f) = std::fs::read_to_string(path) {
+            toml::from_str(f).with_context(|| "请检查 `bilingual.toml` 配置文件的内容")
         } else {
             Ok(Self::default())
         }
