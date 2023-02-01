@@ -316,7 +316,7 @@ pub fn prepend<'e>(event: Event<'e>, table: &mut bool,
                    paragraph: &mut impl Iterator<Item = &'e str>)
                    -> ArrayVec<Event<'e>, MAXIMUM_EVENTS> {
     let mut arr = ArrayVec::<_, MAXIMUM_EVENTS>::new();
-    log::debug!("event: {:?}", event);
+    debug!("event: {:?}", event);
     match event.clone() {
         End(Paragraph) => {
             // ATTENTION: `if let` guards are experimental

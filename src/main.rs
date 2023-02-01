@@ -1,5 +1,7 @@
 use anyhow::Result;
 use bilingual::md;
+#[macro_use]
+extern crate log;
 
 mod cmd;
 mod config;
@@ -10,7 +12,7 @@ mod tests;
 fn main() -> Result<()> {
     log_init()?;
     let mut config = argh::from_env::<cmd::Bilingual>().run()?;
-    log::debug!("\n{:#?}", config);
+    debug!("\n{:#?}", config);
 
     while let Some(output) = config.do_single_query_write() {
         log::trace!("{:?}", output);

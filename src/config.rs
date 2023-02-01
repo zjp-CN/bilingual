@@ -1,6 +1,5 @@
 use crate::md::Md;
 use anyhow::{Context, Error, Result};
-use log::{debug, error, info};
 use reqwest::blocking::{self, Client};
 use serde_json::from_slice;
 use std::path::{Path, PathBuf};
@@ -188,9 +187,11 @@ impl std::fmt::Display for TextItem {
 
 impl Config {
     pub fn init(path: impl AsRef<std::path::Path>) -> Result<Self> {
+        let path = path.as_ref();
         if let Ok(ref f) = std::fs::read_to_string(path) {
             toml::from_str(f).with_context(|| "请检查 `bilingual.toml` 配置文件的内容")
         } else {
+            debug!("{path:?} 配置文件不存在");
             Ok(Self::default())
         }
     }

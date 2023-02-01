@@ -107,7 +107,7 @@ fn default_toml() -> PathBuf {
 
 impl Bilingual {
     pub fn run(mut self) -> Result<Config> {
-        log::debug!("{:#?}", self);
+        debug!("{:#?}", self);
         if self.version {
             println!("{VERSION}");
             std::process::exit(0);
@@ -186,16 +186,19 @@ fn tencent(id: String, key: String, cf: &mut Config) -> Result<()> {
     if cf.tencent.is_none() {
         cf.tencent.replace(translation_api_cn::tencent::User::default());
     }
+    let c = cf.tencent.as_mut().ok_or(anyhow!("覆盖腾讯云 API.id 时出错"))?;
     if !id.is_empty() {
-        cf.tencent.as_mut().ok_or(anyhow!("覆盖腾讯云 API.id 时出错"))?.id = id;
+        c.id = id;
     } else if let Ok(s) = var("BILINGUAL_TENCENT_ID") {
-        cf.tencent.as_mut().ok_or(anyhow!("覆盖腾讯云 API.id 时出错"))?.id = s;
+        c.id = s;
     }
     if !key.is_empty() {
-        cf.tencent.as_mut().ok_or(anyhow!("覆盖腾讯云 API.key 时出错"))?.key = key;
+        c.key = key;
     } else if let Ok(s) = var("BILINGUAL_TENCENT_KEY") {
-        cf.tencent.as_mut().ok_or(anyhow!("覆盖腾讯云 API.key 时出错"))?.key = s;
+        c.key = s;
     }
+    anyhow::ensure!(!c.id.is_empty(), "id 不应该为空");
+    anyhow::ensure!(!c.key.is_empty(), "key 不应该为空");
     Ok(())
 }
 
