@@ -1,5 +1,5 @@
 use bilingual::md::Md;
-use insta::{assert_debug_snapshot, assert_display_snapshot};
+use insta::assert_debug_snapshot;
 use pulldown_cmark::{Event::*, Parser, Tag::*};
 
 const LINKS: &str = r#"

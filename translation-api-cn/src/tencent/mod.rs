@@ -185,7 +185,7 @@ impl<'u, 'q> Header<'u, 'q> {
                                    self.credential_scope,
                                    hash256(canonical_request.as_bytes()));
         let secret_date =
-            hash_2u8(format!("TC3{}", self.user.key).as_bytes(), format!("{}", date).as_bytes())?;
+            hash_2u8(format!("TC3{}", self.user.key).as_bytes(), format!("{date}").as_bytes())?;
         let secret_service = hash_hash_u8(secret_date, Self::SERVICE.as_bytes())?;
         let secret_signing = hash_hash_u8(secret_service, Self::CREDENTIALSCOPE.as_bytes())?;
         Ok(hmac_sha256_string(hash_hash_u8(secret_signing, stringtosign.as_bytes())?))

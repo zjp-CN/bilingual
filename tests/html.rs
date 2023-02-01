@@ -1,12 +1,12 @@
 use insta::assert_debug_snapshot;
 use std::borrow::Cow;
-use tl::*;
+use tl::{Parser, *};
 
 fn parse(s: &str) -> VDom { tl::parse(s, tl::ParserOptions::default()).unwrap() }
 
 #[test]
 fn simple_test() {
-    let dom = parse(&"<p>hi </p>");
+    let dom = parse("<p>hi </p>");
     assert_debug_snapshot!(dom.nodes().iter().filter_map(|n| n.as_tag()).collect::<Vec<_>>(), @r###"
     [
         HTMLTag {
@@ -54,17 +54,18 @@ fn simple_test() {
     "###);
 }
 
-pub fn filter_script<'a>(dom: &VDom<'a>) -> Vec<Cow<'a, str>> {
-    dom.nodes().iter().map(|n| inner_text(n)).collect()
+pub fn filter_script<'a>(dom: &'a VDom<'a>) -> Vec<Cow<'a, str>> {
+    dom.nodes().iter().map(|n| inner_text(n, dom.parser())).collect()
 }
 
 // 排除掉 script 标签
-pub fn inner_text_filter_script<'a>(tag: &HTMLTag<'a>) -> Cow<'a, str> {
+pub fn inner_text_filter_script<'a, 'b: 'a>(tag: &HTMLTag<'a>, parser: &'b Parser<'b>)
+                                            -> Cow<'a, str> {
     fn script(tag: &HTMLTag) -> bool { tag.name() == &Bytes::from("script") }
-    fn pushdown<'a>(node: &Node<'a>, s: &mut String) {
+    fn pushdown(node: &Node, s: &mut String, parser: &Parser) {
         match node {
             Node::Tag(t) if !script(t) => {
-                let text = inner_text_filter_script(t);
+                let text = inner_text_filter_script(t, parser);
                 if !text.is_empty() {
                     s.push_str(&text);
                     s.push(' ');
@@ -75,7 +76,8 @@ pub fn inner_text_filter_script<'a>(tag: &HTMLTag<'a>) -> Cow<'a, str> {
         }
     }
 
-    let ch = tag.children().top();
+    let children = tag.children();
+    let ch = children.top();
     let len = ch.len();
 
     if len == 0 {
@@ -86,27 +88,32 @@ pub fn inner_text_filter_script<'a>(tag: &HTMLTag<'a>) -> Cow<'a, str> {
     let first = &ch[0];
 
     if len == 1 {
-        match first {
-            Node::Tag(t) if !script(t) => return inner_text_filter_script(t),
-            Node::Raw(e) => return e.as_utf8_str(),
+        match first.get(parser) {
+            Some(Node::Tag(t)) if !script(t) => return inner_text_filter_script(t, parser),
+            Some(Node::Raw(e)) => return e.as_utf8_str(),
             _ => return Cow::Borrowed(""),
         }
     }
 
     // If there are >1 nodes, we need to allocate a new string and push each inner_text in it
     // TODO: check if String::with_capacity() is worth it
-    let mut s = String::from(inner_text(first));
+    let mut s =
+        String::from(first.get(parser).map(|node| inner_text(node, parser)).unwrap_or_default());
 
-    tag.children().iter().skip(1).for_each(|node| pushdown(node, &mut s));
+    tag.children()
+       .all(parser)
+       .iter()
+       .skip(1)
+       .for_each(|node| pushdown(node, &mut s, parser));
 
     Cow::Owned(s)
 }
 
-pub fn inner_text<'a>(node: &Node<'a>) -> Cow<'a, str> {
+pub fn inner_text<'a, 'b: 'a>(node: &'a Node<'a>, parser: &'b Parser<'b>) -> Cow<'a, str> {
     match node {
         Node::Comment(_) => Cow::Borrowed(""),
         Node::Raw(r) => r.as_utf8_str(),
-        Node::Tag(t) => inner_text_filter_script(t),
+        Node::Tag(t) => inner_text_filter_script(t, parser),
     }
 }
 

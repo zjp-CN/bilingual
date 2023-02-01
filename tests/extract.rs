@@ -160,7 +160,7 @@ code block
 
     let mut paragraphs = buf.split('\n');
     let table = &mut false;
-    let output = events.into_iter().map(|event| prepend(event, table, &mut paragraphs)).flatten();
+    let output = events.into_iter().flat_map(|event| prepend(event, table, &mut paragraphs));
     let mut output_md = String::with_capacity(capacity * 2);
     cmark(output, &mut output_md).unwrap();
     assert_display_snapshot!(output_md, @r###"

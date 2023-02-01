@@ -83,7 +83,7 @@ fn main() -> Result<()> {
     let text = translate(dbg!(&form))?;
 
     let response: Response =
-        serde_json::from_str(&text).with_context(|| format!("JSON 格式化失败：{}", text))?;
+        serde_json::from_str(&text).with_context(|| format!("JSON 格式化失败：{text}"))?;
     let dst = response.dst().with_context(|| "解析返回数据时失败")?;
 
     #[rustfmt::skip]

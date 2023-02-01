@@ -33,11 +33,10 @@ pub fn send(header: &mut Header) -> AnyResult<blocking::Response> {
         use std::str::FromStr;
         header.header()
               .into_iter()
-              .map(|(k, v)| match (HeaderName::from_str(k), HeaderValue::from_str(v)) {
+              .filter_map(|(k, v)| match (HeaderName::from_str(k), HeaderValue::from_str(v)) {
                   (Ok(key), Ok(value)) => Some((key, value)),
                   _ => None,
-              })
-              .flatten() // 遇到 Err 时，把 Ok 的部分 collect
+              }) // 遇到 Err 时，把 Ok 的部分 collect
               .collect()
     };
     // dbg!(&map);

@@ -116,7 +116,7 @@ fn serde_json_format_test() -> serde_json::Result<()> {
               .replace("{\n", "{")
               .replace("\n}", "}");
     assert_eq!(ss, PAYLOAD);
-    let ss = s.replace(",\n", ", ").replace("\n", "");
+    let ss = s.replace(",\n", ", ").replace('\n', "");
     assert_eq!(ss, PAYLOAD);
 
     // 方法二：重新实现 `serde_json::ser::Formatter`
@@ -160,12 +160,12 @@ mod hash_tests {
 
         let result = mac.finalize().into_bytes();
         assert_eq!("0b0065830a5c8d8f2c4997f5468610d6abc5533e49eac939426cf8158035ec3f",
-                   format!("{:x}", result));
+                   format!("{result:x}"));
 
         let result2 =
             HmacSha256::new_from_slice(result.as_slice()).unwrap().finalize().into_bytes();
         assert_eq!("922394236a962ebc90466942033cf117e347be148f899255de62b1ff4eab21b2",
-                   format!("{:x}", result2));
+                   format!("{result2:x}"));
 
         let mut mac = HmacSha256::new_from_slice(result.as_slice()).unwrap();
         mac.update(b"2");
