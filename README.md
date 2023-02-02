@@ -29,7 +29,7 @@
 2. 或者 cargo 安装：
 
     ```console
-    CARGO_PROFILE_RELEASE_LTO=yes CARGO_PROFILE_RELEASE_OPT_LEVEL=3 cargo install bilingual --features bin
+    cargo install bilingual
     ```
 
 2. 或者源码编译最新版本：
@@ -37,10 +37,13 @@
     ```console
     git clone https://github.com/zjp-CN/bilingual.git
     cd bilingual
-    cargo build --release --features bin
+    cargo build --release
     ```
 
 ## 使用
+
+> 注意：查找全局配置文件的路径使用了 [`dirs::config_dir`](https://docs.rs/dirs/latest/dirs/fn.config_dir.html)，
+> 所以放在各自系统的默认路径下。只测试过 Linux，即 `~/.config/bilingual.toml`。
 
 `bilingual.toml` 样例：
 
