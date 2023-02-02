@@ -177,7 +177,7 @@ macro_rules! id_key {
     ) => {{
         let cf = $cf;
         if cf.$api.is_none() {
-            cf.$api.replace(translation_api_cn::$api::User::default());
+            cf.$api.replace(::translation_api_cn::$api::User::default());
             debug!("由于未找到配置文件，先使用默认配置（无 id 和 key）");
         }
         let c = cf.$api.as_mut().ok_or(anyhow!("覆盖 {} API 时出错", $name))?;
@@ -227,21 +227,4 @@ fn baidu(appid: String, key: String, cf: &mut Config) -> Result<()> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn version_test() {
-        insta::assert_display_snapshot!(VERSION, @r###"
-        v0.1.1
-        git ref: v0.1.1-6-g754d353
-        "###);
-    }
-
-    #[test]
-    fn test_new_filename_dir() {
-        assert_eq!(PathBuf::from("/root/test-zh.md"), new_filename("/root/test.md".as_ref(), "zh"));
-        assert_eq!(PathBuf::from("/root/test-zh/"), new_dir("/root/test/".as_ref(), "zh"));
-        assert_eq!(PathBuf::from("/root/test-zh"), new_dir("/root/test".as_ref(), "zh"));
-    }
-}
+mod tests;
