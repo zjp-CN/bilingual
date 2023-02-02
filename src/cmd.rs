@@ -171,58 +171,59 @@ fn new_dir(f: &Path, to: &str) -> PathBuf {
     f.with_file_name(stem)
 }
 
+macro_rules! id_key {
+    (
+        $cf:ident, $api:ident, $name:literal, $key:ident = $keyl:literal $(, $id:ident = $idl:literal)?
+    ) => {{
+        let cf = $cf;
+        if cf.$api.is_none() {
+            cf.$api.replace(translation_api_cn::$api::User::default());
+            debug!("由于未找到配置文件，先使用默认配置（无 id 和 key）");
+        }
+        let c = cf.$api.as_mut().ok_or(anyhow!("覆盖 {} API 时出错", $name))?;
+        $(
+            if !$id.is_empty() {
+                c.$id = $id;
+                debug!("id 被命令行参数覆盖");
+            } else if let Ok(s) = var($idl) {
+                c.$id = s;
+                debug!("id 被 {} 环境变量覆盖", $idl);
+            }
+            ::anyhow::ensure!(!c.$id.is_empty(), "id 不应该为空");
+        )?
+        if !$key.is_empty() {
+            c.key = $key;
+            debug!("key 被命令行参数覆盖");
+        } else if let Ok(s) = var($keyl) {
+            c.key = s;
+            debug!("id 被 {} 环境变量覆盖", $keyl);
+        }
+        ::anyhow::ensure!(!c.key.is_empty(), "key 不应该为空");
+        Ok(())
+    }};
+}
+
 fn niutrans(key: String, cf: &mut Config) -> Result<()> {
-    if cf.niutrans.is_none() {
-        cf.niutrans.replace(translation_api_cn::niutrans::User::default());
+    id_key! {
+        cf, niutrans, "小牛翻译",
+        key = "BILINGUAL_NIUTRANS_KEY"
     }
-    if !key.is_empty() {
-        cf.niutrans.as_mut().ok_or(anyhow!("覆盖小牛翻译 API.key 时出错"))?.key = key;
-    } else if let Ok(s) = var("BILINGUAL_NIUTRANS_KEY") {
-        cf.niutrans.as_mut().ok_or(anyhow!("覆盖小牛翻译 API.key 时出错"))?.key = s;
-    }
-    Ok(())
 }
 
 fn tencent(id: String, key: String, cf: &mut Config) -> Result<()> {
-    if cf.tencent.is_none() {
-        cf.tencent.replace(translation_api_cn::tencent::User::default());
-        debug!("由于未找到配置文件，先使用默认配置（无 id 和 key）");
+    id_key! {
+        cf, tencent, "腾讯云",
+        key = "BILINGUAL_TENCENT_KEY",
+        id = "BILINGUAL_TENCENT_ID"
     }
-    let c = cf.tencent.as_mut().ok_or(anyhow!("覆盖腾讯云 API.id 时出错"))?;
-    if !id.is_empty() {
-        c.id = id;
-        debug!("id 被命令行参数覆盖");
-    } else if let Ok(s) = var("BILINGUAL_TENCENT_ID") {
-        c.id = s;
-        debug!("id 被 BILINGUAL_TENCENT_ID 环境变量覆盖");
-    }
-    if !key.is_empty() {
-        c.key = key;
-        debug!("key 被命令行参数覆盖");
-    } else if let Ok(s) = var("BILINGUAL_TENCENT_KEY") {
-        c.key = s;
-        debug!("id 被 BILINGUAL_TENCENT_KEY 环境变量覆盖");
-    }
-    anyhow::ensure!(!c.id.is_empty(), "id 不应该为空");
-    anyhow::ensure!(!c.key.is_empty(), "key 不应该为空");
-    Ok(())
 }
 
-fn baidu(id: String, key: String, cf: &mut Config) -> Result<()> {
-    if cf.baidu.is_none() {
-        cf.baidu.replace(translation_api_cn::baidu::User::default());
+fn baidu(appid: String, key: String, cf: &mut Config) -> Result<()> {
+    id_key! {
+        cf, baidu, "百度翻译",
+        key = "BILINGUAL_BAIDU_KEY",
+        appid = "BILINGUAL_BAIDU_ID"
     }
-    if !id.is_empty() {
-        cf.baidu.as_mut().ok_or(anyhow!("覆盖百度翻译 API.id 时出错"))?.appid = id;
-    } else if let Ok(s) = var("BILINGUAL_BAIDU_ID") {
-        cf.baidu.as_mut().ok_or(anyhow!("覆盖百度翻译 API.id 时出错"))?.appid = s;
-    }
-    if !key.is_empty() {
-        cf.baidu.as_mut().ok_or(anyhow!("覆盖百度翻译 API.key 时出错"))?.key = key;
-    } else if let Ok(s) = var("BILINGUAL_BAIDU_KEY") {
-        cf.baidu.as_mut().ok_or(anyhow!("覆盖百度翻译 API.key 时出错"))?.key = s;
-    }
-    Ok(())
 }
 
 #[cfg(test)]
