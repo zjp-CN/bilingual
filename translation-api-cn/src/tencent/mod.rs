@@ -1,7 +1,7 @@
 use crate::Limit;
 use hmac::{
-    crypto_mac::{InvalidKeyLength, Output as HmacOutput},
-    Hmac, Mac, NewMac,
+    digest::{CtOutput as HmacOutput, InvalidLength},
+    Hmac, Mac,
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -33,7 +33,7 @@ pub enum Error {
     #[error("序列化时出错")]
     Ser(#[from] serde_json::Error),
     #[error("计算 HMAC-SHA256 时出错")]
-    Hash(#[from] InvalidKeyLength),
+    Hash(#[from] InvalidLength),
     #[error("计算 unix timestamp 时出错")]
     UnixTimeStamp(#[from] time::error::ComponentRange),
 }
